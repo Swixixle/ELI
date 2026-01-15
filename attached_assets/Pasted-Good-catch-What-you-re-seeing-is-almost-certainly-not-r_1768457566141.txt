@@ -1,0 +1,158 @@
+Good catch. What you’re seeing is almost certainly not real uploads, but seed / placeholder records being rendered by your app.
+
+Let’s walk through this cleanly.
+
+⸻
+
+What’s actually happening
+
+You have three document rows showing:
+	•	Same filename: New Policy Document.pdf
+	•	Same size: 1.2 MB
+	•	Same version: v1.0
+	•	Same date: 1/15/2026
+	•	Status: Active
+
+Yet you never uploaded anything.
+
+That combination is a dead giveaway for mock data.
+
+⸻
+
+The most likely causes (ranked)
+
+1. Seed / demo data in your database
+
+If you:
+	•	Initialized a table with default rows
+	•	Ran a migration that inserts sample records
+	•	Copied a demo schema or template
+
+Then the UI is just faithfully rendering those rows.
+
+Common pattern:
+
+INSERT INTO documents (...)
+VALUES ('New Policy Document.pdf', '1.2MB', 'ACTIVE');
+
+or in JS:
+
+const demoDocs = [
+  { name: "New Policy Document.pdf", status: "ACTIVE" },
+  ...
+];
+
+
+⸻
+
+2. Frontend stub data still wired in
+
+If your backend upload endpoint isn’t connected yet, the frontend may still be using:
+	•	Hardcoded array
+	•	Temporary mock response
+	•	Placeholder API return
+
+Example:
+
+return {
+  documents: mockDocuments
+};
+
+So even with no uploads, the UI renders “documents.”
+
+⸻
+
+3. “Create Case” auto-generates document placeholders
+
+Less common, but possible:
+
+When a case like SYN-DEMO-001 is created, the system auto-attaches:
+	•	Policy template
+	•	Compliance placeholder
+	•	Default artifacts
+
+These are logical records, not uploaded files.
+
+⸻
+
+What this is not
+	•	❌ Not a browser bug
+	•	❌ Not a Replit glitch
+	•	❌ Not phantom uploads
+	•	❌ Not a security issue
+
+Your system is doing exactly what it was told — just not what you intended yet.
+
+⸻
+
+How to confirm in 60 seconds
+
+Do one of these:
+
+Option A — Check the database directly
+
+Open your DB and run:
+
+SELECT * FROM documents;
+
+If rows already exist → they were seeded.
+
+⸻
+
+Option B — Hard refresh + log API response
+
+In DevTools:
+	1.	Reload page
+	2.	Inspect the API call that fetches documents
+	3.	Look at the JSON
+
+If it already contains those 3 docs → backend seeded or stubbed.
+
+⸻
+
+Option C — Try deleting one
+
+If there’s a delete action:
+	•	Delete one row
+	•	Refresh
+
+If it comes back → it’s seed logic
+If it stays gone → it was real DB data
+
+⸻
+
+What I strongly recommend you do next
+
+Since you’re building something audit-grade (ELI Expert):
+
+Short-term (now)
+	•	Rename these to “Demo Policy Template”
+	•	Or mark them as SYSTEM_GENERATED
+	•	Or hide them until a real upload exists
+
+Medium-term
+
+Add a clear state distinction:
+	•	source: user_upload
+	•	source: system_seed
+	•	source: template
+
+This will save you pain later when:
+	•	Auditors ask “who uploaded this?”
+	•	Users dispute provenance
+	•	You add verification logic
+
+⸻
+
+Bottom line
+
+You’re not crazy.
+Nothing was uploaded.
+You’re just seeing demo data being rendered as if it were real.
+
+If you want, next we can:
+	•	Trace exactly where those rows are created (frontend vs backend)
+	•	Cleanly separate templates from uploads
+	•	Add an explicit “No documents uploaded yet” empty state
+
+Just tell me which direction you want to go.

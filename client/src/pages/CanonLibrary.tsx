@@ -29,39 +29,70 @@ export default function CanonLibrary() {
   
   const activeCase = selectedCase || cases?.find(c => c.id === caseIdFromUrl);
 
-  const handleUpload = () => {
+  const handleUploadClick = () => {
     if (!activeCaseId) {
       setShowCaseSelector(true);
       return;
     }
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".pdf,.txt,.doc,.docx,.md";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) handleFileUpload(file);
+    };
+    input.click();
+  };
+
+  const handleFileUpload = async (file: File) => {
     setIsUploading(true);
     setUploadError(null);
     setUploadSuccess(null);
-    
-    const timestamp = Date.now();
-    createDocMutation.mutate({
-      name: `Policy Document ${timestamp}.pdf`,
-      size: "1.2 MB",
-      type: "pdf",
-      version: "v1.0",
-      status: "active",
-      contentHash: `hash_${timestamp}`,
-    }, {
-      onSuccess: (newDoc) => {
-        setUploadSuccess(newDoc);
-        setTimeout(() => {
-          navigate(`/canon/document/${newDoc.id}?caseId=${activeCaseId}`);
-        }, 1500);
-      },
-      onError: (error: any) => {
-        if (error?.message?.includes("409") || error?.message?.includes("Duplicate")) {
-          setUploadError("A document with the same name already exists in this case.");
-        } else {
-          setUploadError(error?.message || "Failed to upload document. Please try again.");
-        }
-      },
-      onSettled: () => setIsUploading(false)
-    });
+
+    try {
+      const content = await file.text();
+      const encoder = new TextEncoder();
+      const data = encoder.encode(content);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const contentHash = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+
+      const formatSize = (bytes: number) => {
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+      };
+
+      const extension = file.name.split(".").pop()?.toLowerCase() || "txt";
+
+      createDocMutation.mutate({
+        name: file.name,
+        size: formatSize(file.size),
+        type: extension,
+        version: "v1.0",
+        status: "active",
+        content: content.slice(0, 50000),
+        contentHash,
+      }, {
+        onSuccess: (newDoc) => {
+          setUploadSuccess(newDoc);
+          setTimeout(() => {
+            navigate(`/canon/document/${newDoc.id}?caseId=${activeCaseId}`);
+          }, 1500);
+        },
+        onError: (error: any) => {
+          if (error?.message?.includes("409") || error?.message?.includes("Duplicate")) {
+            setUploadError("A document with identical content already exists in this case.");
+          } else {
+            setUploadError(error?.message || "Failed to upload document. Please try again.");
+          }
+        },
+        onSettled: () => setIsUploading(false)
+      });
+    } catch (err) {
+      setUploadError("Failed to read file. Please try again.");
+      setIsUploading(false);
+    }
   };
 
   const handleOpenDocument = (doc: CanonDocument) => {
@@ -142,7 +173,7 @@ export default function CanonLibrary() {
                 <p className="text-muted-foreground mt-1">Manage source materials for this case.</p>
               </div>
               <button 
-                onClick={handleUpload}
+                onClick={handleUploadClick}
                 disabled={isUploading}
                 className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-all shadow-sm font-medium text-sm disabled:opacity-70 disabled:cursor-not-allowed"
                 data-testid="button-upload-document"
