@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -19,6 +19,19 @@ export const canonDocuments = pgTable("canon_documents", {
   uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
 });
 
+export const canonChunks = pgTable("canon_chunks", {
+  id: serial("id").primaryKey(),
+  sourceFile: text("source_file").notNull(),
+  section: text("section"),
+  page: integer("page"),
+  version: text("version"),
+  date: text("date"),
+  canonTier: varchar("canon_tier", { length: 20 }).notNull().default("tier-0"),
+  content: text("content").notNull(),
+  contentHash: varchar("content_hash", { length: 64 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -29,7 +42,14 @@ export const insertCanonDocumentSchema = createInsertSchema(canonDocuments).omit
   uploadedAt: true,
 });
 
+export const insertCanonChunkSchema = createInsertSchema(canonChunks).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type CanonDocument = typeof canonDocuments.$inferSelect;
 export type InsertCanonDocument = z.infer<typeof insertCanonDocumentSchema>;
+export type CanonChunk = typeof canonChunks.$inferSelect;
+export type InsertCanonChunk = z.infer<typeof insertCanonChunkSchema>;

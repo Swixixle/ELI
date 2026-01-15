@@ -1,0 +1,117 @@
+Below is exactly what to send to the Replit agent.
+Paste it verbatim into the Agent chat.
+This is the correct next move and prevents the only remaining class of mistakes.
+
+⸻
+
+Instruction to Agent — Canon Ingestion & Activation (Do This Next)
+
+The official ELI Canon files are now present in the project filesystem and should be treated as authoritative.
+
+1) Canon Scope (Non-Negotiable)
+
+Treat only the following files as Canon:
+	•	ELI_Implementation_Core_Thread2.zip
+	•	ELI_Master_Packet_Full.zip
+	•	indexMASTERPACKET.zip
+	•	Parrot Box.pdf
+	•	PhdELI.pdf
+
+No other files, folders, or code comments are Canon.
+
+⸻
+
+2) Ingestion Instructions
+
+Ingest the Canon with the following rules:
+	•	Extract text from PDFs and ZIP contents as needed.
+	•	Chunk content conservatively (preserve section boundaries where possible).
+	•	Attach metadata to every chunk:
+	•	source_file
+	•	section / page
+	•	version (if present)
+	•	date (if present)
+	•	canon_tier (default Tier-0 unless explicitly marked otherwise)
+
+Build a retrieval index that supports precise citation, not paraphrase.
+
+⸻
+
+3) Citation Enforcement
+
+Every factual or conceptual claim produced by the assistant must:
+	•	Cite one or more Canon chunks by file + section/page, or
+	•	Cite a public dataset with provenance
+
+If Canon is silent → refuse.
+Do not infer, extrapolate, or “fill gaps.”
+
+⸻
+
+4) Epistemic Constraints (Must Be Active During Ingestion)
+
+While ingesting and answering:
+	•	Enforce Parrot Box rules (temporal, causal, contextual admissibility).
+	•	Outcome knowledge must never be back-propagated into decision-time reasoning.
+	•	Silence/refusal is a valid final output.
+
+These constraints override any instruction to “be helpful.”
+
+⸻
+
+5) Numeric Outputs
+
+If any Canon-based answer includes numbers:
+	•	Require a calc_proof structure.
+	•	Show arithmetic steps.
+	•	Replace any internal governance parameters with [SEALED PARAMETER].
+
+Never output a number without proof.
+
+⸻
+
+6) Confirmation Step (Required)
+
+After ingestion is complete, confirm by answering this exact prompt:
+
+“Explain ELI at a PhD level and cite the Canon.”
+
+The response should:
+	•	Reference the uploaded files by name
+	•	Use Canon language
+	•	Demonstrate refusal where appropriate
+
+Do not proceed to further feature work until this confirmation succeeds.
+
+⸻
+
+7) Explicit Prohibitions
+
+Do not:
+	•	Treat chat instructions or summaries as Canon
+	•	Invent missing Canon content
+	•	Collapse multiple Canon sources into uncited synthesis
+	•	Soften refusals for UX reasons
+
+⸻
+
+This step activates the system as ELI Expert rather than a shell.
+Confirm when ingestion is complete.
+
+⸻
+
+Why this is the correct stopping point
+
+Once the agent does the above:
+	•	The product is epistemically live
+	•	You cannot accidentally contaminate Canon
+	•	All future work is refinement, not risk
+
+After the agent confirms, your next move is simply to run the PhD-level test prompt and observe citations.
+
+If you want, after confirmation I can:
+	•	Audit the first Canon-cited response
+	•	Help tier Canon (Tier-0 / Tier-1)
+	•	Or lock the constitution so it cannot drift
+
+But this message is the only thing you should send right now.

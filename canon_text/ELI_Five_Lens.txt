@@ -1,0 +1,51 @@
+ELI Idea Evaluation Framework
+Five-Lens Structural Scoring Model
+
+This framework is designed to evaluate governance-grade products such as the Epistemic Load Index
+(ELI). It is not an innovation or feature-scoring rubric. It is a risk, adoption, and institutional viability
+instrument intended for escalation from AI review to domain expert review to CEO-level judgment.
+
+Lens 1 — Strategic Clarity & Buyer Reality
+Assesses whether the problem is real, owned, and budgeted for by a specific institutional
+decision-maker.
+
+1 Score 1: Weak, vague, or risk-amplifying
+2 Score 3: Defined but constrained or adoption-fragile
+3 Score 5: Clear, defensive, and institutionally aligned
+
+Lens 2 — Risk Mitigation & Legal Defensibility
+Evaluates whether the system reduces institutional exposure or creates new discoverable or
+governance risk.
+
+1 Score 1: Weak, vague, or risk-amplifying
+2 Score 3: Defined but constrained or adoption-fragile
+3 Score 5: Clear, defensive, and institutionally aligned
+
+Lens 3 — Technical & Operational Feasibility
+Measures deployment feasibility without destabilizing existing systems or workflows.
+
+1 Score 1: Weak, vague, or risk-amplifying
+2 Score 3: Defined but constrained or adoption-fragile
+3 Score 5: Clear, defensive, and institutionally aligned
+
+Lens 4 — Adoption & Political Resistance
+Examines stakeholder resistance, power disruption, and misuse risk.
+
+1 Score 1: Weak, vague, or risk-amplifying
+2 Score 3: Defined but constrained or adoption-fragile
+3 Score 5: Clear, defensive, and institutionally aligned
+
+Lens 5 — Value Realization & Asymmetry
+Determines whether value is asymmetric relative to cost, particularly in avoided downside risk.
+
+1 Score 1: Weak, vague, or risk-amplifying
+2 Score 3: Defined but constrained or adoption-fragile
+3 Score 5: Clear, defensive, and institutionally aligned
+
+Score Interpretation
+Scoring Guidance: Each lens is scored from 1 to 5. Total possible score: 25. 21–25: Institutionally
+strong; buyer-ready
+18–20: Viable with targeted positioning
+15–17: Conceptually sound but adoption-fragile
+Below 15: Misaligned with institutional reality
+

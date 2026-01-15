@@ -1,0 +1,93 @@
+ELI Gatekeeper Substrate
+Final Theory, Logic, and Enforcement Specification
+Version: Locked / Industrial-Grade
+
+
+
+
+Executive Summary
+The ELI Gatekeeper is a defensive normalization and adjudication substrate designed to convert
+human input into lossy, bias-resistant structured records. It functions as a digital immune system:
+rejecting, quarantining, or transforming malformed, manipulative, or emotionally saturated input
+before it can contaminate the decision layer.
+
+
+Core Design Principles
+- Lossy by design: narrative, emotion, and judgment are intentionally discarded or quarantined.
+
+- No silent failure: every rejection returns a reason code and transformation hint.
+
+- No fact overwrites: contradictions generate dispute states, never replacement.
+
+- Epistemic class isolation: allegations, facts, policies, and opinions never merge.
+
+- Human-facing but machine-governed: UI empathy without evidentiary compromise.
+
+
+Three-Layer Storage Architecture
+Layer 1: Decision Substrate — Contains only normalized, time-anchored, admissible records.
+This is the sole layer with decision weight.
+
+Layer 2: Quarantine & Dispute Layer — Holds contradicted, collided, or source-deficient
+records. Weight is suspended until resolution.
+
+Layer 3: Contextual Scrapbook — Stores narrative exhaust and emotional context. Explicitly
+non-evidentiary, used only for UX continuity and bias-risk metadata.
+
+
+Integrated Optimizations (Gemini Review)
+Clinical / Operational Allow-List: Adjectives that appear in clinical, legal, or operational
+standards (e.g., 'unresponsive', 'intubated', 'noncompliant with protocol') bypass the Adjective
+Scrub.
+
+Sentiment Trend Metadata: Scrapbook entries are tagged for sentiment intensity and volume.
+High narrative-to-fact ratios generate a Bias Risk Flag without affecting evidence weight.
+
+Temporal Relativity: Time anchors may be absolute or relative (e.g., DURING(Shift Alpha),
+BEFORE(Event_ID_123)), preserving admissibility without forcing fabricated timestamps.
+
+Redundancy Penalty: Repeated semantically equivalent allegations from the same source trigger
+a lobbying-detection flag. ELI counts unique data, not persistence.
+
+Source Hierarchy: System Logs > Signed Documents > Third-Party Observation > First-Person
+Assertion. Promotion to Known Fact requires upper-tier sources only.
+
+
+Gatekeeper Logic Tree (Summary)
+1. Intake & classification
+2. Narrative routing (Scrapbook)
+3. Structural normalization (Actor–Action–Object–Condition–Time)
+4. Adjective scrub with allow-list
+5. Epistemic class assignment
+6. Temporal anchoring (absolute or relative)
+7. Source sufficiency check
+8. Similarity analysis (no auto-merge)
+9. Collision & contradiction handling
+10. Terminal state assignment (Rejected, Scrapbooked, Pending, Quarantined, Disputed,
+Admissible)
+
+
+Reason Codes (Canonical)
+- R001_UNKNOWN_TYPE
+
+- R002_UNPARSABLE_STRUCTURE
+
+- R003_EVALUATIVE_LANGUAGE
+
+- S001_NARRATIVE_EXHAUST
+
+- P001_MISSING_TIME_ANCHOR
+
+- Q001_SOURCE_REQUIRED
+
+- D001_CONTRADICTION_WITH_ANCHORED_FACT
+
+- D002_LOGICAL_COLLISION_CROSS_CLASS
+
+- A001_ADMISSIBLE_ACCEPTED
+Operational Posture
+The ELI Gatekeeper does not negotiate with bias, volume, or emotion. It is designed to be
+experienced by users as strict, predictable, and fair — transforming adversarial input into a
+debugging exercise rather than a moral confrontation. System evolution is governed by explicit
+versioning and change logs to prevent silent drift.
+

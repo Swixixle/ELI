@@ -1,0 +1,294 @@
+Below is the ELI Refusal Library — the human-facing interface layer that translates hard
+enforcement into clear, calm, unmovable responses.​
+This library is locked to the reason codes and designed to turn confrontation into debugging,
+not negotiation.
+
+This is written so it can be dropped directly into:
+
+   ●​   UI copy
+   ●​   API responses
+   ●​   LLM system prompts
+   ●​   Audit logs (sanitized variant)
+
+No soft language. No moralizing. No loopholes.
+
+
+
+
+ELI REFUSAL LIBRARY
+Canonical Human Interface for Enforcement Outcomes
+
+
+
+
+DESIGN GOALS (NON-NEGOTIABLE)
+   1.​ Predictable – Same violation → same response.
+   2.​ Non-argumentative – Explains why, never debates whether.
+   3.​ Actionable – Always includes a transformation path.
+   4.​ Emotion-neutral – Neither validating nor dismissive.
+   5.​ Unmovable – No phrasing that implies discretion or exception.
+
+Each response includes:
+
+   ●​   Status
+   ●​   Reason Code
+   ●​   What happened
+   ●​   Why it matters
+   ●​   How to proceed (single next action)
+
+
+
+
+1. HARD REJECTIONS (INPUT NOT STORED)
+R001 — UNKNOWN TYPE
+
+Status: Rejected​
+Reason Code: R001_UNKNOWN_TYPE
+
+Message (UI):
+
+     Input rejected: submission type could not be determined.
+
+Explanation:
+
+     ELI requires each input to be explicitly framed as a Fact, Allegation, Observation,
+     Policy Reference, or Preference.​
+     Unclassified input cannot be normalized or evaluated.
+
+How to proceed:
+
+     Restate your input using one category and the format:​
+     Actor – Action – Object – Time
+
+Example:
+
+     ❌ “This whole situation is wrong.”​
+     ✅ “Nurse A administered Medication X to Patient B at 09:10 on 2026-01-07.”
+
+R002 — UNPARSABLE STRUCTURE
+
+Status: Rejected​
+Reason Code: R002_UNPARSABLE_STRUCTURE
+
+Message:
+
+     Input rejected: required structure missing.
+
+Explanation:
+
+     ELI could not extract a clear actor, action, and object from your input.​
+     Without these, the system cannot create a record.
+
+How to proceed:
+
+     Rewrite using observable actions only.
+
+Template:
+     [Actor] did [Action] to [Object] at [Time] under [Condition].
+
+
+
+
+R003 — EVALUATIVE / JUDGMENT LANGUAGE
+
+Status: Rejected​
+Reason Code: R003_EVALUATIVE_LANGUAGE
+
+Message:
+
+     Input rejected: evaluative or judgment-based language detected.
+
+Explanation:
+
+     Descriptors such as intent, character judgment, or moral evaluation are not
+     admissible.​
+     ELI records actions, not interpretations.
+
+How to proceed:
+
+     Replace judgments with observable behavior.
+
+Example:
+
+     ❌ “The provider was unprofessional and careless.”​
+     ✅ “The provider used profanity toward staff during the 08:00 briefing.”
+
+2. SCRAPBOOK ROUTING (HEARD, NOT WEIGHTED)
+S001 — NARRATIVE EXHAUST
+
+Status: Stored (Context Only)​
+Reason Code: S001_NARRATIVE_EXHAUST
+
+Message:
+
+     Narrative input received and stored as contextual background.
+
+Explanation:
+
+     Emotional, narrative, or experiential descriptions are preserved for context,​
+     but they do not enter the decision substrate.
+Important clarification:
+
+      This content will not be used as evidence or affect outcomes.
+
+How to proceed (optional):
+
+      If you want this considered, extract specific events and resubmit them individually
+      using structured format.
+
+
+
+
+3. PENDING STATES (SALVAGEABLE, ZERO WEIGHT)
+P001 — MISSING TIME ANCHOR
+
+Status: Pending​
+Reason Code: P001_MISSING_TIME_ANCHOR
+
+Message:
+
+      Input stored but not activated: time anchor missing.
+
+Explanation:
+
+      ELI requires a temporal reference to evaluate or relate events.​
+      The content has been preserved but cannot be used yet.
+
+Accepted formats:
+
+   ●​ Exact: 2026-01-07 09:10
+   ●​ Bounded: Morning shift, Jan 7
+   ●​ Relative: DURING(Shift Alpha)
+   ●​ Relational: BEFORE(Event_ID_123)
+
+How to proceed:
+
+      Add a time reference to promote this record.
+
+
+
+
+4. QUARANTINE (STRUCTURALLY VALID,
+EPISTEMICALLY INCOMPLETE)
+Q001 — SOURCE REQUIRED
+Status: Quarantined​
+Reason Code: Q001_SOURCE_REQUIRED
+
+Message:
+
+      Input structurally valid but source is insufficient.
+
+Explanation:
+
+      This type of record requires a verifiable source to be admissible​
+      (e.g., system log, signed document, policy citation).
+
+Source hierarchy reminder:
+
+   1.​ System Logs
+   2.​ Signed Documents
+   3.​ Third-Party Observation
+   4.​ First-Party Assertion
+
+How to proceed:
+
+      Attach or reference an acceptable source.
+
+
+
+
+5. DISPUTE STATES (CONFLICT DETECTED)
+D001 — CONTRADICTION WITH ANCHORED FACT
+
+Status: Disputed​
+Reason Code: D001_CONTRADICTION_WITH_ANCHORED_FACT
+
+Message:
+
+      Contradiction detected with an existing anchored record.
+
+Explanation:
+
+      ELI does not overwrite established facts.​
+      Conflicting claims are preserved and routed to dispute resolution.
+
+Important clarification:
+
+      Submission frequency does not increase weight.
+
+How to proceed:
+     Provide higher-tier documentation or request formal verification.
+
+
+
+
+D002 — LOGICAL COLLISION (CROSS-CLASS)
+
+Status: Disputed​
+Reason Code: D002_LOGICAL_COLLISION_CROSS_CLASS
+
+Message:
+
+     Logical collision detected between incompatible record types.
+
+Explanation:
+
+     Records from different epistemic classes (e.g., Allegation vs Known Fact)​
+     cannot be merged or averaged.
+
+System action:
+
+     Both records have been isolated pending resolution.
+
+How to proceed:
+
+     Clarify scope, strengthen source, or escalate for adjudication.
+
+
+
+
+6. ADMISSIBLE CONFIRMATION (FOR COMPLETENESS)
+A001 — ADMISSIBLE ACCEPTED
+
+Status: Accepted​
+Reason Code: A001_ADMISSIBLE_ACCEPTED
+
+Message:
+
+     Input accepted and recorded.
+
+What happened:
+
+     Your submission met structural, temporal, and epistemic requirements.
+
+Transparency note:
+
+     Scrubbed elements and classification details are available on request.
+7. META-RULES (UI-LEVEL ENFORCEMENT)
+These lines are never shown verbatim but govern tone:
+
+   ●​    Never say: “We can’t right now” → say “This input cannot be processed.”
+   ●​    Never say: “Please understand” → say “This system requires…”
+   ●​    Never imply emotion validation during refusal.
+   ●​    Never suggest exceptions.
+   ●​    Never ask follow-up questions inside a refusal response.
+
+
+
+
+FINAL NOTE (SYSTEM IDENTITY STATEMENT)
+        ELI does not judge intent, credibility, or emotion.​
+        It evaluates structure, evidence, and coherence.​
+        If an input fails, it is not wrong — it is simply not usable yet.
+
+
+
+If you want, the next logical extensions are:
+
+   ●​    Refusal Tone Variants (clinical, legal, HR-safe)
+   ●​    LLM System Prompt Version of this library
+   ●​    Audit-Safe Redacted Variant
+   ●​    Hostile Actor Simulation using this exact refusal language
+
+Say which, and I’ll proceed.
+

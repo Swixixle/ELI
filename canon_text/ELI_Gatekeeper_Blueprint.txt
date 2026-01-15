@@ -1,0 +1,157 @@
+ELI Gatekeeper Substrate
+Authoritative Blueprint Specification (LOCKED)
+Complete Theory · Data Model · Node Logic · Refusal
+Grammar · LLM Kernel
+This document is the single canonical source of truth for the ELI Gatekeeper. No external references are
+required to design, implement, or audit the system described herein.
+
+
+
+
+1. Purpose & Operating Posture
+ELI is a machine-first epistemic governance substrate designed to ingest untrusted human input and produce
+bias-resistant, lossy, structured records suitable for deterministic decision systems. It explicitly rejects narrative
+authority, emotional volume, repetition, and asserted power as inputs to truth.
+
+
+2. Core Axioms (Non-Negotiable)
+•   Lossy by design: all narrative, emotional, and moral framing is discarded or quarantined.
+
+•   Invariance over empathy: fairness is achieved by identical processing, not affective response.
+
+•   No overwrite of anchored facts: contradiction generates dispute, never replacement.
+
+•   Epistemic class isolation: facts, allegations, observations, opinions, and policy texts never merge.
+
+•   No silent failure: every rejection produces a reason code and corrective instruction.
+3. Canonical Data Model
+
+3.1 Normalized Record Schema
+•   record_id (UUID)
+
+•   input_type (enum)
+
+•   epistemic_class (enum)
+
+•   actor_id
+
+•   action_verb
+
+•   object_id
+
+•   condition (optional)
+
+•   time_anchor (absolute or relative)
+
+•   location_context (optional)
+
+•   source_reference
+
+•   state (terminal state enum)
+
+•   reason_code (if non-admissible)
+
+•   scrub_log
+
+•   similarity_hash
+
+•   raw_input_pointer
+
+
+4. Terminal States
+•   REJECTED – structurally unusable; not stored
+
+•   SCRAPBOOKED – narrative exhaust; non-evidentiary
+
+•   PENDING_TIME – missing temporal anchor; zero weight
+
+•   QUARANTINED – source or structural deficiency
+
+•   DISPUTED – contradiction or cross-class collision
+
+•   ADMISSIBLE – decision-substrate eligible
+5. Gatekeeper Logic Tree (Node-by-Node)
+
+Node 0: Input Intake
+Receive raw input. No assumptions of trust.
+
+Node 1: Input Classification
+Classify as Fact, Allegation, Observation, Policy, Preference, Narrative.
+
+Node 1B: Unknown Type Rejection
+If classification fails, reject with R001.
+
+Node 2: Narrative Routing
+If narrative/emotional, route to Scrapbook (S001).
+
+Node 3: Structural Normalization
+Extract Actor–Action–Object–Condition–Time.
+
+Node 3B: Unparseable Rejection
+If structure fails, reject with R002.
+
+Node 4: Adjective Scrub
+Strip evaluative language unless allow-listed.
+
+Node 4B: Judgment Collapse Rejection
+If scrub removes meaning, reject with R003.
+
+Node 5: Epistemic Class Assignment
+Assign Known Fact, Allegation, Observation, Opinion, Policy.
+
+Node 5A: Known Fact Promotion
+Require top-tier source to promote.
+
+Node 6: Temporal Anchor Check
+Require absolute or relative time anchor.
+
+Node 6B: Pending Time Routing
+If missing, store as P001.
+
+Node 7: Source Sufficiency Check
+Validate against source hierarchy.
+
+Node 7B: Quarantine Routing
+If insufficient, Q001.
+
+Node 8: Semantic Similarity Scan
+Detect duplicates and conflicts.
+
+Node 9: Collision Logic
+Detect contradiction or cross-class similarity.
+
+Node 9A: Contradiction Handling
+Route to DISPUTED (D001).
+
+Node 9B: Logical Collision Handling
+Route to DISPUTED (D002).
+
+Node 10: Finalization
+Assign terminal state.
+6. Refusal Grammar & Reason Codes
+R001_UNKNOWN_TYPE: Input could not be classified
+
+R002_UNPARSABLE_STRUCTURE: Actor–Action–Object missing
+
+R003_EVALUATIVE_LANGUAGE: Judgment or intent detected
+
+S001_NARRATIVE_EXHAUST: Narrative routed to Scrapbook
+
+P001_MISSING_TIME_ANCHOR: Temporal anchor required
+
+Q001_SOURCE_REQUIRED: Source insufficient
+
+D001_CONTRADICTION_WITH_ANCHORED_FACT: Contradiction detected
+
+D002_LOGICAL_COLLISION_CROSS_CLASS: Cross-class collision
+
+A001_ADMISSIBLE_ACCEPTED: Record admitted
+7. LLM Enforcement Kernel
+Any LLM acting as ELI must follow this document verbatim. If multiple violations exist, only the highest-priority
+node failure is reported. No empathy language, no negotiation, no exception handling is permitted.
+
+
+Lock Statement
+This blueprint is LOCKED. Any modification requires explicit amendment governance. There are no other valid
+versions of ELI beyond this document.
+

@@ -1,0 +1,69 @@
+ELI v2 — Expanded Treatise on Epistemic Governance
+Deep Rigor, Legal-Grade Rubric Defense, and Explicit Rejection of Common Alternatives
+I. Expanded Essay: Judgment Under Uncertainty
+All complex institutions eventually confront the same paradox: decisions must be made before facts
+stabilize, but judgments are rendered after stability has returned. This temporal asymmetry creates
+an illusion of inevitability that distorts moral and legal reasoning.
+
+ELI exists to interrupt this illusion. Rather than asking whether an outcome was bad, it asks whether
+the decision environment was constrained. This reframing shifts institutional attention from blame to
+structure without eliminating accountability.
+
+
+II. Expanded Essay: Time as an Epistemic Boundary
+Time is not merely a sequence of events; it is a boundary that defines what knowledge may
+legitimately influence judgment.
+
+ELI formalizes this boundary by excluding information that crossed into awareness only after a
+decision was taken, regardless of its later importance.
+
+
+III. Legal-Grade Defense of the ELI Rubric
+The ELI rubric is intentionally minimal because legal defensibility increases as discretion decreases.
+Each of the five dimensions captures a necessary and independent constraint on rational
+decision-making.
+
+Data Completeness addresses informational visibility; Guideline Coherence addresses normative
+clarity; Time Pressure addresses cognitive bandwidth; Irreversibility addresses stakes; Environmental
+Stability addresses system noise.
+
+No dimension overlaps with another. Removing any would collapse explanatory adequacy; adding
+more would introduce subjectivity.
+
+
+IV. Why Categorical Thresholds Are Legally Superior
+Continuous scoring systems imply precision that cannot be justified in adversarial settings. They
+invite comparison, optimization, and cross-case inference — all of which increase litigation risk.
+
+Categorical thresholds provide clarity without false exactness. They constrain interpretation and
+prevent performance ranking.
+
+
+V. Why Not Prediction?
+Predictive systems aim to anticipate future outcomes. ELI is retrospective by design. Prediction
+collapses uncertainty into probability, which becomes indistinguishable from foreseeability in legal
+review.
+
+
+VI. Why Not Machine Learning?
+Machine learning systems learn from outcomes and therefore import future knowledge into past
+judgment. This violates the core epistemic boundary ELI exists to protect.
+
+
+VII. Why Not Root Cause Analysis Alone?
+RCA methodologies often begin after outcomes are known and are vulnerable to narrative
+reconstruction. ELI precedes RCA by freezing context before causal storytelling begins.
+
+
+VIII. Why Not Continuous Quality Scoring?
+Continuous quality scoring incentivizes risk avoidance and documentation theater. ELI rejects
+optimization in favor of epistemic honesty.
+
+
+IX. Conclusion: Governance Through Restraint
+ELI gains authority not through intelligence, but through refusal. It refuses prediction, ranking,
+learning, and optimization.
+
+This restraint makes it suitable as a governor in environments where power, hindsight, and
+technology converge.
+
