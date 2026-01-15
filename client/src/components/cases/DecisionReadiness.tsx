@@ -165,7 +165,7 @@ export function DecisionReadinessPanel({ readiness, onSetDecisionTarget }: Decis
             className={readiness.permitted ? "bg-green-500" : ""}
             data-testid="permission-status"
           >
-            {readiness.permitted ? "Decision Permitted" : "Decision Blocked"}
+            {readiness.permitted ? "Review Eligible" : "Review Blocked"}
           </Badge>
         </div>
       </CardHeader>
@@ -241,8 +241,8 @@ export function DecisionReadinessPanel({ readiness, onSetDecisionTarget }: Decis
                 </PopoverContent>
               </Popover>
             </div>
-            <span className="text-sm font-medium">
-              {readiness.totalSatisfied} / {readiness.totalRequired} conditions
+            <span className="text-sm text-muted-foreground">
+              {readiness.totalSatisfied} of {readiness.totalRequired} present
             </span>
           </div>
           <Progress value={progressPercent} className="h-2" />
@@ -278,6 +278,35 @@ export function DecisionReadinessPanel({ readiness, onSetDecisionTarget }: Decis
             </p>
           </div>
         )}
+
+        {/* Jurisdictional framing - what this means */}
+        <div className="p-3 bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2">
+          <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            What this {readiness.permitted ? "means" : "doesn't mean"}
+          </p>
+          {readiness.permitted ? (
+            <div className="space-y-1.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                <span className="font-medium text-green-600 dark:text-green-400">✓ Means:</span> There is enough structural information that a fair procedural evaluation can now occur.
+              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                <span className="font-medium text-slate-500">✗ Does not mean:</span> The decision is valid, correct, or should proceed.
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-500 italic mt-2">
+                This is jurisdiction, not judgment. Like a court saying "we can hear this case" — not "we've ruled."
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                The record does not yet contain enough structural information to support a procedurally fair evaluation.
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-500 italic mt-2">
+                This does not decide the case — it decides whether the case can be decided.
+              </p>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
