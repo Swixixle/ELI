@@ -2,7 +2,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { INITIAL_MESSAGES, Message, SCENARIO_RESPONSES } from "@/lib/types";
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle } from "lucide-react";
+import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -17,6 +17,7 @@ export default function Home() {
   const [mode, setMode] = useState<"advisor" | "sales">("advisor");
   const [decisionTime, setDecisionTime] = useState<Date | undefined>(undefined);
   const [showDemo, setShowDemo] = useState(true);
+  const [showTryPanel, setShowTryPanel] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -94,9 +95,52 @@ export default function Home() {
         setMessages(prev => [...prev, step.msg]);
         if (step === demoSteps[demoSteps.length - 1]) {
           setIsTyping(false);
+          setShowTryPanel(true);
         }
       }, currentDelay);
     });
+  };
+
+  const triggerScenario = (scenario: string) => {
+    setShowTryPanel(false);
+    const userQueries: Record<string, string> = {
+      "refusal": "Why did we miss the Q3 target?",
+      "revenue": "What is the adjusted EBITDA for Q3?",
+      "category_error": "Who is at fault for the compliance failure?"
+    };
+    
+    const query = userQueries[scenario] || "Show me a demo";
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: query,
+      timestamp: Date.now(),
+      temporalContext: scenario === "refusal" ? "Decision Time: 2024-06-01" : "Decision Time: Now (Default)"
+    };
+    
+    if (scenario === "refusal") {
+      setDecisionTime(new Date("2024-06-01"));
+    }
+    
+    setMessages(prev => [...prev, userMsg]);
+    setIsTyping(true);
+    
+    setTimeout(() => {
+      const responseData = SCENARIO_RESPONSES[scenario];
+      const assistantMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: responseData?.content || "Processing...",
+        citations: responseData?.citations,
+        calcProof: responseData?.calcProof,
+        ipFlags: responseData?.ipFlags,
+        visualSpec: responseData?.visualSpec,
+        timestamp: Date.now(),
+        temporalContext: userMsg.temporalContext
+      };
+      setMessages(prev => [...prev, assistantMsg]);
+      setIsTyping(false);
+    }, 1200);
   };
 
   const handleSend = () => {
@@ -133,13 +177,21 @@ export default function Home() {
            ]
          };
       }
-      else if (lowerInput.includes("revenue") || lowerInput.includes("ebitda")) {
+      else if (lowerInput.includes("fault") || lowerInput.includes("blame") || lowerInput.includes("punish") || lowerInput.includes("guilty") || lowerInput.includes("responsible")) {
+        responseData = SCENARIO_RESPONSES["category_error"];
+      } else if (lowerInput.includes("diagnos") || lowerInput.includes("treatment") || lowerInput.includes("patient") || lowerInput.includes("symptom") || lowerInput.includes("medical advice")) {
+        responseData = SCENARIO_RESPONSES["medical_safety"];
+      } else if (lowerInput.includes("revenue") || lowerInput.includes("ebitda")) {
         responseData = SCENARIO_RESPONSES["revenue"];
-      } else if (lowerInput.includes("miss") || lowerInput.includes("why") || lowerInput.includes("target")) {
+      } else if (lowerInput.includes("miss") || lowerInput.includes("target")) {
         responseData = SCENARIO_RESPONSES["refusal"];
-      } else if (lowerInput.includes("sales") || lowerInput.includes("pitch")) {
+      } else if (lowerInput.includes("sales") || lowerInput.includes("pitch") || lowerInput.includes("positioning")) {
         if (mode === "sales") {
-           responseData = SCENARIO_RESPONSES["sales"];
+           if (lowerInput.includes("metric") || lowerInput.includes("30%") || lowerInput.includes("quantif")) {
+             responseData = SCENARIO_RESPONSES["sales_with_metrics"];
+           } else {
+             responseData = SCENARIO_RESPONSES["sales"];
+           }
         } else {
            responseData = {
              content: "Please switch to **Sales Mode** to generate positioning statements. Advisor Mode is restricted to neutral governance analysis.",
@@ -147,13 +199,26 @@ export default function Home() {
            };
         }
       } else if (lowerInput.includes("inflation") || lowerInput.includes("cpi") || lowerInput.includes("bls")) {
-         responseData = SCENARIO_RESPONSES["cpi_query"];
+         // Temporal public data check: CPI data is as-of 2025-09-01
+         // Use string comparison to avoid timezone issues
+         const cpiAsOfDateStr = "2025-09-01";
+         const decisionDateStr = decisionTime ? format(decisionTime, "yyyy-MM-dd") : null;
+         if (decisionDateStr && decisionDateStr < cpiAsOfDateStr) {
+           responseData = {
+             content: "### Refusal: Temporal Data Constraint\n\nThe CPI-U dataset you requested has an **as-of date** of **2025-09-01**, which is **after** your set Decision Time (" + decisionDateStr + ").\n\nTo maintain outcome-blindness, I can only use public data with an effective date ≤ your Decision Time. This data would not have been available at the point of decision.",
+             ipFlags: [
+               { code: "TEMPORAL_PUBLIC_DATA", message: "Public data as-of date (2025-09-01) exceeds decision time boundary.", type: "temporal_public_data" }
+             ]
+           };
+         } else {
+           responseData = SCENARIO_RESPONSES["cpi_query"];
+         }
       } else if (lowerInput.includes("help") || lowerInput.includes("demo") || lowerInput.includes("use")) {
           runDemo();
           return; 
       } else {
         responseData = {
-          content: "I can assist with that, provided it is covered in the Canon. However, for this prototype, please try asking about **Q3 Revenue**, **Why we missed targets**, **CPI Inflation Data**, or (in Sales Mode) **Sales Positioning**.",
+          content: "I can assist with that, provided it is covered in the Canon. However, for this prototype, please try asking about:\n\n• **Q3 Revenue** (to see calc proof)\n• **Who is at fault?** (to see category error)\n• **CPI Inflation Data** (to see public data provenance)\n• **Sales Positioning** (in Sales Mode)",
           citations: []
         };
       }
@@ -305,6 +370,59 @@ export default function Home() {
               <span>Consulting Canon...</span>
             </div>
           )}
+          
+          {/* Try These Now Panel */}
+          {showTryPanel && !isTyping && (
+            <div className="bg-muted/30 border border-border rounded-xl p-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                Try These Now
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button
+                  onClick={() => triggerScenario("refusal")}
+                  className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg hover:border-destructive/50 hover:bg-destructive/5 transition-all text-left group"
+                  data-testid="button-try-refusal"
+                >
+                  <div className="w-8 h-8 rounded-md bg-destructive/10 text-destructive flex items-center justify-center shrink-0 group-hover:bg-destructive/20 transition-colors">
+                    <Ban className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-foreground">See Refusal</div>
+                    <div className="text-[10px] text-muted-foreground">Hindsight question</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => triggerScenario("revenue")}
+                  className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
+                  data-testid="button-try-proof"
+                >
+                  <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                    <Calculator className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-foreground">See Proof</div>
+                    <div className="text-[10px] text-muted-foreground">Numeric with audit trail</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => triggerScenario("category_error")}
+                  className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg hover:border-purple-500/50 hover:bg-purple-50 transition-all text-left group"
+                  data-testid="button-try-category"
+                >
+                  <div className="w-8 h-8 rounded-md bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 group-hover:bg-purple-200 transition-colors">
+                    <Gavel className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-foreground">See Category Error</div>
+                    <div className="text-[10px] text-muted-foreground">Normative judgment refusal</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
 

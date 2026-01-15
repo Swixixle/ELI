@@ -1,4 +1,3 @@
-
 export type Citation = {
   id: string;
   sourceType: "private_canon" | "public_dataset";
@@ -11,6 +10,8 @@ export type Citation = {
   provenance?: {
     institution: string;
     limitations?: string;
+    retrievedAt?: string;
+    asOf?: string;
   };
 };
 
@@ -18,7 +19,7 @@ export type CalcStep = {
   description: string;
   operation: string;
   result: string;
-  sourceRef?: string; // ID of the citation
+  sourceRef?: string;
 };
 
 export type CalcProof = {
@@ -31,7 +32,7 @@ export type CalcProof = {
 export type IPSafetyFlag = {
   code: string;
   message: string;
-  type: "withheld_parameter" | "temporal_boundary" | "parrot_box";
+  type: "withheld_parameter" | "temporal_boundary" | "parrot_box" | "category_error" | "medical_safety" | "temporal_public_data" | "sales_unverified";
 };
 
 export type VisualSpec = {
@@ -42,20 +43,20 @@ export type VisualSpec = {
 export type Message = {
   id: string;
   role: "user" | "assistant";
-  content: string; // Markdown
+  content: string;
   citations?: Citation[];
   calcProof?: CalcProof;
   visualSpec?: VisualSpec;
   ipFlags?: IPSafetyFlag[];
   timestamp: number;
-  temporalContext?: string; // e.g., "Decision Time: 2024-01-01" or "Current Context"
+  temporalContext?: string;
 };
 
 export const MOCK_CITATIONS: Record<string, Citation> = {
   "c1": {
     id: "c1",
     sourceType: "private_canon",
-    title: "Q3 Financial Performance Report",
+    title: "Internal Canon (Tier-0)",
     version: "v2.1 (Final)",
     section: "3.2 - Revenue Adjustments",
     date: "2025-10-15"
@@ -63,7 +64,7 @@ export const MOCK_CITATIONS: Record<string, Citation> = {
   "c2": {
     id: "c2",
     sourceType: "private_canon",
-    title: "Global Governance Framework",
+    title: "Internal Canon (Tier-0)",
     version: "v4.0",
     section: "Principle 7: Outcome Blindness",
     date: "2024-01-01"
@@ -77,8 +78,26 @@ export const MOCK_CITATIONS: Record<string, Citation> = {
     date: "2025-09-01",
     provenance: {
       institution: "U.S. Department of Labor",
-      limitations: "Seasonally adjusted; subject to revision"
+      limitations: "Seasonally adjusted; subject to revision",
+      retrievedAt: "2025-10-20T14:32:00Z",
+      asOf: "2025-09-01"
     }
+  },
+  "c4": {
+    id: "c4",
+    sourceType: "private_canon",
+    title: "Sales Canon (Tier-1)",
+    version: "v1.3",
+    section: "Approved Positioning - Enterprise",
+    date: "2025-08-01"
+  },
+  "c5": {
+    id: "c5",
+    sourceType: "private_canon",
+    title: "Internal Canon (Tier-0)",
+    version: "v1.3",
+    section: "Measurement Definitions - Compliance Cycle",
+    date: "2025-08-01"
   }
 };
 
@@ -95,7 +114,7 @@ export const INITIAL_MESSAGES: Message[] = [
 export const SCENARIO_RESPONSES: Record<string, Partial<Message>> = {
   "revenue": {
     content: "Based on the Q3 performance data, the adjusted EBITDA is **$42.5M**. \n\nThis figure is derived from the reported gross revenue of $120M, applying the standard operating expense deductions and the internal governance adjustment factor.",
-    citations: [MOCK_CITATIONS["c1"]],
+    citations: [MOCK_CITATIONS["c1"], MOCK_CITATIONS["c2"]],
     calcProof: {
       inputs: [
         { label: "Gross Revenue (Q3)", value: "$120,000,000", sourceRef: "c1" },
@@ -104,7 +123,7 @@ export const SCENARIO_RESPONSES: Record<string, Partial<Message>> = {
       ],
       steps: [
         { description: "Net Operating Income", operation: "$120M - $75M", result: "$45,000,000" },
-        { description: "Apply Governance Adjustment", operation: "$45M * [SEALED PARAMETER]", result: "$42,500,000" }
+        { description: "Apply Governance Adjustment", operation: "$45M × [SEALED PARAMETER]", result: "$42,500,000" }
       ],
       finalResult: "$42,500,000",
       sensitivityNote: "The withheld parameter is within the approved 0.92-0.98 variance band."
@@ -129,16 +148,53 @@ export const SCENARIO_RESPONSES: Record<string, Partial<Message>> = {
       { code: "PARROT_BOX", message: "Context insufficient for inference / Outcome-blindness constraint.", type: "parrot_box" }
     ]
   },
+  "category_error": {
+    content: "### Refusal: Category Error\n\nI cannot determine **fault**, **blame**, or **whether someone should be punished**.\n\nThese are normative moral judgments that cannot be derived from admissible evidence. I am designed for system learning, not actor judgment.\n\n**What I can do instead:**\n- Identify what procedures were in place\n- Show what data was available at decision time\n- Explain governance framework requirements",
+    ipFlags: [
+      { code: "CATEGORY_ERROR", message: "Normative judgment not derivable from admissible evidence.", type: "category_error" }
+    ]
+  },
+  "medical_safety": {
+    content: "### Notice: Medical Safety Boundary\n\nI cannot provide **individualized clinical advice** or process **Protected Health Information (PHI)**.\n\nI can cite public medical guidelines and peer-reviewed literature, but I cannot:\n- Diagnose conditions for specific individuals\n- Recommend treatments for specific patients\n- Process or store patient-identifiable health data\n\n**If your query contains PHI, please redact it before continuing.**",
+    ipFlags: [
+      { code: "MEDICAL_SAFETY", message: "Individualized clinical advice inadmissible. PHI must be redacted.", type: "medical_safety" }
+    ]
+  },
+  "temporal_public_data": {
+    content: "### Refusal: Temporal Data Constraint\n\nThe public dataset you referenced has an **as-of date** that is **after** your set Decision Time.\n\nTo maintain outcome-blindness, I can only use public data with an effective date ≤ your Decision Time. The requested data would not have been available at the point of decision.",
+    ipFlags: [
+      { code: "TEMPORAL_PUBLIC_DATA", message: "Public data as-of date exceeds decision time boundary.", type: "temporal_public_data" }
+    ]
+  },
   "sales": {
-    content: "Here is the approved positioning for the Enterprise Tier:\n\n> \"Our platform delivers **30% faster compliance cycles** by automating the governance layer, allowing your teams to focus on strategy rather than audit prep.\"\n\nThis claim is supported by the Q3 Performance Report.",
-    citations: [MOCK_CITATIONS["c1"]],
+    content: "Here is the approved positioning for the Enterprise Tier:\n\n> \"Our platform streamlines compliance workflows, allowing your teams to focus on strategy rather than audit prep.\"\n\n**Qualitative benefit supported by Canon.** Quantified deltas require explicit measurement definitions in canon.",
+    citations: [MOCK_CITATIONS["c4"]],
+    ipFlags: [
+      { code: "SALES_QUALITATIVE", message: "Quantified claims withheld: measurement definition not found in Sales Canon.", type: "sales_unverified" }
+    ]
+  },
+  "sales_with_metrics": {
+    content: "Here is the approved positioning for the Enterprise Tier:\n\n> \"Our platform delivers **30% faster compliance cycles** by automating the governance layer.\"\n\nThis claim is supported by the Sales Canon with explicit measurement definition.",
+    citations: [MOCK_CITATIONS["c4"], MOCK_CITATIONS["c5"]],
+    calcProof: {
+      inputs: [
+        { label: "Baseline (Competitor Avg)", value: "14 Days", sourceRef: "c5" },
+        { label: "ELI Enterprise", value: "9.8 Days", sourceRef: "c5" },
+        { label: "Measurement Period", value: "Q2-Q3 2025", sourceRef: "c5" }
+      ],
+      steps: [
+        { description: "Calculate Reduction", operation: "14 - 9.8", result: "4.2 Days" },
+        { description: "Calculate Percentage", operation: "(4.2 / 14) × 100", result: "30%" }
+      ],
+      finalResult: "30% Reduction",
+      sensitivityNote: "Based on median enterprise customer data. Individual results may vary."
+    },
     visualSpec: {
       type: "cfo_table",
       data: {
         headers: ["Metric", "Competitor Avg", "ELI Enterprise", "Delta"],
         rows: [
-          ["Compliance Cycle", "14 Days", "9.8 Days", "-30%"],
-          ["Audit Cost", "$50k/yr", "$35k/yr", "-30%"]
+          ["Compliance Cycle", "14 Days", "9.8 Days", "-30%"]
         ]
       }
     }
@@ -152,7 +208,7 @@ export const SCENARIO_RESPONSES: Record<string, Partial<Message>> = {
          { label: "Current Index", value: "315.0", sourceRef: "c3" }
        ],
        steps: [
-         { description: "Calculate Percentage Change", operation: "((315.0 - 305.2) / 305.2) * 100", result: "3.21%" },
+         { description: "Calculate Percentage Change", operation: "((315.0 - 305.2) / 305.2) × 100", result: "3.21%" },
          { description: "Rounding", operation: "Round to nearest tenth", result: "3.2%" }
        ],
        finalResult: "3.2%",

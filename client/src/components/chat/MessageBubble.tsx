@@ -1,7 +1,7 @@
 import { Message, Citation, IPSafetyFlag } from "@/lib/types";
 import { CitationCard } from "./CitationCard";
 import { CalculationProof } from "./CalculationProof";
-import { AlertTriangle, ShieldAlert, Bot, Info, Scale } from "lucide-react";
+import { AlertTriangle, ShieldAlert, Bot, Info, Scale, HeartPulse, Gavel, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
 
@@ -12,6 +12,10 @@ interface MessageBubbleProps {
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const hasParrotBox = message.ipFlags?.some(f => f.type === "parrot_box");
+  const hasCategoryError = message.ipFlags?.some(f => f.type === "category_error");
+  const hasMedicalSafety = message.ipFlags?.some(f => f.type === "medical_safety");
+  const hasTemporalPublicData = message.ipFlags?.some(f => f.type === "temporal_public_data");
+  const hasAnyRefusal = hasParrotBox || hasCategoryError || hasMedicalSafety || hasTemporalPublicData;
   const hasPublicData = message.citations?.some(c => c.sourceType === "public_dataset");
 
   return (
@@ -31,7 +35,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             <div className="text-[10px] text-muted-foreground/70 font-mono border border-border px-2 py-0.5 rounded-full flex items-center gap-1.5">
               <Scale className="w-3 h-3" />
               <span>
-                Status: {hasParrotBox ? "REFUSAL" : "OK"} • {message.temporalContext || "Canon v4.0"} • {message.calcProof ? "Audited" : "Cited"}
+                Status: {hasAnyRefusal ? "REFUSAL" : "OK"} • {message.temporalContext || "Canon v4.0"} • {message.calcProof ? "Audited" : "Cited"}
               </span>
             </div>
           </div>
@@ -39,13 +43,33 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
         {/* Content Body */}
         <div className={cn("prose prose-sm max-w-none break-words", isUser ? "text-primary-foreground prose-invert" : "text-foreground")}>
-          {hasParrotBox ? (
-             <div className="border-l-4 border-destructive bg-destructive/5 p-4 rounded-r-md">
-               <div className="flex items-center gap-2 text-destructive font-bold mb-2">
-                 <ShieldAlert className="w-5 h-5" />
-                 <span>Epistemic Refusal</span>
+          {hasAnyRefusal ? (
+             <div className={cn(
+               "border-l-4 p-4 rounded-r-md",
+               hasMedicalSafety ? "border-rose-500 bg-rose-50 dark:bg-rose-900/10" :
+               hasCategoryError ? "border-purple-500 bg-purple-50 dark:bg-purple-900/10" :
+               hasTemporalPublicData ? "border-amber-500 bg-amber-50 dark:bg-amber-900/10" :
+               "border-destructive bg-destructive/5"
+             )}>
+               <div className={cn(
+                 "flex items-center gap-2 font-bold mb-2",
+                 hasMedicalSafety ? "text-rose-700 dark:text-rose-300" :
+                 hasCategoryError ? "text-purple-700 dark:text-purple-300" :
+                 hasTemporalPublicData ? "text-amber-700 dark:text-amber-300" :
+                 "text-destructive"
+               )}>
+                 {hasMedicalSafety ? <HeartPulse className="w-5 h-5" /> :
+                  hasCategoryError ? <Gavel className="w-5 h-5" /> :
+                  hasTemporalPublicData ? <Clock className="w-5 h-5" /> :
+                  <ShieldAlert className="w-5 h-5" />}
+                 <span>
+                   {hasMedicalSafety ? "Medical Safety Boundary" :
+                    hasCategoryError ? "Category Error" :
+                    hasTemporalPublicData ? "Temporal Data Constraint" :
+                    "Epistemic Refusal"}
+                 </span>
                </div>
-               <p className="text-destructive-foreground text-sm font-medium whitespace-pre-wrap leading-relaxed">
+               <p className="text-foreground text-sm font-medium whitespace-pre-wrap leading-relaxed">
                  {message.content}
                </p>
              </div>
@@ -67,7 +91,9 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-blue-700/80 dark:text-blue-300/80 font-mono text-[10px]">
               <span>Dataset: {citation.title}</span>
-              <span>As of: {citation.date}</span>
+              <span>Data As-Of: {citation.provenance?.asOf || citation.date}</span>
+              <span>Retrieved: {citation.provenance?.retrievedAt ? new Date(citation.provenance.retrievedAt).toLocaleDateString() : "N/A"}</span>
+              <span>Dataset ID: {citation.datasetId || "N/A"}</span>
               {citation.provenance?.limitations && (
                 <span className="col-span-2 italic opacity-80">Note: {citation.provenance.limitations}</span>
               )}
@@ -91,10 +117,15 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         )}
 
         {/* IP Safety Flags (Visual Indicators) */}
-        {!isUser && message.ipFlags && message.ipFlags.length > 0 && !hasParrotBox && (
-          <div className="mt-3 flex gap-2">
+        {!isUser && message.ipFlags && message.ipFlags.length > 0 && !hasAnyRefusal && (
+          <div className="mt-3 flex flex-wrap gap-2">
             {message.ipFlags.map((flag, idx) => (
-              <div key={idx} className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-orange-50 text-orange-800 text-xs border border-orange-200 dark:bg-orange-900/20 dark:text-orange-200 dark:border-orange-800">
+              <div key={idx} className={cn(
+                "inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs border",
+                flag.type === "sales_unverified" 
+                  ? "bg-violet-50 text-violet-800 border-violet-200 dark:bg-violet-900/20 dark:text-violet-200 dark:border-violet-800"
+                  : "bg-orange-50 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-200 dark:border-orange-800"
+              )}>
                 <AlertTriangle className="w-3 h-3" />
                 <span>{flag.message}</span>
               </div>

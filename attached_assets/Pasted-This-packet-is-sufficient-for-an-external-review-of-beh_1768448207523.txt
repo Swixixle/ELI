@@ -1,0 +1,120 @@
+This packet is sufficient for an external review of behavior and UX, and it is largely aligned with the epistemic constitution you intended. It also exposes a few structural risks and “drift vectors” you should correct now—before this becomes a buyer-facing artifact.
+
+What’s strong and correctly implemented
+
+Guided demo as first-class onboarding
+
+The “Run Guided Demo” sequence is the right shape for a self-explanatory expert. It teaches:
+	•	What the system is
+	•	How it proves claims
+	•	What it refuses
+	•	Then hands control to the buyer
+
+That matches your stated goal: the app performs itself.
+
+Admissibility gate is explicit and legible
+
+Your description of temporal locking and refusal states reflects the Parrot Box principle that a system may not speak beyond what was causally/temporally/contextually available at decision time.  ￼
+The refusal messaging in Transcript C is appropriately direct and bounded.
+
+Computation audit and IP sealing are conceptually correct
+
+The [SEALED PARAMETER] pattern is the correct way to prove arithmetic without disclosing the internal policy mechanics.
+
+High-priority issues to fix (these will matter with real buyers)
+
+1) Any numeric answer must always produce calc_proof—including EBITDA
+
+Transcript A presents adjusted EBITDA but does not show a calc proof. That undermines your “honest machine” posture because the first buyer question will be: “Show me how you got that.”
+
+Directive: If the response contains any numeric output (including EBITDA), calc_proof is mandatory and must show:
+	•	inputs (revenue, expense categories, adjustments)
+	•	steps
+	•	final result
+	•	and any sealed parameters as explicit redactions
+
+If some inputs are proprietary or confidential, show them as:
+	•	“CONFIDENTIAL INPUT (withheld)” but still preserve the arithmetic structure
+	•	or require user authorization to reveal the value
+
+2) Sales Mode transcript currently violates “no invented claims”
+
+Transcript D says: “XX% faster compliance cycles…” and “supported by the Q3 Performance Report.” If that report does not explicitly contain the measurement methodology and the claim, this is classic claim laundering.
+
+Directive: Sales Mode must only output:
+	•	exact approved positioning language (Tier-1 Sales Canon), and
+	•	only attach quantified deltas if:
+	•	the canon contains the measurement definition, baseline, and dates, or
+	•	a public dataset is cited with derivation shown
+
+Otherwise, Sales Mode must say:
+	•	“Qualitative benefit supported by Canon”
+	•	and refuse quantified deltas.
+
+3) Provenance must include “retrieval timestamp” and “as-of” separately
+
+For public data, you currently show “As of 2025-09-01.” You also need:
+	•	retrieved_at (when the system fetched it)
+	•	as_of (the dataset’s effective date)
+
+These are not the same and will matter in audits.
+
+4) Decision-Time Lock must apply to public data requests too (you implied it, enforce it)
+
+You mention refusing “today’s stock price” when decision-time is set to last year. Good. Make it explicit in the spec:
+
+Directive: When temporal context is set to T:
+	•	the public data layer must enforce as_of <= T
+	•	and refuse if only newer data exists
+
+This is the Parrot Box admissibility triad operationalized.  ￼
+
+5) Add a “Category Error” refusal subtype (you need this)
+
+Right now you have:
+	•	temporal admissibility refusal
+	•	“not in canon” refusal
+
+You are missing a third common failure mode: users asking for normative moral judgments disguised as factual outputs (e.g., “Who is at fault?” “Should they be punished?”).
+
+The Parrot Box explicitly treats illegitimate speech as the harm.  ￼
+
+Directive: Add refusal subtype:
+	•	CATEGORY_ERROR (normative judgment not derivable from admissible evidence)
+	•	with a one-sentence explanation and a redirect to what the system can do (system learning vs actor judgment).
+
+6) You must include medical safety + PHI handling in the packet (currently absent)
+
+You told me earlier you want “real medical data.” That raises two requirements the packet does not mention:
+	•	No PHI storage/processing
+	•	No patient-specific diagnosis/treatment
+
+Directive: Add a Medical Safety section to the behavior spec:
+	•	public guideline and literature citations are allowed
+	•	individualized clinical advice is not
+	•	PHI triggers a warning and a request to redact
+
+This is essential for credibility and risk control.
+
+IP hygiene check: acceptable, with one tweak
+
+Your “explicit withholdings” list is good.
+
+One tweak: document titles like “Accountability–Load Matrix” or “Governance decision rules” can themselves leak the presence of specific mechanisms. That may be fine, but if you want tighter hygiene:
+
+Directive: In public-facing displays, prefer generic labels:
+	•	“Internal Canon (Tier-0)” + version/date
+	•	while keeping full names only in admin/audit export
+
+Recommendation: one small change to onboarding that will materially improve self-explanation
+
+Add one single “Try these now” panel at the end of the demo with three buttons:
+	1.	“Ask a hindsight question (to see refusal)”
+	2.	“Ask a numbers question (to see proof)”
+	3.	“Ask for implementation (to see system design)”
+
+That ensures the buyer experiences the three pillars within 60 seconds.
+
+Bottom line
+
+This is a legitimate prototype and the packet is a good IP-safe disclosure. Tighten the six items above—especially (1) calc_proof for all numbers and (2) prohibiting quantified sales claims without a measurement definition—and you will have a buyer-facing expert that is both self-explanatory and defensible.
