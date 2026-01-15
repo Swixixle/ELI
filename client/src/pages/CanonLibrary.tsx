@@ -1,66 +1,52 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/shared/Badge";
-import { FileText, Upload, Trash2, Calendar, Shield } from "lucide-react";
+import { FileText, Upload, Trash2, Calendar, Shield, FolderOpen, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CanonDocument } from "@shared/schema";
+import type { Case } from "@shared/schema";
+import { useCases, useCaseDocuments, useCreateCaseDocument, useDeleteCaseDocument } from "@/lib/casesApi";
+import { CaseSelector } from "@/components/cases/CaseSelector";
+import { useSearch, Link } from "wouter";
 
 export default function CanonLibrary() {
-  const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
-
-  // Fetch all documents
-  const { data: docs = [], isLoading } = useQuery<CanonDocument[]>({
-    queryKey: ["/api/canon"],
-  });
-
-  // Create document mutation
-  const createMutation = useMutation({
-    mutationFn: async (doc: Omit<CanonDocument, "id" | "uploadedAt">) => {
-      const response = await fetch("/api/canon", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(doc),
-      });
-      if (!response.ok) throw new Error("Failed to create document");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/canon"] });
-    },
-  });
-
-  // Delete document mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/canon/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete document");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/canon"] });
-    },
-  });
+  const [showCaseSelector, setShowCaseSelector] = useState(false);
+  const [selectedCase, setSelectedCase] = useState<Case | null>(null);
+  
+  const search = useSearch();
+  const urlParams = new URLSearchParams(search);
+  const caseIdFromUrl = urlParams.get("caseId");
+  
+  const { data: cases } = useCases();
+  const activeCaseId = selectedCase?.id || caseIdFromUrl;
+  
+  const { data: docs = [], isLoading } = useCaseDocuments(activeCaseId);
+  const createDocMutation = useCreateCaseDocument(activeCaseId);
+  const deleteDocMutation = useDeleteCaseDocument(activeCaseId);
 
   const handleUpload = () => {
+    if (!activeCaseId) {
+      setShowCaseSelector(true);
+      return;
+    }
     setIsUploading(true);
-    setTimeout(() => {
-      createMutation.mutate({
-        name: "New Policy Document.pdf",
-        size: "1.2 MB",
-        type: "pdf",
-        version: "v1.0",
-        status: "active",
-      });
-      setIsUploading(false);
-    }, 1000);
+    createDocMutation.mutate({
+      name: "New Policy Document.pdf",
+      size: "1.2 MB",
+      type: "pdf",
+      version: "v1.0",
+      status: "active",
+    }, {
+      onSettled: () => setIsUploading(false)
+    });
   };
 
   const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
+    if (!activeCaseId) return;
+    deleteDocMutation.mutate(id);
   };
+  
+  const activeCase = selectedCase || cases?.find(c => c.id === caseIdFromUrl);
 
   if (isLoading) {
     return (
@@ -77,33 +63,77 @@ export default function CanonLibrary() {
 
   return (
     <AppLayout>
+      {/* Case Selector Modal */}
+      {showCaseSelector && (
+        <CaseSelector
+          open={showCaseSelector}
+          onOpenChange={setShowCaseSelector}
+          onSelectCase={(c) => setSelectedCase(c)}
+          currentCaseId={activeCaseId}
+        />
+      )}
+      
       <div className="max-w-5xl mx-auto p-8">
         
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Canon Library</h1>
-            <p className="text-muted-foreground mt-1">Manage the authoritative documents that ground the Expert System.</p>
+        {/* No Case Selected State */}
+        {!activeCaseId ? (
+          <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
+              <FolderOpen className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Select a Case</h2>
+            <p className="text-muted-foreground mb-6 max-w-sm">
+              Documents must be bound to a case. Select or create a case to view and upload documents.
+            </p>
+            <button
+              onClick={() => setShowCaseSelector(true)}
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-all"
+              data-testid="button-select-case"
+            >
+              <FolderOpen className="w-4 h-4" />
+              Select Case
+            </button>
           </div>
-          <button 
-            onClick={handleUpload}
-            disabled={isUploading}
-            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-all shadow-sm font-medium text-sm disabled:opacity-70 disabled:cursor-not-allowed"
-            data-testid="button-upload-document"
-          >
-            {isUploading ? (
-              <>
-                 <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                 <span>Processing...</span>
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4" />
-                <span>Upload Document</span>
-              </>
-            )}
-          </button>
-        </div>
+        ) : (
+          <>
+            {/* Header with Case Context */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
+                    <ArrowLeft className="w-4 h-4" />
+                  </Link>
+                  <button 
+                    onClick={() => setShowCaseSelector(true)}
+                    className="flex items-center gap-2 text-sm text-primary hover:underline"
+                    data-testid="button-change-case"
+                  >
+                    <FolderOpen className="w-4 h-4" />
+                    {activeCase?.name || "Case"}
+                  </button>
+                </div>
+                <h1 className="text-2xl font-display font-bold text-foreground">Case Documents</h1>
+                <p className="text-muted-foreground mt-1">Manage source materials for this case.</p>
+              </div>
+              <button 
+                onClick={handleUpload}
+                disabled={isUploading}
+                className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-all shadow-sm font-medium text-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                data-testid="button-upload-document"
+              >
+                {isUploading ? (
+                  <>
+                     <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                     <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4" />
+                    <span>Upload Document</span>
+                  </>
+                )}
+              </button>
+            </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -179,11 +209,13 @@ export default function CanonLibrary() {
                <div className="p-12 text-center text-muted-foreground">
                  <Upload className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
                  <h3 className="text-lg font-medium text-foreground mb-1">No documents found</h3>
-                 <p className="text-sm">Upload your first canon document to get started.</p>
+                 <p className="text-sm">Upload your first document to get started.</p>
                </div>
              )}
            </div>
         </div>
+          </>
+        )}
 
       </div>
     </AppLayout>

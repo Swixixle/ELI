@@ -89,6 +89,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCanonDocument(doc: InsertCanonDocument): Promise<CanonDocument> {
+    // Validate case existence before insert (defense-in-depth)
+    const [caseExists] = await db.select({ id: cases.id }).from(cases).where(eq(cases.id, doc.caseId));
+    if (!caseExists) {
+      throw new Error(`Case ${doc.caseId} does not exist. Documents must be bound to a valid case.`);
+    }
+    
     const [newDoc] = await db.insert(canonDocuments).values(doc).returning();
     return newDoc;
   }

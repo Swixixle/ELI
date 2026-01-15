@@ -20,7 +20,7 @@ export const cases = pgTable("cases", {
 
 export const canonDocuments = pgTable("canon_documents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  caseId: varchar("case_id").references(() => cases.id),
+  caseId: varchar("case_id").notNull().references(() => cases.id),
   name: text("name").notNull(),
   size: text("size").notNull(),
   type: varchar("type", { length: 10 }).notNull(),

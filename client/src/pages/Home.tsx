@@ -2,13 +2,15 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { INITIAL_MESSAGES, Message, SCENARIO_RESPONSES } from "@/lib/types";
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel } from "lucide-react";
+import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar"; // Assuming shadcn Calendar exists or use standard input
+import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { queryClient } from "@/lib/queryClient";
+import { CaseSelector } from "@/components/cases/CaseSelector";
+import type { Case } from "@shared/schema";
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -18,6 +20,8 @@ export default function Home() {
   const [decisionTime, setDecisionTime] = useState<Date | undefined>(undefined);
   const [showDemo, setShowDemo] = useState(true);
   const [showTryPanel, setShowTryPanel] = useState(false);
+  const [activeCase, setActiveCase] = useState<Case | null>(null);
+  const [showCaseSelector, setShowCaseSelector] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -255,19 +259,24 @@ export default function Home() {
         <div className="flex items-center justify-between px-8 py-4 border-b bg-background/95 backdrop-blur z-10 sticky top-0">
           <div>
             <h2 className="text-lg font-semibold font-display text-foreground flex items-center gap-2">
-              {showDemo && messages.length === 0 ? (
+              {activeCase ? (
                 <>
-                  <span className="text-muted-foreground">No Case Loaded</span>
-                </>
-              ) : (
-                <>
-                  {mode === "advisor" ? "Case Analysis" : "Sales Review"}
+                  <button 
+                    onClick={() => setShowCaseSelector(true)}
+                    className="flex items-center gap-2 hover:text-primary transition-colors"
+                    data-testid="button-change-case"
+                  >
+                    <FolderOpen className="w-4 h-4" />
+                    {activeCase.name}
+                  </button>
                   <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-mono">Active</span>
                 </>
+              ) : (
+                <span className="text-muted-foreground">No Case Loaded</span>
               )}
             </h2>
             <p className="text-xs text-muted-foreground">
-              {showDemo && messages.length === 0 
+              {!activeCase 
                 ? "Select an option below to begin" 
                 : mode === "advisor" 
                   ? "Outcome-Blind • Auditable • Canon-Cited" 
@@ -341,9 +350,22 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Case Selector Modal */}
+        {showCaseSelector && (
+          <CaseSelector
+            open={showCaseSelector}
+            onOpenChange={setShowCaseSelector}
+            onSelectCase={(c) => {
+              setActiveCase(c);
+              setShowDemo(false);
+            }}
+            currentCaseId={activeCase?.id}
+          />
+        )}
+
         {/* Chat Area */}
         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6 scroll-smooth">
-          {showDemo && messages.length === 0 ? (
+          {!activeCase && messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center space-y-8 animate-in fade-in duration-700">
                {/* No Case Loaded Banner */}
                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6 max-w-lg w-full">
@@ -398,7 +420,7 @@ export default function Home() {
                  </button>
                  
                  <button
-                   onClick={() => { setShowDemo(false); }}
+                   onClick={() => setShowCaseSelector(true)}
                    className="flex flex-col items-center gap-3 p-6 bg-card border-2 border-border rounded-xl hover:border-primary/50 hover:shadow-lg transition-all text-center group"
                    data-testid="cta-open-case"
                  >

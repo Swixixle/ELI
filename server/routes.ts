@@ -95,12 +95,86 @@ export async function registerRoutes(
     }
   });
 
+  // Create document for a case
+  app.post("/api/cases/:id/documents", async (req, res) => {
+    try {
+      const caseData = await storage.getCase(req.params.id);
+      if (!caseData) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+      
+      const docData = {
+        ...req.body,
+        caseId: req.params.id
+      };
+      
+      const validatedData = insertCanonDocumentSchema.parse(docData);
+      const newDoc = await storage.createCanonDocument(validatedData);
+      res.status(201).json(newDoc);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid document data", details: error.errors });
+      } else {
+        console.error("Error creating case document:", error);
+        res.status(500).json({ error: "Failed to create document" });
+      }
+    }
+  });
+
+  // Delete document for a case (case-scoped deletion)
+  app.delete("/api/cases/:caseId/documents/:docId", async (req, res) => {
+    try {
+      const { caseId, docId } = req.params;
+      
+      // Verify case exists
+      const caseData = await storage.getCase(caseId);
+      if (!caseData) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+      
+      // Verify document exists and belongs to this case
+      const doc = await storage.getCanonDocument(docId);
+      if (!doc) {
+        res.status(404).json({ error: "Document not found" });
+        return;
+      }
+      if (doc.caseId !== caseId) {
+        res.status(403).json({ error: "Document does not belong to this case" });
+        return;
+      }
+      
+      await storage.deleteCanonDocument(docId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting case document:", error);
+      res.status(500).json({ error: "Failed to delete document" });
+    }
+  });
+
   // === DOCUMENT ROUTES ===
 
-  // Get all canon documents
+  // Get all canon documents (DEPRECATED - use GET /api/cases/:id/documents)
+  // This endpoint requires caseId query parameter for case-scoped access
   app.get("/api/canon", async (req, res) => {
     try {
-      const documents = await storage.getAllCanonDocuments();
+      const caseId = req.query.caseId as string;
+      if (!caseId) {
+        res.status(400).json({ 
+          error: "caseId query parameter is required. Use GET /api/cases/:id/documents to list case documents." 
+        });
+        return;
+      }
+      
+      // Verify case exists
+      const caseData = await storage.getCase(caseId);
+      if (!caseData) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+      
+      const documents = await storage.getDocumentsByCase(caseId);
       res.json(documents);
     } catch (error) {
       console.error("Error fetching canon documents:", error);
@@ -108,10 +182,19 @@ export async function registerRoutes(
     }
   });
 
-  // Create a new canon document
+  // Create a new canon document (DEPRECATED - use POST /api/cases/:id/documents)
+  // This endpoint enforces case validation to prevent orphaned documents
   app.post("/api/canon", async (req, res) => {
     try {
       const validatedData = insertCanonDocumentSchema.parse(req.body);
+      
+      // Enforce case existence
+      const caseData = await storage.getCase(validatedData.caseId);
+      if (!caseData) {
+        res.status(400).json({ error: "Invalid caseId: case does not exist. Use POST /api/cases/:id/documents instead." });
+        return;
+      }
+      
       const newDoc = await storage.createCanonDocument(validatedData);
       res.status(201).json(newDoc);
     } catch (error) {
@@ -124,15 +207,12 @@ export async function registerRoutes(
     }
   });
 
-  // Delete a canon document
+  // Delete a canon document (DEPRECATED - use DELETE /api/cases/:caseId/documents/:docId)
+  // This endpoint is disabled to enforce case-scoped document management
   app.delete("/api/canon/:id", async (req, res) => {
-    try {
-      await storage.deleteCanonDocument(req.params.id);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting canon document:", error);
-      res.status(500).json({ error: "Failed to delete document" });
-    }
+    res.status(400).json({ 
+      error: "Direct document deletion is disabled. Use DELETE /api/cases/:caseId/documents/:docId to delete documents within their case context." 
+    });
   });
 
   // Search Canon chunks
