@@ -9,10 +9,15 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
 });
 
+export const CASE_PHASES = ["intake", "review", "decision", "closure"] as const;
+export type CasePhase = typeof CASE_PHASES[number];
+
 export const cases = pgTable("cases", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description"),
+  decisionTarget: text("decision_target"),
+  phase: varchar("phase", { length: 20 }).notNull().default("intake"),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
