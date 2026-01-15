@@ -1,0 +1,223 @@
+You’re right to call this out. Your reaction is correct.
+That response is not acceptable, and—importantly—it’s wrong in a specific, fixable way.
+
+I’ll do three things:
+	1.	Explain why that response is nonsense
+	2.	Explain what the system should have done instead
+	3.	Give you exact instructions to send to the Replit agent so this never happens again
+
+No mystique. No philosophy. Just product correction.
+
+⸻
+
+1. Why that response is nonsense (plainly)
+
+You asked (or simulated):
+
+“Was it appropriate to discipline the unit for this outcome?”
+
+The system responded with:
+	•	A bibliography-style citation dump
+	•	A title page summary of The Parrot Box
+	•	No actual engagement with your question
+	•	No refusal
+	•	No procedural answer
+	•	No guidance
+
+That is textbook RAG failure.
+
+What went wrong technically
+
+The system:
+	•	Retrieved canon content correctly
+	•	But mistook retrieval for answering
+
+It treated your question as:
+
+“What is The Parrot Box?”
+
+instead of:
+
+“Is this governance action admissible?”
+
+That’s not just bad UX — it violates your entire product premise.
+
+⸻
+
+2. What the system should have done
+
+Let’s be very concrete.
+
+For the question:
+
+“Was it appropriate to discipline the unit for this outcome?”
+
+There are only three legitimate responses.
+
+Option A — Procedural answer (best case)
+
+If sufficient admissible context exists, the system should say something like:
+
+Based on the available decision-time record, a disciplinary judgment is not procedurally supported.
+
+Outcome information alone does not establish policy violation or individual fault. Under Canon constraints, this case should be treated as a system-level review, not unit discipline.
+
+This is a governance answer, not a philosophy lecture.
+
+⸻
+
+Option B — Conditional answer
+
+If context is missing:
+
+I cannot assess the appropriateness of discipline without:
+– the policy in force at the time
+– the decision context available to the unit
+– evidence that a violation was knowable pre-outcome
+
+Without these, disciplinary judgment is not admissible.
+
+This is still useful.
+
+⸻
+
+Option C — Explicit refusal (also valid)
+
+If the question relies entirely on outcome knowledge:
+
+Refusal: Temporal Admissibility Violation
+
+Discipline based solely on outcome knowledge is not permitted under Canon constraints.
+Outcome information may inform system improvement, but not unit-level judgment.
+
+This is actually a strong output.
+
+⸻
+
+3. Why citing The Parrot Box directly was the wrong move
+
+Canon should govern reasoning, not replace it.
+
+Your system currently behaves like:
+
+“User asked a governance question → dump relevant canon text”
+
+But it must behave like:
+
+“User asked a governance question → apply canon rules → produce a judgment about admissibility”
+
+The Parrot Box is a constraint engine, not an encyclopedia entry.
+
+Dumping it verbatim is like responding to:
+
+“Is this contract enforceable?”
+with:
+“Here is the history of contract law.”
+
+⸻
+
+4. The exact fix (this is what to send the agent)
+
+Paste this verbatim to the Replit agent.
+
+⸻
+
+🚨 Instruction to Agent — Canon Application, Not Canon Recitation
+
+The system is currently responding to governance questions by summarizing Canon documents instead of applying Canon constraints.
+
+This is incorrect behavior.
+
+Effective immediately:
+1. Canon documents must NEVER be summarized as a primary response
+
+Do not:
+	•	list titles
+	•	describe documents
+	•	restate abstracts
+	•	present bibliographic content
+
+Canon is a rule set, not an answer.
+
+⸻
+
+2. Governance questions must trigger a Procedural Admissibility Evaluation
+
+For questions of the form:
+	•	“Was it appropriate to…”
+	•	“Was it fair to…”
+	•	“Should we discipline…”
+	•	“Can we conclude…”
+
+The response must follow this structure:
+	1.	Identify the type of judgment requested (disciplinary, causal, financial, etc.)
+	2.	Check admissibility conditions:
+	•	Temporal (decision-time knowledge)
+	•	Causal (could it have influenced action?)
+	•	Contextual (role, policy, constraints)
+	3.	Output ONE of:
+	•	Procedural approval
+	•	Procedural rejection
+	•	Explicit refusal with reason
+
+⸻
+
+3. Citations must SUPPORT the judgment, not replace it
+
+Citations should appear as:
+	•	Footnotes
+	•	Badges
+	•	Justifications
+
+They must not be the body of the response.
+
+⸻
+
+4. Add a hard guardrail
+
+If a response contains:
+	•	only canon titles
+	•	only document summaries
+	•	no explicit admissibility determination
+
+→ treat it as a system failure and regenerate.
+
+⸻
+
+5. Required test case (must pass)
+
+For the prompt:
+
+“Was it appropriate to discipline the unit for this outcome?”
+
+The system must:
+	•	either issue a Parrot Box refusal
+	•	or explain procedurally why discipline is or is not admissible
+	•	and must NOT summarize The Parrot Box itself
+
+⸻
+
+5. Why this matters commercially
+
+If a buyer sees the response you just showed me, they will think:
+
+“This is a philosophy search engine, not a decision tool.”
+
+That would kill the product.
+
+Once fixed, the same question will produce:
+
+“You are not allowed to make that judgment with this information.”
+
+And that is the moment they understand the value.
+
+⸻
+
+Bottom line (no sugarcoating)
+	•	Your instinct is right
+	•	The system behaved incorrectly
+	•	This is a solvable orchestration error, not a conceptual flaw
+	•	The fix is to force canon application, not canon exposition
+
+Send the instruction above.
+If you want, after the agent responds, paste the next output here and I’ll sanity-check it before you trust it.
