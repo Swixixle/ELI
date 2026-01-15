@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { queryClient } from "@/lib/queryClient";
 import { CaseSelector } from "@/components/cases/CaseSelector";
 import type { Case } from "@shared/schema";
+import { normalizeQuestion, isMetaQuery, getMetaHelpResponse } from "@/lib/questionNormalizer";
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -152,6 +153,8 @@ export default function Home() {
 
     if (showDemo) setShowDemo(false);
 
+    const normalized = normalizeQuestion(inputValue);
+
     const userMsg: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -159,18 +162,32 @@ export default function Home() {
       timestamp: Date.now(),
       temporalContext: decisionTime 
         ? `Decision Time: ${format(decisionTime, "yyyy-MM-dd")}` 
-        : "Decision Time: Now (Default)"
+        : "Decision Time: Now (Default)",
+      interpretation: normalized.interpretation,
+      normalizedQuery: normalized.intent !== "passthrough" ? normalized.normalized : undefined
     };
 
     setMessages(prev => [...prev, userMsg]);
     setInputValue("");
+
+    if (isMetaQuery(normalized)) {
+      const helpMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: getMetaHelpResponse(),
+        timestamp: Date.now()
+      };
+      setMessages(prev => [...prev, helpMsg]);
+      return;
+    }
+
     setIsTyping(true);
 
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: inputValue, mode })
+        body: JSON.stringify({ message: normalized.normalized, mode })
       });
       
       const data = await response.json();

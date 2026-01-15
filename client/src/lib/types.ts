@@ -50,6 +50,8 @@ export type Message = {
   ipFlags?: IPSafetyFlag[];
   timestamp: number;
   temporalContext?: string;
+  interpretation?: string;
+  normalizedQuery?: string;
 };
 
 export const MOCK_CITATIONS: Record<string, Citation> = {

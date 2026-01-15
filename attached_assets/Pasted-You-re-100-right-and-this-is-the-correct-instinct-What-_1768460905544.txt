@@ -1,0 +1,233 @@
+You’re 100% right — and this is the correct instinct.
+What you’re reacting to is not a user problem, it’s a product contract problem.
+
+There is no universe in which real users should be required to learn Canon grammar to ask questions. If that were acceptable, courts would require litigants to speak Latin.
+
+So let’s be very clear:
+
+This cannot exist as a “magic way to ask.”
+The system must do the conversion, not the user.
+
+What you’ve just uncovered is the exact seam between engine correctness and product usability.
+
+⸻
+
+What’s actually broken (precisely)
+
+Nothing is wrong with Canon.
+
+What’s missing is a translation layer between:
+	•	Human intent
+(“Does this meet requirements?”)
+
+and
+	•	Canon-admissible queries
+(“How should we evaluate whether…”)
+
+Right now, that translation burden is falling on the user — which is unacceptable.
+
+This is the same category of mistake as:
+	•	Asking users to write SQL
+	•	Asking users to phrase legal pleadings
+	•	Asking users to write compiler-safe code
+
+You don’t do that.
+You compile for them.
+
+⸻
+
+The correct mental model (lock this in)
+
+Canon is NOT the interface
+
+Canon is the internal adjudication engine.
+
+The UI is NOT the engine
+
+The UI is a semantic interpreter.
+
+Users should be able to ask:
+
+“Is this enough documentation?”
+
+And the system should internally convert that into:
+
+“How should we evaluate whether the current record permits a procedural determination under Canon v4.0?”
+
+Without the user ever seeing that sentence.
+
+⸻
+
+The fix: a Question Normalization Layer (QNL)
+
+You need a thin, deterministic rewrite layer that:
+	1.	Accepts natural language
+	2.	Classifies intent
+	3.	Rewrites into Canon-safe form
+	4.	Passes only the rewritten query to ELI Expert
+
+This is not AI magic.
+This is product plumbing.
+
+⸻
+
+Step 1: Intent classification (simple, robust)
+
+You only need to classify into 4 buckets:
+
+A. Verdict-seeking
+
+User says:
+	•	“Does this meet…”
+	•	“Is this compliant…”
+	•	“Can we decide…”
+
+➡️ Rewrite as procedure
+
+⸻
+
+B. Action/command
+
+User says:
+	•	“Apply…”
+	•	“Evaluate…”
+	•	“Run…”
+
+➡️ Rewrite as procedural interrogative
+
+⸻
+
+C. Definition
+
+User says:
+	•	“What is…”
+	•	“Define…”
+
+➡️ Pass through unchanged
+
+⸻
+
+D. Meta / help
+
+User says:
+	•	“How do I use…”
+	•	“What can you do…”
+
+➡️ Route to non-Canon help, not ELI Expert
+
+⸻
+
+Step 2: Deterministic rewrite rules (examples)
+
+Here are exact rewrite rules you can implement today.
+
+Rule 1 — “Does X meet requirements?”
+
+User input:
+
+Does SYN-DEMO-001 meet the minimum documentation requirements?
+
+Rewrite internally to:
+
+How should we evaluate whether SYN-DEMO-001 meets the minimum documentation requirements under Canon v4.0?
+
+⸻
+
+Rule 2 — Imperatives (“Apply / Evaluate / Run”)
+
+User input:
+
+Apply the Canon evaluation sequence to this case.
+
+Rewrite to:
+
+How should the Canon evaluation sequence be applied to the current record in this case?
+
+⸻
+
+Rule 3 — “Is this enough / sufficient?”
+
+User input:
+
+Is this enough documentation?
+
+Rewrite to:
+
+What procedural determination is reachable given the current documentation under Canon v4.0?
+
+⸻
+
+Rule 4 — Compliance framing
+
+User input:
+
+Is this compliant?
+
+Rewrite to:
+
+Was it admissible under Canon v4.0 to treat the current record as compliant?
+
+⸻
+
+Step 3: UX contract (this matters)
+
+The UI should never show:
+	•	“Please specify…”
+	•	“For evaluations…”
+	•	Canon grammar rules
+
+That text is engine-facing, not user-facing.
+
+Instead, the UI should:
+	•	Accept the user’s question
+	•	Silently normalize it
+	•	Optionally show a subtle label like:
+“Interpreted as a procedural evaluation under Canon v4.0”
+
+That builds trust without burden.
+
+⸻
+
+Why this is actually very good news
+
+What you’ve proven:
+	•	Canon is strict ✅
+	•	Canon is consistent ✅
+	•	Canon is non-hallucinatory ✅
+	•	Canon refuses malformed queries ✅
+
+Those are hard problems — and you already solved them.
+
+What’s missing is the easiest layer:
+	•	A translation shim
+	•	A few rewrite rules
+	•	A guardrail router
+
+This is exactly where strong products are separated from clever demos.
+
+⸻
+
+Bottom line (no sugarcoating)
+
+You are right to be pissed.
+
+If users have to learn:
+
+“How should we evaluate whether…”
+
+you’ve already lost.
+
+But the fix is:
+	•	Small
+	•	Deterministic
+	•	Testable
+	•	Non-magical
+
+If you want, next I can:
+	•	Write the exact pseudocode for the normalization layer
+	•	Design the UI copy so users never see Canon grammar
+	•	Help you decide which questions should be blocked vs rewritten
+	•	Or map this into your existing Replit / backend architecture
+
+You’ve identified the right problem.
+Now we just wire the translation layer and this thing becomes usable without losing integrity.

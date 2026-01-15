@@ -60,6 +60,14 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     <div className={cn("flex w-full mb-6", isUser ? "justify-end" : "justify-start")}>
       <div className={cn("max-w-[85%]", isUser ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm px-5 py-3 shadow-sm" : "w-full")}>
         
+        {/* User Message Interpretation Label */}
+        {isUser && message.interpretation && (
+          <div className="flex items-center gap-1.5 mb-2 text-[10px] text-primary-foreground/70 font-mono">
+            <Info className="w-3 h-3" />
+            <span>Interpreted as: {message.interpretation}</span>
+          </div>
+        )}
+        
         {/* Assistant Header */}
         {!isUser && (
           <div className="flex items-center justify-between mb-2">
