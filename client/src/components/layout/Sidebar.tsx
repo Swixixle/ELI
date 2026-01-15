@@ -88,11 +88,15 @@ export function Sidebar() {
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border space-y-3">
         <button className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors w-full">
           <LogOut className="w-3 h-3" />
           <span>Secure Sign Out</span>
         </button>
+        <div className="text-[9px] text-muted-foreground/60 text-center leading-tight">
+          <p>2026 Alexander John Maksimovich</p>
+          <p className="font-medium">Nikodemus Systems</p>
+        </div>
       </div>
     </div>
   );
