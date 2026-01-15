@@ -2,7 +2,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { INITIAL_MESSAGES, Message, SCENARIO_RESPONSES, CANONICAL_INTENTS, QUESTION_BANK } from "@/lib/types";
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel, FolderOpen, CheckCircle, AlertCircle, AlertTriangle, ArrowRight, CheckSquare, Lock, FileSearch, CircleSlash, Wrench, Search, X, ChevronDown, Info } from "lucide-react";
+import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel, FolderOpen, CheckCircle, AlertCircle, AlertTriangle, ArrowRight, CheckSquare, Lock, FileSearch, CircleSlash, Wrench, Search, X, ChevronDown, Info, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -713,9 +713,9 @@ export default function Home() {
 
         {/* Two-Column Dashboard Layout */}
         {activeCase && (
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-0 min-h-0 overflow-hidden">
-            {/* LEFT COLUMN - Question Bank + Ask Bar */}
-            <div className="flex flex-col min-h-0 border-r">
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-0 min-h-0">
+            {/* LEFT COLUMN - Question Bank + Ask Bar + Responses */}
+            <div className="flex flex-col min-h-0 border-r overflow-hidden">
               {/* Compact Status Summary */}
               <div className="px-6 py-3 border-b bg-muted/30 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -877,7 +877,7 @@ export default function Home() {
               )}
 
               {/* Pinned Ask Bar - Always Visible */}
-              <div className="px-6 py-4 border-t bg-background shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)]">
+              <div className="shrink-0 px-6 py-4 border-t bg-background shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)] z-10">
                 {selectedQuestion && viewMode === "builder" && (
                   <div className="flex items-center gap-2 mb-3">
                     <div className="flex-1 flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs">
@@ -919,40 +919,47 @@ export default function Home() {
                   </button>
                 </div>
               </div>
+
+              {/* Response Panel - Scrollable */}
+              {messages.length > 0 && (
+                <div className="flex-1 min-h-0 flex flex-col border-t bg-muted/10">
+                  <div className="shrink-0 px-6 py-3 border-b bg-background flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <MessageCircle className="w-4 h-4" />
+                      ELI Expert Response
+                    </h3>
+                    <span className="text-xs text-muted-foreground">{messages.length} message{messages.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <ScrollArea className="flex-1 min-h-0">
+                    <div className="px-6 py-4 space-y-4">
+                      {messages.map((msg) => (
+                        <MessageBubble 
+                          key={msg.id} 
+                          message={msg}
+                          isAuditExpanded={expandedAuditMessages.has(msg.id)}
+                          onToggleAudit={() => toggleAuditExpanded(msg.id)}
+                        />
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
             </div>
 
             {/* RIGHT COLUMN - Decision Readiness, Timeline, Documents */}
-            <ScrollArea className="bg-muted/20">
-              <div className="p-4 space-y-4">
-                <DecisionReadinessPanel 
-                  readiness={decisionReadiness}
-                  onSetDecisionTarget={() => setShowDecisionTargetDialog(true)}
-                />
-                <CaseTimeline caseData={activeCase} />
-                <DocumentsConsidered caseData={activeCase} />
-              </div>
-            </ScrollArea>
-          </div>
-        )}
-
-        {/* Chat Area - Shows responses */}
-        {activeCase && messages.length > 0 && (
-          <div className="border-t bg-muted/10">
-            <div className="px-8 py-4 border-b">
-              <h3 className="text-sm font-medium text-muted-foreground">Recent Responses</h3>
-            </div>
-            <ScrollArea className="max-h-[300px]">
-              <div className="px-8 py-4 space-y-4">
-                {messages.map((msg) => (
-                  <MessageBubble 
-                    key={msg.id} 
-                    message={msg}
-                    isAuditExpanded={expandedAuditMessages.has(msg.id)}
-                    onToggleAudit={() => toggleAuditExpanded(msg.id)}
+            <div className="flex flex-col min-h-0 bg-muted/20">
+              <ScrollArea className="flex-1 min-h-0">
+                <div className="p-4 space-y-4">
+                  <DecisionReadinessPanel 
+                    readiness={decisionReadiness}
+                    onSetDecisionTarget={() => setShowDecisionTargetDialog(true)}
                   />
-                ))}
-              </div>
-            </ScrollArea>
+                  <CaseTimeline caseData={activeCase} />
+                  <DocumentsConsidered caseData={activeCase} />
+                </div>
+              </ScrollArea>
+            </div>
           </div>
         )}
 
@@ -1102,8 +1109,6 @@ export default function Home() {
               </div>
             </div>
           )}
-          
-          <div ref={messagesEndRef} />
         </div>
 
 

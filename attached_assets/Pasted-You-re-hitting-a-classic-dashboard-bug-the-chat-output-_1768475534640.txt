@@ -1,0 +1,120 @@
+You’re hitting a classic dashboard bug: the chat/output panel is rendered inside a container with overflow: hidden (or a fixed height) and the scroll is being captured by the page/grid instead of the response panel. Result: the response exists, but you can’t scroll to read it.
+
+Below is a paste-ready instruction set for the Replit agent to fix it correctly (and prevent future regressions).
+
+⸻
+
+PASTE THIS TO REPLIT AGENT (FIX: RESPONSE PANEL SCROLL + LAYOUT)
+
+Problem
+
+The ELI Expert response area is visible but cannot be scrolled. The response content is being clipped because the parent layout (grid/page) is controlling overflow, and the response panel does not have its own scroll context.
+
+Goal
+
+Make the ELI Expert Response panel independently scrollable with a defined height, while keeping the overall dashboard stable (no weird double-scroll unless intended).
+
+⸻
+
+A) Implement a Proper “Three-Row” Left Column Layout
+
+Left column should be a flex column with three regions:
+	1.	Top (fixed): Decision status + question bank/search
+	2.	Middle (fixed/sticky): Ask bar (input + Ask button)
+	3.	Bottom (flex-grow, scroll): ELI Expert responses
+
+Requirement: Bottom region must have min-height: 0 or it won’t scroll in flex layouts.
+
+Tailwind skeleton (use exactly this pattern)
+
+<div className="grid grid-cols-12 h-[calc(100vh-<headerHeight>px)] gap-4">
+  {/* Left: interaction + responses */}
+  <section className="col-span-8 flex flex-col min-h-0">
+    {/* Top: question picker */}
+    <div className="shrink-0">
+      {/* status, search, question cards */}
+    </div>
+
+    {/* Ask bar */}
+    <div className="shrink-0 sticky bottom-0 z-10 bg-background border-t py-3">
+      {/* input + Ask button */}
+    </div>
+
+    {/* Responses: THIS MUST SCROLL */}
+    <div className="flex-1 min-h-0 overflow-y-auto">
+      {/* Response cards */}
+    </div>
+  </section>
+
+  {/* Right: context */}
+  <aside className="col-span-4 flex flex-col min-h-0">
+    <div className="flex-1 min-h-0 overflow-y-auto">
+      {/* timeline, docs, readiness */}
+    </div>
+  </aside>
+</div>
+
+Key fix terms:
+	•	min-h-0 on flex containers that contain scroll regions
+	•	flex-1 min-h-0 overflow-y-auto on the response region
+
+Without min-h-0, the browser treats the child as “auto-sized” and it will never scroll properly.
+
+⸻
+
+B) Ensure No Parent is Blocking Scroll
+
+Search for these anti-patterns and remove or adjust:
+	•	Any parent wrapper with overflow-hidden above the response panel
+	•	Any wrapper using h-screen with nested scroll but missing min-h-0
+	•	Any position: fixed overlay covering the response area
+
+Specifically check:
+	•	the page root container
+	•	the grid wrapper
+	•	the left column wrapper
+	•	any Card/Panel component that wraps the response list
+
+⸻
+
+C) Make Response Content Scrollable Even When Short
+
+If you’re using shadcn ScrollArea, use it inside the response region:
+
+<div className="flex-1 min-h-0">
+  <ScrollArea className="h-full">
+    {/* response content */}
+  </ScrollArea>
+</div>
+
+Do not place ScrollArea without giving the parent a height.
+
+⸻
+
+D) Add a Visible “Response Header” and Anchor to New Output
+
+Users need to know where output lives and jump to it.
+	•	Add a header inside the response panel: “ELI Expert Response”
+	•	On submit, scroll to bottom of response container:
+	•	responsesRef.current?.scrollTo({ top: responsesRef.current.scrollHeight, behavior: 'smooth' })
+
+⸻
+
+E) Acceptance Tests
+	1.	When ELI Expert outputs long text, you can scroll inside the response panel.
+	2.	The page itself does not “trap” scroll and prevent panel scrolling.
+	3.	Right sidebar scrolls independently if it overflows.
+	4.	Ask bar remains visible while responses scroll.
+
+⸻
+
+Quick diagnosis you can run
+
+In DevTools, inspect the response container and verify:
+	•	it has a computed height (not “auto” expanding)
+	•	it has overflow-y: auto/scroll
+	•	its parents do not force overflow: hidden
+
+⸻
+
+If you paste the Tailwind skeleton exactly, it will fix this in one iteration. The single most common missing piece is min-h-0 on the flex parent of the scroll area.
