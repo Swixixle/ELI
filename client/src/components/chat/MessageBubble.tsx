@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Message, Citation, IPSafetyFlag, UserLayerSummary } from "@/lib/types";
+import { Message, Citation, IPSafetyFlag, UserLayerSummary, Counterfactual } from "@/lib/types";
 import { CitationCard } from "./CitationCard";
 import { CalculationProof } from "./CalculationProof";
-import { AlertTriangle, ShieldAlert, Bot, Info, Scale, HeartPulse, Gavel, Clock, HelpCircle, ChevronDown, ChevronUp, ExternalLink, CheckCircle, AlertCircle, XCircle, FileQuestion, ArrowRight } from "lucide-react";
+import { AlertTriangle, ShieldAlert, Bot, Info, Scale, HeartPulse, Gavel, Clock, HelpCircle, ChevronDown, ChevronUp, ExternalLink, CheckCircle, AlertCircle, XCircle, FileQuestion, ArrowRight, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
 
@@ -39,6 +39,43 @@ const STATUS_CONFIG = {
     borderColor: "border-red-200 dark:border-red-800"
   }
 };
+
+function CounterfactualPanel({ counterfactuals }: { counterfactuals: Counterfactual[] }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (!counterfactuals || counterfactuals.length === 0) return null;
+
+  return (
+    <div className="mt-3 border-t border-border/50 pt-3">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        data-testid="btn-what-would-change"
+      >
+        <RefreshCw className="w-3 h-3" />
+        {isExpanded ? "Hide" : "What would change this?"}
+        {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+      </button>
+      
+      {isExpanded && (
+        <div className="mt-2 space-y-2">
+          {counterfactuals.map((cf, i) => (
+            <div key={i} className="p-2.5 bg-background/80 rounded-md border border-border/30 text-xs">
+              <div className="flex items-start gap-2">
+                <span className="text-muted-foreground font-medium shrink-0">If:</span>
+                <span className="text-foreground">{cf.condition}</span>
+              </div>
+              <div className="flex items-start gap-2 mt-1.5 pt-1.5 border-t border-border/30">
+                <span className="text-primary font-medium shrink-0">Then:</span>
+                <span className="text-foreground">{cf.wouldChange}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function UserSummaryCard({ summary, onShowDetails, isExpanded }: { summary: UserLayerSummary; onShowDetails: () => void; isExpanded: boolean }) {
   const config = STATUS_CONFIG[summary.status];
@@ -82,6 +119,11 @@ function UserSummaryCard({ summary, onShowDetails, isExpanded }: { summary: User
           <span className="text-sm text-foreground">{summary.nextStep}</span>
         </div>
       </div>
+
+      {/* Counterfactual Panel - "What would change this?" */}
+      {summary.counterfactuals && summary.counterfactuals.length > 0 && (
+        <CounterfactualPanel counterfactuals={summary.counterfactuals} />
+      )}
 
       {/* Show/Hide Audit Reasoning Toggle */}
       <button
