@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCanonDocumentSchema, type CanonChunk } from "@shared/schema";
+import { insertCanonDocumentSchema, insertCaseSchema, type CanonChunk } from "@shared/schema";
 import { z } from "zod";
 
 const chatRequestSchema = z.object({
@@ -14,6 +14,89 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  // === CASE ROUTES ===
+  
+  // Get all cases
+  app.get("/api/cases", async (req, res) => {
+    try {
+      const allCases = await storage.getAllCases();
+      res.json(allCases);
+    } catch (error) {
+      console.error("Error fetching cases:", error);
+      res.status(500).json({ error: "Failed to fetch cases" });
+    }
+  });
+
+  // Get single case
+  app.get("/api/cases/:id", async (req, res) => {
+    try {
+      const caseData = await storage.getCase(req.params.id);
+      if (!caseData) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+      res.json(caseData);
+    } catch (error) {
+      console.error("Error fetching case:", error);
+      res.status(500).json({ error: "Failed to fetch case" });
+    }
+  });
+
+  // Create new case
+  app.post("/api/cases", async (req, res) => {
+    try {
+      const validatedData = insertCaseSchema.parse(req.body);
+      const newCase = await storage.createCase(validatedData);
+      res.status(201).json(newCase);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid case data", details: error.errors });
+      } else {
+        console.error("Error creating case:", error);
+        res.status(500).json({ error: "Failed to create case" });
+      }
+    }
+  });
+
+  // Update case
+  app.patch("/api/cases/:id", async (req, res) => {
+    try {
+      const updatedCase = await storage.updateCase(req.params.id, req.body);
+      if (!updatedCase) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+      res.json(updatedCase);
+    } catch (error) {
+      console.error("Error updating case:", error);
+      res.status(500).json({ error: "Failed to update case" });
+    }
+  });
+
+  // Delete case
+  app.delete("/api/cases/:id", async (req, res) => {
+    try {
+      await storage.deleteCase(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting case:", error);
+      res.status(500).json({ error: "Failed to delete case" });
+    }
+  });
+
+  // Get documents for a case
+  app.get("/api/cases/:id/documents", async (req, res) => {
+    try {
+      const documents = await storage.getDocumentsByCase(req.params.id);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching case documents:", error);
+      res.status(500).json({ error: "Failed to fetch documents" });
+    }
+  });
+
+  // === DOCUMENT ROUTES ===
+
   // Get all canon documents
   app.get("/api/canon", async (req, res) => {
     try {

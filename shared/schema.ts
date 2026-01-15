@@ -9,12 +9,23 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
 });
 
+export const cases = pgTable("cases", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: varchar("status", { length: 20 }).notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const canonDocuments = pgTable("canon_documents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  caseId: varchar("case_id").references(() => cases.id),
   name: text("name").notNull(),
   size: text("size").notNull(),
   type: varchar("type", { length: 10 }).notNull(),
   version: text("version").notNull(),
+  contentHash: varchar("content_hash", { length: 64 }),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
 });
@@ -37,6 +48,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
+export const insertCaseSchema = createInsertSchema(cases).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertCanonDocumentSchema = createInsertSchema(canonDocuments).omit({
   id: true,
   uploadedAt: true,
@@ -49,6 +66,8 @@ export const insertCanonChunkSchema = createInsertSchema(canonChunks).omit({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type Case = typeof cases.$inferSelect;
+export type InsertCase = z.infer<typeof insertCaseSchema>;
 export type CanonDocument = typeof canonDocuments.$inferSelect;
 export type InsertCanonDocument = z.infer<typeof insertCanonDocumentSchema>;
 export type CanonChunk = typeof canonChunks.$inferSelect;

@@ -1,0 +1,185 @@
+This is not a UX nit — it is a state-management failure. What you’re describing is exactly what happens when documents exist only as records, not as addressable objects.
+
+I’ll be precise.
+
+⸻
+
+What Is Actually Happening (Root Cause)
+
+Symptom 1
+
+“When I upload a document it just duplicates the document that’s already there”
+
+Symptom 2
+
+“It did not allow me to open it”
+
+These two together indicate the same underlying flaw:
+
+Documents are being stored as metadata entries, not as openable case artifacts.
+
+In other words:
+	•	The system records that a document exists
+	•	But does not bind that document to:
+	•	a case
+	•	a viewer route
+	•	or a document state
+
+So every upload creates:
+	•	a new row
+	•	pointing to the same placeholder or null content
+	•	with no functional “open” action
+
+⸻
+
+Likely Technical Failure (Very Specific)
+
+One (or more) of the following is true:
+
+1. Upload Handler Is Re-registering, Not Attaching
+
+The upload endpoint is:
+	•	inserting a document record
+	•	but not associating it with a case ID
+	•	or overwriting a shared placeholder reference
+
+Result: duplicates with identical underlying pointers.
+
+⸻
+
+2. No Canonical Document ID → Viewer Mapping
+
+The UI probably renders a list like:
+
+Document {
+  id
+  name
+  created_at
+}
+
+…but there is no route like:
+
+/cases/:caseId/documents/:docId
+
+So clicking does nothing — because there is nowhere to go.
+
+⸻
+
+3. “Upload” ≠ “Openable Asset”
+
+The system likely treats uploads as:
+	•	attachments
+	•	or audit inputs
+
+…but not as primary working objects.
+
+That’s fatal for an analysis system.
+
+⸻
+
+Why This Is a Serious Design Error (Not a Bug)
+
+In a governance system:
+
+If a document cannot be opened, it does not exist.
+
+Duplication + non-openability tells the user:
+	•	the system is decorative
+	•	not operational
+	•	not safe for real decisions
+
+This breaks trust immediately.
+
+⸻
+
+What Must Exist (Non-Negotiable)
+
+A Document Must Have ALL of the Following
+	1.	Stable Document ID
+	2.	Explicit Case Association
+	3.	Viewer State
+	4.	Canonical “Open” Route
+	5.	Non-duplicative Upload Logic
+
+If any one of these is missing, you get exactly what you’re seeing.
+
+⸻
+
+Minimal Fix (Engineering-Light, Impact-Heavy)
+
+1. Enforce Case Context on Upload
+
+Uploading without an active case should be impossible.
+
+Before upload:
+
+“No case loaded. Select or create a case.”
+
+This alone prevents duplication chaos.
+
+⸻
+
+2. Treat Upload as “Create + Attach”, Not “Register”
+
+Upload flow must be:
+
+Create Document → Attach to Case → Open Viewer
+
+Not:
+
+Register Document → List It → Done
+
+
+⸻
+
+3. Auto-Open After Upload (Critical)
+
+After upload completes:
+	•	immediately open the document viewer
+	•	even if the viewer is minimal
+
+This confirms to the user:
+
+“This object is real and actionable.”
+
+⸻
+
+4. De-duplicate by Content Hash (Optional but Smart)
+
+If the same file is uploaded twice:
+	•	detect identical hash
+	•	prompt:
+“This document already exists in this case. Open it?”
+
+⸻
+
+How to Validate the Fix (Quick Test)
+
+After implementing:
+	1.	Create a new case
+	2.	Upload a document
+	3.	Verify:
+	•	Only one entry appears
+	•	Clicking opens a viewer
+	•	Re-upload does not duplicate silently
+
+If any step fails, the architecture is still wrong.
+
+⸻
+
+Bottom Line
+
+This is not a polish issue.
+It is a missing object model.
+
+Right now:
+	•	documents are ghosts
+	•	cases are implied, not real
+	•	the UI is ahead of the system underneath
+
+If you want, next I can:
+	•	define the canonical ELI Case + Document schema
+	•	write the exact upload → open flow
+	•	or diagnose this specifically for Replit / your current backend stack
+
+Tell me which level you want to go to next.

@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, users, canonDocuments, canonChunks } from "@shared/schema";
+import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, type Case, type InsertCase, users, canonDocuments, canonChunks, cases } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, or, sql } from "drizzle-orm";
 
@@ -7,8 +7,16 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
+  getAllCases(): Promise<Case[]>;
+  getCase(id: string): Promise<Case | undefined>;
+  createCase(caseData: InsertCase): Promise<Case>;
+  updateCase(id: string, updates: Partial<InsertCase>): Promise<Case | undefined>;
+  deleteCase(id: string): Promise<void>;
+  
   getAllCanonDocuments(): Promise<CanonDocument[]>;
+  getDocumentsByCase(caseId: string): Promise<CanonDocument[]>;
   getCanonDocument(id: string): Promise<CanonDocument | undefined>;
+  getDocumentByHash(caseId: string, contentHash: string): Promise<CanonDocument | undefined>;
   createCanonDocument(doc: InsertCanonDocument): Promise<CanonDocument>;
   deleteCanonDocument(id: string): Promise<void>;
   
@@ -32,12 +40,51 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getAllCases(): Promise<Case[]> {
+    return await db.select().from(cases).orderBy(desc(cases.updatedAt));
+  }
+
+  async getCase(id: string): Promise<Case | undefined> {
+    const [caseData] = await db.select().from(cases).where(eq(cases.id, id));
+    return caseData;
+  }
+
+  async createCase(caseData: InsertCase): Promise<Case> {
+    const [newCase] = await db.insert(cases).values(caseData).returning();
+    return newCase;
+  }
+
+  async updateCase(id: string, updates: Partial<InsertCase>): Promise<Case | undefined> {
+    const [updatedCase] = await db.update(cases)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(cases.id, id))
+      .returning();
+    return updatedCase;
+  }
+
+  async deleteCase(id: string): Promise<void> {
+    await db.delete(canonDocuments).where(eq(canonDocuments.caseId, id));
+    await db.delete(cases).where(eq(cases.id, id));
+  }
+
   async getAllCanonDocuments(): Promise<CanonDocument[]> {
     return await db.select().from(canonDocuments).orderBy(desc(canonDocuments.uploadedAt));
   }
 
   async getCanonDocument(id: string): Promise<CanonDocument | undefined> {
     const [doc] = await db.select().from(canonDocuments).where(eq(canonDocuments.id, id));
+    return doc;
+  }
+
+  async getDocumentsByCase(caseId: string): Promise<CanonDocument[]> {
+    return await db.select().from(canonDocuments)
+      .where(eq(canonDocuments.caseId, caseId))
+      .orderBy(desc(canonDocuments.uploadedAt));
+  }
+
+  async getDocumentByHash(caseId: string, contentHash: string): Promise<CanonDocument | undefined> {
+    const [doc] = await db.select().from(canonDocuments)
+      .where(sql`${canonDocuments.caseId} = ${caseId} AND ${canonDocuments.contentHash} = ${contentHash}`);
     return doc;
   }
 
