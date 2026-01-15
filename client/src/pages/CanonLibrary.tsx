@@ -29,6 +29,9 @@ export default function CanonLibrary() {
   
   const activeCase = selectedCase || cases?.find(c => c.id === caseIdFromUrl);
 
+  const TEXT_FILE_EXTENSIONS = ["txt", "md", "json", "csv", "xml", "html", "css", "js", "ts"];
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB limit for full storage
+
   const handleUploadClick = () => {
     if (!activeCaseId) {
       setShowCaseSelector(true);
@@ -36,7 +39,7 @@ export default function CanonLibrary() {
     }
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = ".pdf,.txt,.doc,.docx,.md";
+    input.accept = ".txt,.md,.json,.csv,.xml,.html,.css,.js,.ts";
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) handleFileUpload(file);
@@ -48,6 +51,20 @@ export default function CanonLibrary() {
     setIsUploading(true);
     setUploadError(null);
     setUploadSuccess(null);
+
+    const extension = file.name.split(".").pop()?.toLowerCase() || "";
+    
+    if (!TEXT_FILE_EXTENSIONS.includes(extension)) {
+      setUploadError(`Unsupported file type. Currently supported: ${TEXT_FILE_EXTENSIONS.join(", ")}. PDF and DOCX support coming soon.`);
+      setIsUploading(false);
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setUploadError(`File too large. Maximum size is 2 MB to ensure complete document storage. Your file: ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
+      setIsUploading(false);
+      return;
+    }
 
     try {
       const content = await file.text();
@@ -63,15 +80,13 @@ export default function CanonLibrary() {
         return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
       };
 
-      const extension = file.name.split(".").pop()?.toLowerCase() || "txt";
-
       createDocMutation.mutate({
         name: file.name,
         size: formatSize(file.size),
         type: extension,
         version: "v1.0",
         status: "active",
-        content: content.slice(0, 50000),
+        content: content,
         contentHash,
       }, {
         onSuccess: (newDoc) => {
