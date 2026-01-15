@@ -4,11 +4,9 @@ import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
   Files, 
-  History, 
-  Settings, 
+  Info, 
   LogOut,
-  Shield,
-  Briefcase
+  Shield
 } from "lucide-react";
 import { Badge } from "@/components/shared/Badge";
 
@@ -18,8 +16,7 @@ export function Sidebar() {
   const navItems = [
     { icon: LayoutDashboard, label: "Advisor", href: "/" },
     { icon: Files, label: "Canon Library", href: "/canon" },
-    { icon: History, label: "Audit Log", href: "/audit" },
-    { icon: Settings, label: "Governance", href: "/settings" },
+    { icon: Info, label: "How It Works", href: "/about" },
   ];
 
   return (
