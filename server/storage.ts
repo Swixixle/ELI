@@ -1,6 +1,6 @@
-import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, type Case, type InsertCase, users, canonDocuments, canonChunks, cases } from "@shared/schema";
+import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, type Case, type InsertCase, type CaseEvent, type InsertCaseEvent, type DecisionTarget, type InsertDecisionTarget, type Determination, type InsertDetermination, users, canonDocuments, canonChunks, cases, caseEvents, decisionTargets, determinations } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, ilike, or, sql } from "drizzle-orm";
+import { eq, desc, ilike, or, sql, and } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -22,6 +22,16 @@ export interface IStorage {
   
   searchCanonChunks(query: string, limit?: number): Promise<CanonChunk[]>;
   getAllCanonChunks(): Promise<CanonChunk[]>;
+  
+  getCaseEvents(caseId: string): Promise<CaseEvent[]>;
+  createCaseEvent(event: InsertCaseEvent): Promise<CaseEvent>;
+  
+  getActiveDecisionTarget(caseId: string): Promise<DecisionTarget | null>;
+  setDecisionTarget(caseId: string, text: string, setBy?: string): Promise<DecisionTarget>;
+  lockDecisionTarget(id: string): Promise<DecisionTarget | undefined>;
+  
+  createDetermination(determination: InsertDetermination): Promise<Determination>;
+  getLatestDetermination(caseId: string): Promise<Determination | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -63,6 +73,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCase(id: string): Promise<void> {
+    await db.delete(determinations).where(eq(determinations.caseId, id));
+    await db.delete(caseEvents).where(eq(caseEvents.caseId, id));
+    await db.delete(decisionTargets).where(eq(decisionTargets.caseId, id));
     await db.delete(canonDocuments).where(eq(canonDocuments.caseId, id));
     await db.delete(cases).where(eq(cases.id, id));
   }
@@ -126,6 +139,65 @@ export class DatabaseStorage implements IStorage {
 
   async getAllCanonChunks(): Promise<CanonChunk[]> {
     return await db.select().from(canonChunks);
+  }
+
+  async getCaseEvents(caseId: string): Promise<CaseEvent[]> {
+    return await db.select().from(caseEvents)
+      .where(eq(caseEvents.caseId, caseId))
+      .orderBy(caseEvents.eventTime);
+  }
+
+  async createCaseEvent(event: InsertCaseEvent): Promise<CaseEvent> {
+    const [newEvent] = await db.insert(caseEvents).values(event).returning();
+    return newEvent;
+  }
+
+  async getActiveDecisionTarget(caseId: string): Promise<DecisionTarget | null> {
+    const [target] = await db.select().from(decisionTargets)
+      .where(and(eq(decisionTargets.caseId, caseId), eq(decisionTargets.isActive, true)))
+      .orderBy(desc(decisionTargets.setAt))
+      .limit(1);
+    return target ?? null;
+  }
+
+  async setDecisionTarget(caseId: string, text: string, setBy?: string): Promise<DecisionTarget> {
+    await db.update(decisionTargets)
+      .set({ isActive: false })
+      .where(eq(decisionTargets.caseId, caseId));
+    
+    const [newTarget] = await db.insert(decisionTargets).values({
+      caseId,
+      text,
+      setBy: setBy ?? null,
+      isActive: true,
+    }).returning();
+    
+    await db.update(cases)
+      .set({ decisionTarget: text, updatedAt: new Date() })
+      .where(eq(cases.id, caseId));
+    
+    return newTarget;
+  }
+
+  async lockDecisionTarget(id: string): Promise<DecisionTarget | undefined> {
+    const [locked] = await db.update(decisionTargets)
+      .set({ lockedAt: new Date() })
+      .where(eq(decisionTargets.id, id))
+      .returning();
+    return locked;
+  }
+
+  async createDetermination(determination: InsertDetermination): Promise<Determination> {
+    const [newDetermination] = await db.insert(determinations).values(determination).returning();
+    return newDetermination;
+  }
+
+  async getLatestDetermination(caseId: string): Promise<Determination | null> {
+    const [det] = await db.select().from(determinations)
+      .where(eq(determinations.caseId, caseId))
+      .orderBy(desc(determinations.createdAt))
+      .limit(1);
+    return det ?? null;
   }
 }
 

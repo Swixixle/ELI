@@ -1,3 +1,95 @@
+// Canon v4.0 Determination Receipt Types
+export type ConditionStatus = {
+  required: boolean;
+  met: boolean;
+  evidenceRefs?: string[];
+  missing?: {
+    neededInterviews?: number;
+    neededIndependentDocs?: number;
+    neededPolicyRecords?: number;
+    neededConstraintArtifacts?: number;
+    rule?: string;
+  };
+  subRequirements?: Record<string, { required: boolean; met: boolean; evidenceRefs?: string[] }>;
+};
+
+export type DeterminationChecklist = {
+  A_decision_target_defined: ConditionStatus;
+  B_temporal_verification: ConditionStatus & {
+    subRequirements?: {
+      B1_timestamp_on_key_evidence: ConditionStatus;
+      B2_sequence_of_events_established: ConditionStatus;
+    };
+  };
+  C_independent_verification: ConditionStatus;
+  D_policy_application_record: ConditionStatus;
+  E_contextual_constraints: ConditionStatus;
+};
+
+export type DocumentConsidered = {
+  docId: string;
+  filename: string;
+  sha256: string;
+  uploadedAt: string;
+  version?: string;
+};
+
+export type DeterminationReceipt = {
+  receiptVersion: string;
+  canonVersion: string;
+  caseId: string;
+  decisionTarget: {
+    text: string;
+    setAt: string;
+    setBy?: string;
+  };
+  decisionTime: {
+    mode: "explicit" | "inferred";
+    timestamp: string;
+    source?: string;
+  };
+  policyThresholds: {
+    minConditionsMet: number;
+    totalConditions: number;
+    temporalRequired: boolean;
+  };
+  documentsConsidered: DocumentConsidered[];
+  admissibility: {
+    rule: string;
+    admittedDocIds: string[];
+    excludedDocIds: string[];
+    notes: string[];
+  };
+  checklist: DeterminationChecklist;
+  summary: {
+    conditionsMet: number;
+    conditionsTotal: number;
+    status: "Decision Permitted" | "Advisory Only" | "Blocked";
+    explanationPlain: string;
+  };
+  gapsEquation: string[];
+  caseStateHash: {
+    sha256: string;
+  };
+  signature?: {
+    algorithm: string;
+    publicKeyId: string;
+    signatureB64: string;
+  };
+};
+
+export type EvaluationResult = {
+  checklist: DeterminationChecklist;
+  summary: {
+    conditionsMet: number;
+    conditionsTotal: number;
+    status: "Decision Permitted" | "Advisory Only" | "Blocked";
+    explanationPlain: string;
+  };
+  gapsEquation: string[];
+  canProceed: boolean;
+};
+
 export type Citation = {
   id: string;
   sourceType: "private_canon" | "public_dataset";

@@ -1,0 +1,350 @@
+Below is paste-ready content you can drop straight into Replit Agent. It includes: (1) a Canon Rulebook v4.0 “public spec,” (2) a Determination Receipt JSON schema, (3) the UI/UX changes (including your “equation”/gap counter), and (4) minimal backend/API + data model notes.
+
+⸻
+
+REPLIT AGENT TASK: Implement “Open Rules + Cryptographic Receipts” (Canon v4.0)
+
+Goal
+
+Replace “magic prompting” with a verifiable, auditable workflow:
+	1.	Canon Rulebook defines the evaluation rules in plain English (public spec).
+	2.	Decision Readiness computes required conditions + gaps (“equation style”).
+	3.	Determination Receipt is generated for every decision: reproducible, hash-anchored, exportable.
+	4.	Proof-of-Integrity: document hashes + case-state hash + signed receipt.
+	5.	Verifier mode: local or endpoint that validates a receipt against hashes.
+
+⸻
+
+1) CANON RULEBOOK v4.0 (Public Spec)
+
+Canon v4.0 — Outcome-Blind Procedural Review
+
+Purpose: Determine whether a decision is procedurally reviewable and whether a procedurally valid determination can be made without using outcome knowledge.
+
+Core commitments:
+	•	Outcome-blind: outcomes are not admissible to judge what “should have been known.”
+	•	Time-locked: evaluation is performed relative to a defined decision-time boundary.
+	•	Grounded: only documents explicitly included in the case record are admissible.
+	•	Auditable: every determination produces a receipt listing evidence used, rules applied, and missing elements.
+
+Definitions
+	•	Decision Target: A single, answerable governance question (e.g., “Was disciplinary action procedurally permissible based on documentation available at time T?”).
+	•	Decision Time (T): The timestamp that defines what information is admissible.
+	•	Admissible Evidence: Documents or structured evidence entries that existed at or before T (or explicitly designated as contemporaneous to T).
+	•	Procedural Determination: One of:
+	•	Permitted (sufficient procedural basis to proceed)
+	•	Advisory Only (insufficient basis for high-stakes action, but can issue guidance)
+	•	Blocked (cannot proceed due to missing required elements)
+
+Canon Evaluation Sequence (Mandatory)
+	1.	Lock Decision Target + Decision Time
+	2.	Apply Gatekeeper (Admissibility)
+	3.	Assess Evidence Sufficiency (Readiness Checklist)
+	4.	Generate Determination
+	5.	Issue Determination Receipt (hashes + citations)
+
+Readiness Checklist (v4.0)
+
+The case is evaluated on 5 conditions. Each condition has minimum requirements. The system shows:
+	•	Met / Missing
+	•	Count needed (equation format)
+	•	Which evidence items satisfied it
+
+Condition A — Decision Target Defined (Required Gate)
+
+Requirement: One Decision Target set.
+	•	If missing → Blocked.
+
+Condition B — Temporal Verification (2-of-2 required)
+
+Requirement: Both must be satisfied:
+	1.	Decision-time timestamp on at least one key evidence artifact (e.g., record header, metadata, signature, system log)
+	2.	Sequence of events established (timeline with at least 2 ordered events anchored to timestamps)
+
+If missing → readiness cannot exceed “Advisory Only.”
+
+Condition C — Independent Verification (1-of-1 required)
+
+Requirement: At least one independent corroborator:
+	•	1 usable interview (defined below), OR
+	•	1 independent document (e.g., third-party report, device log, external audit note)
+
+Usable interview standard:
+	•	Identified interviewer + date/time + role
+	•	Verbatim or structured Q/A (not pure narrative)
+	•	Signed/attested or recorded chain-of-custody
+	•	Clear linkage to a claim in the case
+
+Condition D — Policy Application Record (1-of-1 required)
+
+Requirement: At least one record showing how policy was applied at decision time:
+	•	policy excerpt + applicable section(s)
+	•	mapping from facts to policy criteria
+	•	who applied it + when + what action was taken/proposed
+
+Condition E — Contextual Constraints (1-of-1 required)
+
+Requirement: At least one artifact describing constraints at decision time:
+	•	staffing/resource constraints OR time pressure OR system conditions
+	•	what was reasonably accessible/known at the time
+
+Determination Logic (v4.0)
+	•	Blocked if Decision Target missing OR Gatekeeper fails (no admissible evidence).
+	•	Decision Permitted if ≥3 of 5 conditions met AND Temporal Verification is met (2/2) AND Decision Target defined.
+	•	Advisory Only if <3 of 5 met OR Temporal Verification is not met.
+	•	Note: “≥3 of 5” is a default policy setting. It must be configurable per customer, but the receipt must record the threshold.
+
+Outputs Required
+
+Every run must produce:
+	1.	Checklist Status (Met/Missing, counts)
+	2.	What’s Missing (Equation Form)
+	3.	Procedural Determination
+	4.	Determination Receipt (hash-anchored, signed, exportable)
+
+⸻
+
+2) DETERMINATION RECEIPT (JSON SCHEMA + EXAMPLE)
+
+JSON Schema (store + export)
+
+Create a DeterminationReceipt object with:
+
+{
+  "receipt_version": "1.0",
+  "canon_version": "4.0",
+  "case_id": "SYN-DEMO-001",
+  "decision_target": {
+    "text": "Does the current record contain sufficient contemporaneous documentation to support a procedurally valid decision?",
+    "set_at": "2026-01-15T02:10:00Z",
+    "set_by": "user:123"
+  },
+  "decision_time": {
+    "mode": "explicit|inferred",
+    "timestamp": "2026-01-15T01:48:00Z",
+    "source": "doc:Evidence_Log.pdf#hash"
+  },
+  "policy_thresholds": {
+    "min_conditions_met": 3,
+    "total_conditions": 5,
+    "temporal_required": true
+  },
+  "documents_considered": [
+    {
+      "doc_id": "doc_01",
+      "filename": "Policy_Document.pdf",
+      "sha256": "…",
+      "uploaded_at": "…",
+      "version": "v1.0"
+    }
+  ],
+  "admissibility": {
+    "rule": "Only evidence available at/before decision_time is admissible",
+    "admitted_doc_ids": ["doc_01", "doc_02"],
+    "excluded_doc_ids": [],
+    "notes": []
+  },
+  "checklist": {
+    "A_decision_target_defined": {
+      "required": true,
+      "met": true,
+      "evidence_refs": ["system:decision_target"]
+    },
+    "B_temporal_verification": {
+      "required": true,
+      "met": true,
+      "sub_requirements": {
+        "B1_timestamp_on_key_evidence": { "required": true, "met": true, "evidence_refs": ["doc_02#p1"] },
+        "B2_sequence_of_events_established": { "required": true, "met": true, "evidence_refs": ["timeline:event_1", "timeline:event_2"] }
+      }
+    },
+    "C_independent_verification": {
+      "required": true,
+      "met": false,
+      "missing": { "needed_interviews": 1, "needed_independent_docs": 1, "rule": "Need 1 usable interview OR 1 independent document" }
+    },
+    "D_policy_application_record": {
+      "required": true,
+      "met": false,
+      "missing": { "needed_policy_application_records": 1 }
+    },
+    "E_contextual_constraints": {
+      "required": true,
+      "met": true,
+      "evidence_refs": ["doc_03#p2"]
+    }
+  },
+  "summary": {
+    "conditions_met": 3,
+    "conditions_total": 5,
+    "status": "Decision Permitted|Advisory Only|Blocked",
+    "explanation_plain": "3 of 5 readiness conditions are met, including Temporal Verification. Decision is permitted procedurally, but independence and policy application documentation are missing."
+  },
+  "gaps_equation": [
+    "Independent Verification: need (1 usable interview) OR (1 independent document)",
+    "Policy Application: need (1 policy application record)"
+  ],
+  "case_state_hash": {
+    "sha256": "hash_of_all_admitted_doc_hashes+decision_target+decision_time+checklist_results"
+  },
+  "signature": {
+    "algorithm": "ed25519",
+    "public_key_id": "eli-prod-001",
+    "signature_b64": "…"
+  }
+}
+
+Receipt Export Formats
+	•	Export JSON (exact schema above)
+	•	Export PDF (human readable, includes: decision target, checklist, gaps equation, document hashes, case_state_hash, signature)
+
+⸻
+
+3) UI/UX SPEC (Fix confusion, remove “magic question” burden)
+
+Primary Screen: “Decision Readiness”
+
+Replace long text responses with a 2-column layout:
+
+Left: Decision Readiness Panel (always visible)
+	•	Decision Target (editable until locked)
+	•	Decision Time (pick from timeline or set explicit)
+	•	Readiness Meter: X / 5 conditions
+	•	Each condition card:
+	•	Status icon (met/missing)
+	•	Plain English requirement
+	•	“Evidence used” chips (clickable)
+	•	If missing: Equation line (“Need: 1 usable interview OR 1 independent doc”)
+	•	“Add document” CTA
+
+Right: “Documents Considered”
+	•	list of docs with version + hash badge
+	•	“Admissible” vs “Excluded” tags
+
+Bottom: Two modes ONLY
+
+Replace the two confusing boxes with a single bar and two tabs:
+
+Tab 1: “Quick Review” (default)
+
+Buttons:
+	•	Readiness
+	•	What’s Missing
+	•	Limits
+	•	Red Flags
+	•	Next Steps
+Each button opens a concise panel, not an essay.
+
+Tab 2: “Audit Details” (collapsed by default)
+
+This shows the long-form reasoning and citations and is explicitly labeled:
+
+“Audit Details (for counsel / regulator). Not required for day-to-day use.”
+
+“Proceed” Action
+
+Add a prominent CTA at top-right of readiness panel:
+	•	If status = Blocked → disabled + shows “Set Decision Target”
+	•	If Advisory Only → “Proceed (Advisory)” + warns “Not sufficient for disciplinary action”
+	•	If Decision Permitted → “Proceed to Review” (routes to Review phase)
+
+“What success looks like”
+
+Show a small “Success Criteria” strip:
+	•	“To reach Decision Permitted you need: Temporal Verification (2/2) + at least 3 total conditions met.”
+
+⸻
+
+4) GAP EQUATION ENGINE (What user asked for)
+
+Implement a deterministic “needs expression” per condition.
+
+Examples displayed directly in UI:
+	•	Temporal Verification: 2/2 met or need: 1 decision-time timestamp + 1 ordered timeline event
+	•	Independent Verification: need: (1 usable interview) OR (1 independent document)
+	•	Policy Application: need: 1 policy application record
+	•	Contextual Constraints: need: 1 constraints artifact (staffing/time/system conditions)
+
+Also show a Total Gap Summary:
+	•	“To reach 3/5: add 1 of the following: Independent Verification OR Policy Application”
+
+⸻
+
+5) BACKEND / DATA MODEL
+
+Tables
+	•	cases
+	•	documents (id, case_id, filename, version, sha256, uploaded_at, metadata_json)
+	•	case_events (timeline)
+	•	decision_targets (case_id, text, set_at, set_by, locked_at)
+	•	determinations (case_id, receipt_json, status, created_at, case_state_hash, signature)
+
+Hashing
+	•	On upload: compute SHA-256 of file bytes.
+	•	case_state_hash = sha256(concat(
+canon_version,
+decision_target_text,
+decision_time_iso,
+admitted_doc_sha256s_sorted,
+checklist_results_json_canonical
+))
+
+Signing
+	•	Use server-side ed25519 key pair.
+	•	Sign the canonical JSON serialization of receipt without signature field.
+	•	Store signature + key id in receipt.
+
+⸻
+
+6) API ENDPOINTS
+	•	POST /api/cases/:caseId/decision-target (set/update)
+	•	POST /api/cases/:caseId/decision-time (set)
+	•	POST /api/cases/:caseId/documents (upload)
+	•	POST /api/cases/:caseId/evaluate (returns checklist + gaps + status + draft receipt)
+	•	POST /api/cases/:caseId/determine (locks and generates signed receipt)
+	•	GET /api/cases/:caseId/receipt/latest (download JSON)
+	•	GET /api/cases/:caseId/receipt/latest.pdf (download PDF)
+	•	POST /api/verify (input receipt + list of doc hashes → returns valid/invalid)
+
+⸻
+
+7) COPY (Plain English, non-annoying)
+
+When user asks vague question:
+
+Instead of “need more specific question”, show:
+“Pick what you’re trying to decide.”
+Buttons:
+	•	“Is action X procedurally permissible?”
+	•	“Is record sufficient to proceed?”
+	•	“What must be added to reach a reviewable state?”
+	•	“What can’t be determined yet?”
+
+In readiness panel:
+	•	“Decision Permitted” means: You have enough documentation to proceed with a procedural review under Canon v4.0.
+	•	“Advisory Only” means: You can get guidance, but you should not take punitive action based on this record alone.
+	•	“Blocked” means: A required gate is missing (e.g., decision target or admissible evidence).
+
+⸻
+
+8) IMPORTANT: Make thresholds defensible (answer “who chose 5?”)
+
+Implement:
+	•	conditions_total is fixed at 5 in Canon v4.0 (documented in Rulebook).
+	•	min_conditions_met is a policy setting per customer (default 3).
+	•	Receipt must record the thresholds used.
+	•	UI must show: “Threshold policy: 3 of 5 (configurable)”
+
+Add a “Why these 5?” tooltip:
+“These are the minimum categories required to reduce hindsight bias and make procedural review auditable: time anchoring, independent corroboration, policy mapping, and context constraints.”
+
+⸻
+
+If you paste the above, the agent should implement the whole “rules + receipts” approach and eliminate the confusing “ask the perfect question” dynamic.
+
+If you want one extra thing that will immediately make this feel real to buyers: add a one-click “Export Audit Packet” that zips:
+	•	receipt.json
+	•	receipt.pdf
+	•	all documents
+	•	hashes_manifest.txt
+	•	verifier_instructions.txt

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, serial, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -17,8 +17,11 @@ export const cases = pgTable("cases", {
   name: text("name").notNull(),
   description: text("description"),
   decisionTarget: text("decision_target"),
+  decisionTime: timestamp("decision_time"),
+  decisionTimeMode: varchar("decision_time_mode", { length: 20 }),
   phase: varchar("phase", { length: 20 }).notNull().default("intake"),
   status: varchar("status", { length: 20 }).notNull().default("active"),
+  policyThresholdMin: integer("policy_threshold_min").notNull().default(3),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -70,6 +73,57 @@ export const insertCanonChunkSchema = createInsertSchema(canonChunks).omit({
   createdAt: true,
 });
 
+// Decision Targets - tracks decision target history per case
+export const decisionTargets = pgTable("decision_targets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  caseId: varchar("case_id").notNull().references(() => cases.id),
+  text: text("text").notNull(),
+  setAt: timestamp("set_at").notNull().defaultNow(),
+  setBy: varchar("set_by", { length: 255 }),
+  lockedAt: timestamp("locked_at"),
+  isActive: boolean("is_active").notNull().default(true),
+});
+
+// Case Events - timeline entries for temporal verification
+export const caseEvents = pgTable("case_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  caseId: varchar("case_id").notNull().references(() => cases.id),
+  eventType: varchar("event_type", { length: 50 }).notNull(),
+  description: text("description").notNull(),
+  eventTime: timestamp("event_time").notNull(),
+  sourceDocId: varchar("source_doc_id").references(() => canonDocuments.id),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Determinations - stores signed receipts
+export const determinations = pgTable("determinations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  caseId: varchar("case_id").notNull().references(() => cases.id),
+  canonVersion: varchar("canon_version", { length: 10 }).notNull().default("4.0"),
+  status: varchar("status", { length: 30 }).notNull(),
+  receiptJson: jsonb("receipt_json").notNull(),
+  caseStateHash: varchar("case_state_hash", { length: 64 }).notNull(),
+  signatureB64: text("signature_b64"),
+  publicKeyId: varchar("public_key_id", { length: 50 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertDecisionTargetSchema = createInsertSchema(decisionTargets).omit({
+  id: true,
+  setAt: true,
+});
+
+export const insertCaseEventSchema = createInsertSchema(caseEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDeterminationSchema = createInsertSchema(determinations).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Case = typeof cases.$inferSelect;
@@ -78,3 +132,9 @@ export type CanonDocument = typeof canonDocuments.$inferSelect;
 export type InsertCanonDocument = z.infer<typeof insertCanonDocumentSchema>;
 export type CanonChunk = typeof canonChunks.$inferSelect;
 export type InsertCanonChunk = z.infer<typeof insertCanonChunkSchema>;
+export type DecisionTarget = typeof decisionTargets.$inferSelect;
+export type InsertDecisionTarget = z.infer<typeof insertDecisionTargetSchema>;
+export type CaseEvent = typeof caseEvents.$inferSelect;
+export type InsertCaseEvent = z.infer<typeof insertCaseEventSchema>;
+export type Determination = typeof determinations.$inferSelect;
+export type InsertDetermination = z.infer<typeof insertDeterminationSchema>;

@@ -1,8 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCanonDocumentSchema, insertCaseSchema, type CanonChunk } from "@shared/schema";
+import { insertCanonDocumentSchema, insertCaseSchema, insertCaseEventSchema, type CanonChunk } from "@shared/schema";
 import { z } from "zod";
+import { evaluateCanonConditions, type EvaluationContext } from "./canonEvaluator";
 
 const chatRequestSchema = z.object({
   message: z.string().min(1),
@@ -81,6 +82,136 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error deleting case:", error);
       res.status(500).json({ error: "Failed to delete case" });
+    }
+  });
+
+  // === CANON v4.0 EVALUATION ROUTES ===
+
+  // Set/update decision target for a case
+  app.post("/api/cases/:id/decision-target", async (req, res) => {
+    try {
+      const { text, setBy } = req.body;
+      if (!text || typeof text !== "string") {
+        res.status(400).json({ error: "Decision target text is required" });
+        return;
+      }
+      const target = await storage.setDecisionTarget(req.params.id, text, setBy);
+      res.status(201).json(target);
+    } catch (error) {
+      console.error("Error setting decision target:", error);
+      res.status(500).json({ error: "Failed to set decision target" });
+    }
+  });
+
+  // Get active decision target for a case
+  app.get("/api/cases/:id/decision-target", async (req, res) => {
+    try {
+      const target = await storage.getActiveDecisionTarget(req.params.id);
+      if (!target) {
+        res.status(404).json({ error: "No active decision target" });
+        return;
+      }
+      res.json(target);
+    } catch (error) {
+      console.error("Error fetching decision target:", error);
+      res.status(500).json({ error: "Failed to fetch decision target" });
+    }
+  });
+
+  // Set decision time for a case
+  app.post("/api/cases/:id/decision-time", async (req, res) => {
+    try {
+      const { timestamp, mode } = req.body;
+      if (!timestamp) {
+        res.status(400).json({ error: "Decision time timestamp is required" });
+        return;
+      }
+      const updatedCase = await storage.updateCase(req.params.id, {
+        decisionTime: new Date(timestamp),
+        decisionTimeMode: mode || "explicit",
+      });
+      if (!updatedCase) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+      res.json(updatedCase);
+    } catch (error) {
+      console.error("Error setting decision time:", error);
+      res.status(500).json({ error: "Failed to set decision time" });
+    }
+  });
+
+  // Get case events (timeline)
+  app.get("/api/cases/:id/events", async (req, res) => {
+    try {
+      const events = await storage.getCaseEvents(req.params.id);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching case events:", error);
+      res.status(500).json({ error: "Failed to fetch events" });
+    }
+  });
+
+  // Create case event
+  app.post("/api/cases/:id/events", async (req, res) => {
+    try {
+      const eventData = {
+        ...req.body,
+        caseId: req.params.id,
+      };
+      const validatedData = insertCaseEventSchema.parse(eventData);
+      const newEvent = await storage.createCaseEvent(validatedData);
+      res.status(201).json(newEvent);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid event data", details: error.errors });
+      } else {
+        console.error("Error creating event:", error);
+        res.status(500).json({ error: "Failed to create event" });
+      }
+    }
+  });
+
+  // Evaluate case - returns checklist, gaps, and status (no side effects)
+  app.post("/api/cases/:id/evaluate", async (req, res) => {
+    try {
+      const caseData = await storage.getCase(req.params.id);
+      if (!caseData) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+
+      const documents = await storage.getDocumentsByCase(req.params.id);
+      const events = await storage.getCaseEvents(req.params.id);
+      const activeTarget = await storage.getActiveDecisionTarget(req.params.id);
+
+      const ctx: EvaluationContext = {
+        caseData,
+        documents,
+        events,
+        activeDecisionTarget: activeTarget,
+      };
+
+      const result = evaluateCanonConditions(ctx);
+      res.json(result);
+    } catch (error) {
+      console.error("Error evaluating case:", error);
+      res.status(500).json({ error: "Failed to evaluate case" });
+    }
+  });
+
+  // Get latest determination receipt for a case
+  app.get("/api/cases/:id/receipt/latest", async (req, res) => {
+    try {
+      const determination = await storage.getLatestDetermination(req.params.id);
+      if (!determination) {
+        res.status(404).json({ error: "No determination found" });
+        return;
+      }
+      res.json(determination.receiptJson);
+    } catch (error) {
+      console.error("Error fetching receipt:", error);
+      res.status(500).json({ error: "Failed to fetch receipt" });
     }
   });
 
