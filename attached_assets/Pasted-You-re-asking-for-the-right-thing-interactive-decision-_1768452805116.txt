@@ -1,0 +1,144 @@
+You’re asking for the right thing: interactive, decision-useful outputs. And the screenshot shows the system is still stuck in “policy-mode” (templates + refusal posture), even while it’s rendering a sensitivity widget. That mismatch is why it feels dead.
+
+Here’s the key correction:
+
+The product must do two jobs
+	1.	Epistemic enforcement (what it cannot say)
+	2.	Decision support (what it can say, as ranges/scenarios)
+
+Right now, it’s doing (1) and failing at (2).
+
+⸻
+
+What “possible outcomes” should mean in ELI (without becoming an oracle)
+
+You do not want it to predict the future like a fortune teller.
+
+You want it to produce scenario bands:
+	•	If X assumption holds, outcome range is Y
+	•	If X breaks, downside is Z
+	•	Key drivers and sensitivity are made explicit
+	•	It can say: “Here are plausible paths” with confidence qualifiers
+
+That’s legitimate and extremely valuable.
+
+So yes: it should answer questions like:
+
+“What does 42.5M EBITDA mean for my bottom line?”
+
+But to do that it needs a mapping between EBITDA and “bottom line” outcomes (cash, covenants, runway, valuation, debt service, distributions, taxes, etc.). If that mapping is missing from canon, it must ask for minimal inputs—not give you templates.
+
+⸻
+
+What your screenshot reveals (specific failure)
+
+You asked:
+
+“what does that mean for my bottom line”
+
+The system responded with generic “Please specify…” templates.
+
+That is a product-killer. A real expert would say:
+	•	“Bottom line” can mean 4 different things—pick one
+	•	Here are the implications under each
+	•	Here’s the range and what drives it
+	•	Here’s what I need (only if required)
+
+The app should feel like a CFO-grade analyst—not a rules poster.
+
+⸻
+
+Exactly what to tell the Replit agent (paste this)
+
+Instruction to Agent — Enable Interactive Scenario Answers (Not Templates)
+
+We need the assistant to be interactive and decision-useful. It must generate scenario bands and implication mappings, not generic “please specify” templates.
+
+1) Add “Interpretation Layer” for Finance Questions
+
+If user asks “what does X mean for my bottom line / runway / covenants / valuation” and X is a numeric metric (e.g., EBITDA):
+
+The assistant must respond with:
+
+A. Clarify the target meaning (one-tap choices)
+Offer buttons (or a short list) like:
+	•	Cash flow impact
+	•	Runway / burn
+	•	Debt service / covenants
+	•	Valuation / multiples
+	•	Budget / headcount capacity
+
+B. Provide immediate provisional implications
+Even before extra inputs, provide generic but useful interpretation:
+	•	directionality (up/down)
+	•	typical sensitivities
+	•	what must be known to compute precisely
+
+C. Ask only for minimal missing inputs
+If precision requires more data, ask 1–3 key inputs max (not a questionnaire).
+
+2) Scenario Bands Must Be the Default Output
+
+When outcomes are requested, generate:
+	•	Base / Upside / Downside bands
+	•	Key drivers (top 3)
+	•	What would change the conclusion
+
+No “prediction.” This is conditional scenario analysis.
+
+3) Make the Sensitivity Widget Clickable + Conversational
+
+When a sensitivity model is shown (e.g., 40M–45M EBITDA):
+
+The assistant must automatically narrate:
+	•	What that band implies under common mappings
+	•	What assumptions drive the spread
+	•	What’s the decision significance
+
+And enable follow-ups like:
+	•	“Show downside case”
+	•	“What breaks first?”
+	•	“What assumptions create 45M?”
+
+4) Hard rule: Never reply with generic prompt templates
+
+Responses like:
+“Please specify: Was it admissible to… / How should we evaluate…”
+are not acceptable in the main chat flow.
+
+Those can exist in a “Help” page, not as the primary assistant answer.
+
+5) Required example behavior
+
+User: “EBITDA sensitivity is 42.5M. What does that mean for my bottom line?”
+Assistant must respond with:
+	•	Clarifier: “Do you mean cash, covenants, valuation, or budget?”
+	•	A base interpretation for each category
+	•	A scenario band with minimal assumptions
+	•	A short list of 1–3 inputs to compute exact results if the user wants
+
+⸻
+
+What you personally should expect after this fix
+
+When you ask “possible outcomes,” you should get answers like:
+	•	“Given EBITDA range 40–45M, runway likely ranges from X–Y months assuming burn rate B. If burn is unknown, give burn and I’ll compute.”
+	•	“At a 6–8x multiple, implied valuation band is … (with proof).”
+	•	“Debt covenant headroom: if covenant is Net Debt/EBITDA ≤ k, headroom is … (requires net debt input).”
+
+That is CFO-grade interactivity.
+
+⸻
+
+One more critical point (so you don’t get misled)
+
+If you want “possible outcomes” that are truly specific, the system needs either:
+	•	those mapping rules in canon, or
+	•	a minimal “finance profile” you enter once (debt, burn, covenants, revenue, etc.)
+
+You do not need a giant dataset.
+You need a small set of parameters so the app can compute scenarios.
+
+⸻
+
+If you want, tell me what “bottom line” means to you in your head (cash, valuation, runway, covenant, profit), and I’ll give you the exact 3-input “finance profile” that makes the app feel alive without turning it into a spreadsheet monster.

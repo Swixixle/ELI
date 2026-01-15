@@ -123,6 +123,183 @@ function generateEpistemicResponse(message: string, chunks: CanonChunk[], mode: 
     canonTier: chunk.canonTier
   }));
 
+  // FINANCIAL INTERPRETATION LAYER - Scenario analysis, not templates
+  const financialPatterns = [
+    /\bwhat does .* mean for (my|our|the) (bottom line|runway|cash|valuation|covenants?)\b/,
+    /\b(ebitda|revenue|margin|profit|earnings|cash flow)\b.*\b(mean|imply|impact|affect)\b/,
+    /\bwhat are the (implications?|impact|effects?)\b/,
+    /\bwhat does (that|this|\d+[mk]?) mean\b/,
+    /\b(bottom line|runway|burn rate|cash position|valuation|multiple)\b/,
+    /\bsensitivity\b.*\b(mean|imply|range)\b/
+  ];
+
+  if (financialPatterns.some(p => p.test(lowerMessage))) {
+    // Extract any numbers from the message
+    const numberMatch = lowerMessage.match(/(\d+(?:\.\d+)?)\s*(m|k|million|thousand)?/i);
+    const hasNumber = !!numberMatch;
+    const extractedValue = numberMatch ? `${numberMatch[1]}${numberMatch[2] || 'M'}` : null;
+    
+    // Detect what kind of "bottom line" they mean
+    const isCashQuestion = /\b(cash|liquidity|runway|burn)\b/.test(lowerMessage);
+    const isValuationQuestion = /\b(valuation|multiple|exit|worth)\b/.test(lowerMessage);
+    const isCovenantQuestion = /\b(covenant|debt|leverage|ratio)\b/.test(lowerMessage);
+    const isBudgetQuestion = /\b(budget|headcount|capacity|spend)\b/.test(lowerMessage);
+    const isEbitdaQuestion = /\bebitda\b/.test(lowerMessage);
+    
+    if (isEbitdaQuestion && hasNumber) {
+      const value = parseFloat(numberMatch![1]);
+      const suffix = (numberMatch![2] || 'M').toUpperCase();
+      const baseValue = suffix === 'K' ? value / 1000 : value;
+      
+      return {
+        content: `## EBITDA Interpretation: ${extractedValue}
+
+### Immediate Implications
+
+**Valuation (at typical multiples):**
+| Multiple | Implied Value |
+|----------|---------------|
+| 5x | $${(baseValue * 5).toFixed(1)}M |
+| 7x | $${(baseValue * 7).toFixed(1)}M |
+| 10x | $${(baseValue * 10).toFixed(1)}M |
+
+**Cash Flow Proxy:**
+- Pre-capex cash generation: ~${extractedValue} annually
+- Monthly cash capacity: ~$${(baseValue / 12).toFixed(2)}M
+
+**Debt Capacity (at 3x leverage):**
+- Supportable debt: ~$${(baseValue * 3).toFixed(1)}M
+
+### Scenario Bands
+
+| Scenario | EBITDA | Key Driver |
+|----------|--------|------------|
+| Downside | $${(baseValue * 0.85).toFixed(1)}M | Revenue miss or margin compression |
+| Base | $${baseValue.toFixed(1)}M | Current trajectory |
+| Upside | $${(baseValue * 1.15).toFixed(1)}M | Operating leverage or pricing power |
+
+### What This Means for Your Bottom Line
+
+**If "bottom line" means cash:** 
+You have ~$${(baseValue / 12).toFixed(2)}M/month before capex and debt service.
+
+**If "bottom line" means valuation:**
+At market multiples (6-8x), enterprise value range is $${(baseValue * 6).toFixed(0)}M–$${(baseValue * 8).toFixed(0)}M.
+
+**If "bottom line" means covenant headroom:**
+At EBITDA of ${extractedValue}, you can support ~$${(baseValue * 3).toFixed(1)}M debt at 3x leverage.
+
+### To Compute Precisely, Provide:
+1. Your current debt level (for covenant math)
+2. Monthly burn rate (for runway)
+3. Target valuation multiple (for exit scenarios)`,
+        citations,
+        calcProof: {
+          steps: [
+            `Base EBITDA: ${extractedValue}`,
+            `Valuation at 7x: $${(baseValue * 7).toFixed(1)}M`,
+            `Debt capacity at 3x: $${(baseValue * 3).toFixed(1)}M`,
+            `Monthly cash: $${(baseValue / 12).toFixed(2)}M`
+          ],
+          sealedParams: ["Industry multiple range", "Risk adjustment factor"]
+        }
+      };
+    }
+    
+    if (isCashQuestion) {
+      return {
+        content: `## Cash/Runway Interpretation
+
+### What I Need to Compute Runway
+
+To calculate months of runway, I need just 3 inputs:
+1. **Current cash position** (e.g., $5M)
+2. **Monthly burn rate** (e.g., $200K/month)
+3. **Revenue trajectory** (flat, growing, or declining)
+
+### Provisional Analysis (Before Your Inputs)
+
+**Typical runway scenarios:**
+
+| Cash | Burn | Runway |
+|------|------|--------|
+| $3M | $150K/mo | 20 months |
+| $5M | $200K/mo | 25 months |
+| $10M | $300K/mo | 33 months |
+
+**Key sensitivity:** A 20% burn reduction extends runway by ~25%.
+
+### Decision Significance
+- <12 months runway: Immediate action required
+- 12-18 months: Begin fundraise/cost action
+- 18+ months: Strategic optionality
+
+Provide your cash and burn, and I'll compute your exact position with scenario bands.`,
+        citations
+      };
+    }
+    
+    if (isValuationQuestion) {
+      return {
+        content: `## Valuation Interpretation
+
+### Standard Valuation Framework
+
+| Metric | Multiple Range | What It Measures |
+|--------|----------------|------------------|
+| Revenue | 1-5x | Growth potential |
+| EBITDA | 5-12x | Profitability + scale |
+| ARR (SaaS) | 5-15x | Recurring revenue quality |
+
+### Scenario Bands
+
+| Scenario | Multiple | Key Driver |
+|----------|----------|------------|
+| Downside | Low end of range | Market correction, execution risk |
+| Base | Mid-range | Current trajectory |
+| Upside | High end | Strategic premium, growth acceleration |
+
+### To Compute Your Valuation Range, Provide:
+1. **EBITDA or Revenue** (trailing or projected)
+2. **Industry/sector** (for comp selection)
+3. **Growth rate** (for multiple calibration)
+
+I'll return a valuation band with the arithmetic shown.`,
+        citations
+      };
+    }
+    
+    // Generic financial question - offer clarification choices
+    return {
+      content: `## Financial Interpretation
+
+"Bottom line" can mean several things. Which applies to you?
+
+### Quick Clarification
+
+**Cash/Runway** → How long can we operate?
+**Valuation** → What are we worth at exit/raise?
+**Covenants** → Are we within debt limits?
+**Budget Capacity** → What can we afford to spend?
+
+### Immediate Interpretation
+
+Whatever your focus, the key drivers are typically:
+- **Revenue trajectory** (growth rate, stability)
+- **Margin structure** (gross, operating, EBITDA)
+- **Cash conversion** (working capital, capex)
+- **Leverage** (debt, covenant headroom)
+
+### To Get Scenario Bands, Tell Me:
+1. Which "bottom line" matters most right now
+2. One key metric (EBITDA, revenue, or cash)
+3. Your planning horizon (months or years)
+
+I'll return base/upside/downside scenarios with the math shown.`,
+      citations
+    };
+  }
+
   // GOVERNANCE JUDGMENT QUESTIONS - Apply Canon rules, don't recite them
   const governancePatterns = [
     /\bwas it (appropriate|fair|right|correct|justified)\b/,
