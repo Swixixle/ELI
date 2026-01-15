@@ -42,8 +42,24 @@ The frontend follows a page-based structure with three main routes:
 
 Current tables:
 - `users` - Basic user authentication
-- `canon_documents` - Stores metadata about uploaded Canon documents (name, size, type, version, status)
+- `cases` - Case containers for document management (name, description, status, timestamps)
+- `canon_documents` - Stores metadata about uploaded Canon documents (name, size, type, version, status, caseId FK)
 - `canon_chunks` - Stores chunked Canon content for retrieval (72 chunks from 10 documents)
+
+### Case-Centric Document Management
+All documents are bound to cases. The system enforces case ownership at multiple layers:
+- **Schema**: `canon_documents.caseId` is NOT NULL with foreign key to `cases`
+- **Storage**: `createCanonDocument` validates case existence before insert
+- **API**: All document endpoints require case context; legacy global endpoints are disabled or case-gated
+- **UI**: CaseSelector component required before any document operations
+
+Case-scoped API endpoints:
+- `GET /api/cases` - List all cases
+- `POST /api/cases` - Create new case
+- `GET /api/cases/:id` - Get case details
+- `GET /api/cases/:id/documents` - List documents in case
+- `POST /api/cases/:id/documents` - Create document in case
+- `DELETE /api/cases/:caseId/documents/:docId` - Delete document (validates ownership)
 
 ### Canon Ingestion System
 - **Ingestion Script**: `server/ingestCanon.ts` - Extracts, chunks, and indexes Canon PDFs
