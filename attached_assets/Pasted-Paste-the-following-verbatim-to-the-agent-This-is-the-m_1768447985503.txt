@@ -1,0 +1,126 @@
+Paste the following verbatim to the agent. This is the minimal, IP-safe disclosure that lets me accurately “see” what you’ve built without exposing internals.
+
+⸻
+
+Instruction to Agent: External Architectural Review Packet (IP-Safe)
+
+Prepare an External Review Packet so a third-party expert can evaluate the ELI Expert system without receiving proprietary logic, thresholds, or canon content.
+
+1) Provide a System Behavior Spec (not code)
+
+Deliver a concise document (or message) that describes:
+	•	User Flow (First-Run Experience)
+	•	What the user sees on load
+	•	How “Ask how to use me” is triggered
+	•	How the demo/walkthrough progresses
+	•	How the system transitions into normal Q&A
+	•	Core Interaction Loop
+	•	Input → Retrieval → Admissibility Check → Response
+	•	Where refusals occur
+	•	Where citations are enforced
+	•	Where visuals are conditionally rendered
+
+No pseudocode required. Plain English is sufficient.
+
+⸻
+
+2) Provide a Redacted Component Map
+
+List components by role only, not implementation:
+
+Example format:
+	•	Retrieval Layer (canon + public data) — function only
+	•	Admissibility Gate (Parrot Box enforcement) — rule summary
+	•	Computation Audit Layer — what it outputs, not how it computes
+	•	IP-Sealing Mechanism — what is redacted and when
+	•	UI Renderer — what types of visuals exist
+
+Do not include:
+	•	Algorithms
+	•	Thresholds
+	•	Scoring formulas
+	•	Internal data schemas
+
+⸻
+
+3) Provide Representative Output Transcripts (Sanitized)
+
+Include 3–4 short example conversations with:
+	•	One successful factual answer (with citation badges)
+	•	One numeric answer showing calc_proof with [SEALED PARAMETER]
+	•	One Parrot Box refusal
+	•	One Sales Mode response bounded by canon
+
+Rules:
+	•	Replace any real numbers with neutral placeholders if needed
+	•	Do not include real canon text
+	•	Preserve structure, labels, and refusal language
+
+⸻
+
+4) Provide the Response Contract (Schema Only)
+
+Share the response schema without values, e.g.:
+	•	answer_markdown
+	•	citations[]
+	•	calc_proof[]
+	•	visual_spec
+	•	epistemic_status
+	•	ip_safety_flags[]
+
+Do not include:
+	•	Field population logic
+	•	Examples tied to real canon
+
+⸻
+
+5) Provide a Visual Inventory
+
+List all visual elements that can appear, e.g.:
+	•	Evidence badges
+	•	Provenance banners
+	•	Calc proof expander
+	•	Epistemic refusal state
+	•	Decision-time lock indicator
+	•	Demo cards used in onboarding
+
+Screenshots are optional but must be blurred/redacted if they show canon text.
+
+⸻
+
+6) Explicitly Withhold (state this in the packet)
+
+Include a short disclaimer:
+
+The following are intentionally excluded:
+– Canon documents and excerpts
+– Internal scoring or thresholds
+– Governance decision rules
+– Proprietary adjustment factors
+
+This confirms IP hygiene.
+
+⸻
+
+7) Optional (if easy): Read-Only URL or Recording
+
+If feasible, provide one of:
+	•	A short screen recording of the onboarding + one query, with content redacted
+	•	A temporary read-only URL that demonstrates UI states only (no data access)
+
+⸻
+
+Purpose Statement (include this verbatim)
+
+This packet is for architectural and epistemic review only.
+It is designed to demonstrate system behavior, constraints, and honesty mechanisms without exposing proprietary intellectual property.
+
+⸻
+
+If the agent delivers just this, I’ll be able to:
+	•	Validate that the product does what you intend
+	•	Spot structural risks or gaps
+	•	Confirm the UX reads as “expert performing itself”
+	•	Do all of that without reverse-engineering or contaminating IP
+
+Once you paste their response back here, I’ll review it as if I were a hostile but fair external evaluator.
