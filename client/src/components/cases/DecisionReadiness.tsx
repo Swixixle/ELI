@@ -215,7 +215,7 @@ export function DecisionReadinessPanel({ readiness, onSetDecisionTarget }: Decis
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-medium">Review Readiness</span>
+              <span className="text-sm font-medium">Procedural Prerequisites</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="text-muted-foreground hover:text-foreground transition-colors" data-testid="btn-why-criteria">
@@ -224,9 +224,9 @@ export function DecisionReadinessPanel({ readiness, onSetDecisionTarget }: Decis
                 </PopoverTrigger>
                 <PopoverContent className="w-80 p-0" align="start">
                   <div className="p-3 border-b bg-muted/30">
-                    <p className="text-xs font-semibold">Why these 5 conditions?</p>
+                    <p className="text-xs font-semibold">Why these 5 procedural prerequisites?</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      These criteria recur across law, audit, safety engineering, and ethics. They are the smallest complete set required for procedurally legitimate review.
+                      These are not arbitrary conditions. They are the minimum basis set for defensible procedural evaluation — recurring across administrative law, root cause analysis, and regulatory enforcement.
                     </p>
                   </div>
                   <div className="p-2 max-h-64 overflow-y-auto">
@@ -246,11 +246,19 @@ export function DecisionReadinessPanel({ readiness, onSetDecisionTarget }: Decis
             </span>
           </div>
           <Progress value={progressPercent} className="h-2" />
-          <p className={`text-xs ${readiness.permitted ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
-            {readiness.permitted 
-              ? "This case can be fairly evaluated." 
-              : "This case cannot yet be fairly evaluated."}
-          </p>
+          
+          {/* Threshold policy interpretation */}
+          <div className="text-xs space-y-1">
+            <p className={readiness.permitted ? "text-green-600 dark:text-green-400 font-medium" : "text-amber-600 dark:text-amber-400 font-medium"}>
+              {readiness.totalSatisfied <= 2 && "Review unsafe — advisory only"}
+              {readiness.totalSatisfied === 3 && "Review permitted, high procedural risk"}
+              {readiness.totalSatisfied === 4 && "Review strong, defensible"}
+              {readiness.totalSatisfied >= 5 && "Review robust, regulator-ready"}
+            </p>
+            <p className="text-muted-foreground">
+              Meeting fewer than all prerequisites does not invalidate a decision — it increases procedural risk.
+            </p>
+          </div>
         </div>
 
         {readiness.categories.length > 0 && (
