@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertCanonDocumentSchema, insertCaseSchema, insertCaseEventSchema, type CanonChunk } from "@shared/schema";
 import { z } from "zod";
 import { evaluateCanonConditions, type EvaluationContext } from "./canonEvaluator";
+import { computeCaseStateHash, signReceipt, hashSHA256 } from "./crypto";
 
 const chatRequestSchema = z.object({
   message: z.string().min(1),
@@ -197,6 +198,128 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error evaluating case:", error);
       res.status(500).json({ error: "Failed to evaluate case" });
+    }
+  });
+
+  // Create a determination with signed receipt
+  app.post("/api/cases/:id/determine", async (req, res) => {
+    try {
+      const caseData = await storage.getCase(req.params.id);
+      if (!caseData) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+
+      const documents = await storage.getDocumentsByCase(req.params.id);
+      const events = await storage.getCaseEvents(req.params.id);
+      const activeTarget = await storage.getActiveDecisionTarget(req.params.id);
+
+      if (!activeTarget) {
+        res.status(400).json({ error: "No decision target defined" });
+        return;
+      }
+
+      const ctx: EvaluationContext = {
+        caseData,
+        documents,
+        events,
+        activeDecisionTarget: activeTarget,
+      };
+
+      const evaluation = evaluateCanonConditions(ctx);
+
+      const documentsWithoutHash = documents.filter((doc) => !doc.contentHash);
+      if (documentsWithoutHash.length > 0) {
+        res.status(400).json({
+          error: "Documents missing content hash",
+          documents: documentsWithoutHash.map((d) => d.name),
+          hint: "Re-upload documents to compute content hashes",
+        });
+        return;
+      }
+
+      if (!caseData.decisionTime) {
+        res.status(400).json({
+          error: "Decision time not set",
+          hint: "Set decision time before creating determination",
+        });
+        return;
+      }
+
+      const documentsConsidered = documents.map((doc) => ({
+        docId: doc.id,
+        filename: doc.name,
+        sha256: doc.contentHash!,
+        uploadedAt: doc.uploadedAt?.toISOString() || "",
+        version: doc.version || undefined,
+      }));
+
+      const checklistSnapshot: Record<string, boolean> = {
+        A_decision_target_defined: evaluation.checklist.A_decision_target_defined.met,
+        B_temporal_verification: evaluation.checklist.B_temporal_verification.met,
+        C_independent_verification: evaluation.checklist.C_independent_verification.met,
+        D_policy_application_record: evaluation.checklist.D_policy_application_record.met,
+        E_contextual_constraints: evaluation.checklist.E_contextual_constraints.met,
+      };
+
+      const caseStateHash = computeCaseStateHash({
+        caseId: req.params.id,
+        decisionTarget: activeTarget.text,
+        decisionTime: caseData.decisionTime!.toISOString(),
+        documentsConsidered: documentsConsidered.map((d) => ({ docId: d.docId, sha256: d.sha256 })),
+        checklistSnapshot,
+      });
+
+      const receiptData = {
+        receiptVersion: "1.0",
+        canonVersion: "4.0",
+        caseId: req.params.id,
+        decisionTarget: {
+          text: activeTarget.text,
+          setAt: activeTarget.setAt?.toISOString() || null,
+          setBy: activeTarget.setBy || null,
+        },
+        decisionTime: {
+          mode: (caseData.decisionTimeMode as "explicit" | "inferred") || "explicit",
+          timestamp: caseData.decisionTime!.toISOString(),
+        },
+        policyThresholds: {
+          minConditionsMet: caseData.policyThresholdMin || 3,
+          totalConditions: 5,
+          temporalRequired: true,
+        },
+        documentsConsidered,
+        admissibility: {
+          rule: "temporal_boundary",
+          admittedDocIds: documents.map((d) => d.id),
+          excludedDocIds: [],
+          notes: [],
+        },
+        checklist: evaluation.checklist,
+        summary: evaluation.summary,
+        gapsEquation: evaluation.gapsEquation,
+        caseStateHash: {
+          sha256: caseStateHash,
+        },
+      };
+
+      const receiptJson = JSON.stringify(receiptData);
+      const signature = signReceipt(receiptJson);
+      const signedReceipt = { ...receiptData, signature };
+
+      const determination = await storage.createDetermination({
+        caseId: req.params.id,
+        status: evaluation.summary.status,
+        conditionsMet: evaluation.summary.conditionsMet,
+        conditionsTotal: evaluation.summary.conditionsTotal,
+        receiptJson: signedReceipt,
+        caseStateHash,
+      });
+
+      res.status(201).json(determination);
+    } catch (error) {
+      console.error("Error creating determination:", error);
+      res.status(500).json({ error: "Failed to create determination" });
     }
   });
 

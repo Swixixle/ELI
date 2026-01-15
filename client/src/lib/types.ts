@@ -40,8 +40,8 @@ export type DeterminationReceipt = {
   caseId: string;
   decisionTarget: {
     text: string;
-    setAt: string;
-    setBy?: string;
+    setAt: string | null;
+    setBy: string | null;
   };
   decisionTime: {
     mode: "explicit" | "inferred";
