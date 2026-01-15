@@ -116,6 +116,57 @@ export const CANONICAL_INTENTS: IntentConfig[] = [
   { id: "defensibility", label: "Defensibility", description: "Can this be justified?", icon: "Shield", question: "Is this decision defensible?" }
 ];
 
+// Question Bank - Plain language questions organized by intent
+export type QuestionBankCategory = {
+  id: string;
+  label: string;
+  icon: string;
+  questions: { id: string; label: string; query: string }[];
+};
+
+export const QUESTION_BANK: QuestionBankCategory[] = [
+  {
+    id: "permission",
+    label: "Permission to Decide",
+    icon: "Lock",
+    questions: [
+      { id: "can-decide", label: "Are we allowed to decide yet?", query: "Are we allowed to decide yet?" },
+      { id: "what-missing", label: "What evidence is still missing?", query: "What evidence is still missing?" },
+      { id: "what-blocks", label: "What would block this decision?", query: "What would block this decision?" }
+    ]
+  },
+  {
+    id: "evidence",
+    label: "Evidence Status",
+    icon: "FileSearch",
+    questions: [
+      { id: "enough-docs", label: "Do we have enough documentation?", query: "Do we have enough documentation?" },
+      { id: "what-assumptions", label: "What assumptions are we relying on?", query: "What assumptions are we relying on?" },
+      { id: "whats-weak", label: "What's the weakest part of our case?", query: "What's the weakest part of our case?" }
+    ]
+  },
+  {
+    id: "limits",
+    label: "What We Can't Know",
+    icon: "CircleSlash",
+    questions: [
+      { id: "cant-determine", label: "What can't be determined right now?", query: "What can't be determined right now?" },
+      { id: "what-outside", label: "What's outside our scope?", query: "What's outside our scope?" },
+      { id: "temporal-gaps", label: "What wasn't knowable at decision time?", query: "What wasn't knowable at decision time?" }
+    ]
+  },
+  {
+    id: "defensibility",
+    label: "Audit & Defense",
+    icon: "Shield",
+    questions: [
+      { id: "is-defensible", label: "Is this decision defensible?", query: "Is this decision defensible?" },
+      { id: "regulator-asks", label: "What if a regulator asks why we decided this?", query: "What if a regulator asks why we decided this?" },
+      { id: "can-close", label: "Can this case be closed?", query: "Can this case be closed?" }
+    ]
+  }
+];
+
 export type Message = {
   id: string;
   role: "user" | "assistant";

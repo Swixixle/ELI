@@ -1,8 +1,8 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { MessageBubble } from "@/components/chat/MessageBubble";
-import { INITIAL_MESSAGES, Message, SCENARIO_RESPONSES, CANONICAL_INTENTS } from "@/lib/types";
+import { INITIAL_MESSAGES, Message, SCENARIO_RESPONSES, CANONICAL_INTENTS, QUESTION_BANK } from "@/lib/types";
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel, FolderOpen, CheckCircle, AlertCircle, AlertTriangle, ArrowRight, CheckSquare } from "lucide-react";
+import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel, FolderOpen, CheckCircle, AlertCircle, AlertTriangle, ArrowRight, CheckSquare, Lock, FileSearch, CircleSlash, Wrench, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -140,6 +140,13 @@ const INTENT_ICONS: Record<string, React.ReactNode> = {
   "defensibility": <Shield className="w-3.5 h-3.5" />
 };
 
+const QUESTION_BANK_ICONS: Record<string, React.ReactNode> = {
+  "Lock": <Lock className="w-4 h-4" />,
+  "FileSearch": <FileSearch className="w-4 h-4" />,
+  "CircleSlash": <CircleSlash className="w-4 h-4" />,
+  "Shield": <Shield className="w-4 h-4" />
+};
+
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -154,6 +161,8 @@ export default function Home() {
   const [documentCount, setDocumentCount] = useState(0);
   const [showDecisionTargetDialog, setShowDecisionTargetDialog] = useState(false);
   const [decisionTargetInput, setDecisionTargetInput] = useState("");
+  const [viewMode, setViewMode] = useState<"builder" | "audit">("builder");
+  const [showFreeText, setShowFreeText] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -577,24 +586,26 @@ export default function Home() {
 
              <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg">
                 <button 
-                  onClick={() => setMode("advisor")}
+                  onClick={() => setViewMode("builder")}
                   className={cn(
                     "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2",
-                    mode === "advisor" ? "bg-white shadow text-foreground" : "text-muted-foreground hover:text-foreground"
+                    viewMode === "builder" ? "bg-white shadow text-foreground" : "text-muted-foreground hover:text-foreground"
                   )}
+                  data-testid="mode-builder"
                 >
-                  <FileText className="w-3 h-3" />
-                  Advisor
+                  <Wrench className="w-3 h-3" />
+                  Builder
                 </button>
                 <button 
-                  onClick={() => setMode("sales")}
+                  onClick={() => setViewMode("audit")}
                   className={cn(
                     "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2",
-                    mode === "sales" ? "bg-white shadow text-foreground" : "text-muted-foreground hover:text-foreground"
+                    viewMode === "audit" ? "bg-white shadow text-foreground" : "text-muted-foreground hover:text-foreground"
                   )}
+                  data-testid="mode-audit"
                 >
-                  <Briefcase className="w-3 h-3" />
-                  Sales
+                  <Search className="w-3 h-3" />
+                  Audit
                 </button>
              </div>
           </div>
@@ -825,7 +836,7 @@ export default function Home() {
         <div className="px-8 pb-8 pt-4 relative">
           
           {/* Suggestion Chip for Demo (if chat is empty but demo dismissed manually) */}
-          {!showDemo && messages.length === 0 && (
+          {!showDemo && messages.length === 0 && !activeCase && (
              <button 
                onClick={runDemo} 
                className="absolute -top-8 left-1/2 -translate-x-1/2 bg-primary/10 hover:bg-primary/20 text-primary text-xs px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors"
@@ -835,51 +846,119 @@ export default function Home() {
              </button>
           )}
 
-          {/* Intent Buttons - Quick access to canonical questions */}
-          {activeCase && (
-            <div className="mb-3">
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">Quick Review</div>
-              <div className="flex flex-wrap gap-2">
-                {CANONICAL_INTENTS.slice(0, 6).map((intent) => (
-                  <button
-                    key={intent.id}
-                    onClick={() => handleIntentClick(intent.question)}
-                    disabled={isTyping}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted/50 hover:bg-muted border border-border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    data-testid={`intent-${intent.id}`}
-                  >
-                    {INTENT_ICONS[intent.id]}
-                    {intent.label}
-                  </button>
+          {/* Question Bank - Builder Mode (default) */}
+          {activeCase && viewMode === "builder" && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <h3 className="text-sm font-semibold text-foreground mb-1">What do you want to know?</h3>
+                <p className="text-xs text-muted-foreground">Select a question to evaluate your case</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {QUESTION_BANK.map((category) => (
+                  <div key={category.id} className="bg-card border rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
+                        {QUESTION_BANK_ICONS[category.icon]}
+                      </div>
+                      <h4 className="font-medium text-sm">{category.label}</h4>
+                    </div>
+                    <div className="space-y-2">
+                      {category.questions.map((q) => (
+                        <button
+                          key={q.id}
+                          onClick={() => handleIntentClick(q.query)}
+                          disabled={isTyping}
+                          className="w-full text-left px-3 py-2 text-sm bg-muted/30 hover:bg-muted border border-transparent hover:border-border rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          data-testid={`question-${q.id}`}
+                        >
+                          {q.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
+
+              {/* Collapsed Free Text Option */}
+              <div className="text-center pt-2">
+                <button
+                  onClick={() => setShowFreeText(!showFreeText)}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  data-testid="toggle-free-text"
+                >
+                  {showFreeText ? "Hide custom question" : "Ask a custom question..."}
+                </button>
+              </div>
+
+              {showFreeText && (
+                <div className="relative shadow-lg rounded-xl overflow-hidden border border-border bg-background focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                  <textarea
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask a governance question..."
+                    className="w-full min-h-[60px] max-h-[120px] p-4 pr-12 resize-none outline-none text-sm bg-transparent placeholder:text-muted-foreground/50 font-medium"
+                  />
+                  <button 
+                    onClick={handleSend}
+                    disabled={!inputValue.trim()}
+                    className="absolute right-3 bottom-3 p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
-          <div className="relative shadow-lg rounded-xl overflow-hidden border border-border bg-background focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-            <textarea
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask a governance or financial question..."
-              className="w-full min-h-[60px] max-h-[200px] p-4 pr-12 resize-none outline-none text-sm bg-transparent placeholder:text-muted-foreground/50 font-medium"
-            />
-            <button 
-              onClick={handleSend}
-              disabled={!inputValue.trim()}
-              className="absolute right-3 bottom-3 p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-            
-            {/* Input Footer */}
-            <div className="absolute left-4 bottom-3 flex gap-4 text-[10px] font-mono text-muted-foreground/60 pointer-events-none">
-              <span className="flex items-center gap-1"><Settings2 className="w-3 h-3" /> CANON: v4.0 (LOCKED)</span>
-              <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> AUDIT: ON</span>
-            </div>
-          </div>
+          {/* Audit Mode - Full free-form input with quick intents */}
+          {activeCase && viewMode === "audit" && (
+            <>
+              <div className="mb-3">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">Quick Review</div>
+                <div className="flex flex-wrap gap-2">
+                  {CANONICAL_INTENTS.slice(0, 6).map((intent) => (
+                    <button
+                      key={intent.id}
+                      onClick={() => handleIntentClick(intent.question)}
+                      disabled={isTyping}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted/50 hover:bg-muted border border-border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      data-testid={`intent-${intent.id}`}
+                    >
+                      {INTENT_ICONS[intent.id]}
+                      {intent.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="relative shadow-lg rounded-xl overflow-hidden border border-border bg-background focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                <textarea
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask a governance or audit question..."
+                  className="w-full min-h-[60px] max-h-[200px] p-4 pr-12 resize-none outline-none text-sm bg-transparent placeholder:text-muted-foreground/50 font-medium"
+                />
+                <button 
+                  onClick={handleSend}
+                  disabled={!inputValue.trim()}
+                  className="absolute right-3 bottom-3 p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+                
+                <div className="absolute left-4 bottom-3 flex gap-4 text-[10px] font-mono text-muted-foreground/60 pointer-events-none">
+                  <span className="flex items-center gap-1"><Settings2 className="w-3 h-3" /> CANON: v4.0</span>
+                  <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> AUDIT MODE</span>
+                </div>
+              </div>
+            </>
+          )}
+
           <p className="text-center text-[10px] text-muted-foreground mt-3">
-             ELI Expert produces outcome-blind, verifiable outputs. All numeric claims are cited.
+             ELI shows exactly what evidence is required before a decision is allowed.
           </p>
         </div>
 
