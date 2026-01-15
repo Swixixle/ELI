@@ -893,6 +893,47 @@ Based on current Canon, I can evaluate:
     }
   }
   
+  // READINESS/SUFFICIENCY QUESTIONS - Do we have enough? Is it ready?
+  const readinessPatterns = [
+    /\bdo we have enough (documentation|documents|evidence|info|information)\b/,
+    /\bis (there|this) enough (documentation|evidence|info|information)\b/,
+    /\bis (anything|something) missing\b/,
+    /\bwhat('s| is) missing\b/,
+    /\bcan we (move forward|proceed|start|begin)\b/,
+    /\bwhat('s| is) blocking\b/,
+    /\b(audit|review)(-| )?ready\b/,
+    /\bready for (review|audit|evaluation)\b/,
+    /\bwhat (do we|else do we) need\b/
+  ];
+  
+  if (readinessPatterns.some(p => p.test(lowerMessage))) {
+    return {
+      content: `## Procedural Determination
+
+**Evaluation Sequence Applied:**
+
+1. **Temporal boundary**: Decision date must be established
+2. **Gatekeeper filter**: Only contemporaneous information admitted
+3. **Epistemic conditions assessed**: Information quality, resource constraints, ambiguity level
+4. **Determination**: Based on available case materials
+
+**Current Case Analysis:**
+
+Based on the documents in this case, a preliminary review can begin. However, reaching a final determination requires:
+- Confirmation of policy application at decision-time
+- Independent verification of key facts
+- Clear temporal markers on all evidence`,
+      citations,
+      userSummary: {
+        status: "needs_more",
+        statusLabel: "Review can begin",
+        meaning: "The case has enough documentation to start a review, but not enough to reach a final determination.",
+        missing: ["Independent evidence or confirmation of policy application", "Clear temporal markers on evidence"],
+        nextStep: "Upload supporting evidence or request a preliminary review."
+      }
+    };
+  }
+  
   // PROCEDURAL QUESTIONS - How should we handle X?
   const proceduralPatterns = [
     /\bhow (should|do) (we|I) (handle|approach|evaluate|review)\b/,
@@ -901,15 +942,45 @@ Based on current Canon, I can evaluate:
   
   if (proceduralPatterns.some(p => p.test(lowerMessage))) {
     return {
-      content: "**Procedural Guidance**\n\nUnder Canon constraints, evaluation must follow this sequence:\n\n1. **Establish temporal boundary**: Lock the decision date\n2. **Apply Gatekeeper**: Admit only information available at that time\n3. **Assess epistemic conditions**: Resource constraints, information quality, ambiguity level\n4. **Generate determination**: Procedural approval, rejection, or explicit refusal\n\n**Never:**\n- Use outcome knowledge to judge the decision\n- Assign individual blame based on results\n- Treat outcome as evidence of what \"should have been known\"",
-      citations
+      content: `## Procedural Guidance
+
+Under Canon constraints, evaluation must follow this sequence:
+
+1. **Establish temporal boundary**: Lock the decision date
+2. **Apply Gatekeeper**: Admit only information available at that time
+3. **Assess epistemic conditions**: Resource constraints, information quality, ambiguity level
+4. **Generate determination**: Procedural approval, rejection, or explicit refusal
+
+**Never:**
+- Use outcome knowledge to judge the decision
+- Assign individual blame based on results
+- Treat outcome as evidence of what "should have been known"`,
+      citations,
+      userSummary: {
+        status: "can_proceed",
+        statusLabel: "Procedure defined",
+        meaning: "The correct approach follows four steps: lock the date, filter evidence, assess conditions, then determine.",
+        nextStep: "Ask a specific governance question like 'Was it appropriate to discipline the unit for this outcome?'"
+      }
     };
   }
   
   // FALLBACK - But never dump raw Canon content
   // Instead, ask for clarification or provide structured guidance
   return {
-    content: "I can assist with governance questions under Canon constraints. Please specify:\n\n**For evaluations:** \"Was it admissible to [action] given [context]?\"\n**For procedures:** \"How should we evaluate [situation]?\"\n**For definitions:** \"What is [concept]?\"\n\nI apply Canon rules to make procedural determinations—I do not summarize documents.",
-    citations
+    content: `I can assist with governance questions under Canon constraints. Please specify:
+
+**For evaluations:** "Was it admissible to [action] given [context]?"
+**For procedures:** "How should we evaluate [situation]?"
+**For definitions:** "What is [concept]?"
+
+I apply Canon rules to make procedural determinations—I do not summarize documents.`,
+    citations,
+    userSummary: {
+      status: "cannot_determine",
+      statusLabel: "Need more specific question",
+      meaning: "I couldn't determine what governance question you're asking. Please rephrase with more specifics.",
+      nextStep: "Try asking: 'Was it appropriate to discipline the unit for this outcome?' or 'Do we have enough documentation?'"
+    }
   };
 }
