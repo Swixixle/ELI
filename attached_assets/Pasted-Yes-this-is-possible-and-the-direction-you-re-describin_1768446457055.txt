@@ -1,0 +1,136 @@
+Yes—this is possible, and the direction you’re describing is the right product move: the app opens as a guided expert, not a toolkit.
+
+A clean way to think about it:
+
+On first load, the product “performs itself.”
+It teaches the buyer how to interrogate it, proves it’s honest, then gets out of the way.
+
+Below is what to implement (and what to tell your agent/architect). This keeps UI minimal, uses visuals only when they demonstrate the mechanism, and makes the system self-explanatory.
+
+⸻
+
+What you want, precisely
+
+Core experience
+	1.	App opens → one prominent box:
+“Ask how to use me.”
+(also clickable as a one-tap prompt)
+	2.	User asks “how do I use this?” → the ELI Expert runs a scripted demo:
+	•	What ELI is (conceptually)
+	•	What it can/can’t do (epistemic boundaries)
+	•	How it proves claims (citations + calc proof)
+	•	A quick “try this” set of prompts (3–5)
+	3.	Then it transitions into one interface:
+	•	A single chat input
+	•	Optional mode toggle hidden behind a simple “Audience” dropdown (Buyer / CFO / Engineer) if needed
+	•	Visuals appear only when the model chooses “Show how this works”
+
+Minimalism requirement
+
+No dashboards. No gadgets. No sprawling controls.
+All “advanced controls” should be collapsed and only appear when a user asks.
+
+⸻
+
+The “presentation” should not be a slideshow
+
+It should be a guided, interactive walkthrough inside the chat.
+
+Format: 4 panels max, inside the conversation
+	•	Panel 1: What this is
+	•	Panel 2: What it refuses
+	•	Panel 3: How it proves numbers
+	•	Panel 4: Ask me anything (with examples)
+
+Each panel can use a small visual card (not a full page) with one diagram/table max.
+
+⸻
+
+The essential visual demonstrations (only these)
+	1.	Evidence Badges demo
+
+	•	One example answer with [CANON] and [PUBLIC SOURCE]
+	•	A tooltip: “Every claim must have a source.”
+
+	2.	Calc proof demo
+
+	•	A small numeric example with “Show Math”
+	•	Demonstrate [SEALED PARAMETER] as “IP-protected factor”
+	•	The point: “We prove arithmetic without exposing internals.”
+
+	3.	Parrot Box / refusal demo
+
+	•	A question that triggers refusal
+	•	The point: “We don’t pretend to know what cannot be known.”
+
+That’s it. Everything else is optional.
+
+⸻
+
+“Importing you into the program” (what’s realistic)
+
+You can absolutely “import you” in the relevant sense:
+	•	Your canon
+	•	Your positioning language
+	•	Your constraints and tone
+	•	Your preferred explanations (PhD-level clarity)
+
+But it should be framed as:
+
+“The assistant is trained on your canonical materials and governed by strict admissibility rules.”
+
+Not as literal identity import. The effect can be what you want: a credible proxy.
+
+⸻
+
+The PhD-level requirement (how to implement cleanly)
+
+Do this with a single toggle in the response contract, not UI clutter:
+	•	Default: Executive clarity
+	•	If user types “deep dive” or selects “PhD mode”:
+	•	More formal structure
+	•	Definitions, assumptions, proofs
+	•	Implementation detail level increased
+	•	Still citation-bound
+
+Important: PhD mode must still refuse when sources don’t support the claim.
+
+⸻
+
+What to tell your Replit agent/architect (paste this)
+
+Instruction: Self-Explanatory Onboarding + Demo-First UX
+	1.	On app load, show a prominent onboarding card:
+	•	Title: “Ask how to use me”
+	•	Button: “Run the demo”
+	•	Also auto-suggest prompt in the input.
+	2.	If user clicks or asks “how do I use this?” the assistant must run a scripted walkthrough:
+	•	What ELI is
+	•	What it refuses (Parrot Box)
+	•	How it proves numbers (calc proof + sealed parameter)
+	•	How to ask questions (examples)
+	•	End with “Ask me anything.”
+	3.	Keep UI minimal:
+	•	Single chat interface
+	•	No dashboards
+	•	No persistent gadgets
+	•	Advanced settings hidden behind a single “More” drawer
+	4.	Visuals must be used only to demonstrate mechanism:
+	•	Evidence badge demo
+	•	Calc proof demo
+	•	Refusal demo
+No additional visuals unless explicitly requested.
+	5.	Response behavior:
+	•	Every claim must have [CANON] or [PUBLIC SOURCE]
+	•	Numeric outputs require calc_proof
+	•	Proprietary logic must remain sealed as [SEALED PARAMETER]
+	•	Parrot Box refusals must be clear and self-explanatory.
+	6.	Add a persistent “What can you do?” help chip that re-runs the demo at any time.
+
+⸻
+
+Answer to your direct question
+
+Yes, it’s possible—and the current architecture you’ve described (citations + calc_proof + refusal states + decision-time context) is exactly what enables this to be self-explanatory without being salesy or bloated.
+
+If you want, paste the agent’s current UI structure (or a link/screenshot of the home screen state), and I’ll give you a tighter “first-screen” layout that reads like a product, not a prototype.
