@@ -10,7 +10,9 @@ import {
   Lock, 
   CheckCircle,
   AlertTriangle,
-  ArrowRight
+  ArrowRight,
+  Clock,
+  Gavel
 } from "lucide-react";
 
 export default function About() {
@@ -139,10 +141,113 @@ export default function About() {
                     </li>
                   </ul>
                   <p className="text-xs text-muted-foreground italic">
-                    This constraint is called the "Parrot Box" — the system does not pretend to know what cannot be known.
+                    This constraint ensures the system does not pretend to know what cannot be known.
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Glossary Section */}
+        <section id="glossary" className="mb-16">
+          <h2 className="text-2xl font-display font-bold text-foreground mb-6 flex items-center gap-3">
+            <FileCheck className="w-6 h-6 text-primary" />
+            Governance Terms Explained
+          </h2>
+          
+          <div className="space-y-6">
+            {/* Outcome-Blindness */}
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+              <h3 className="font-display font-semibold text-lg text-foreground mb-3 flex items-center gap-2">
+                <Eye className="w-5 h-5 text-purple-600" />
+                Outcome-Blindness Rule
+                <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full ml-2">internal: Parrot Box</span>
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-sm text-foreground mb-1">What It Is</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    A governance constraint that prevents the system from using knowledge of outcomes to evaluate decisions that were made before those outcomes occurred. This is the difference between "what should have been done" (hindsight) and "what was knowable at the time" (decision-time analysis).
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm text-foreground mb-1">Why It Exists</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    In governance, litigation, and audits, using hindsight to judge past decisions is unfair and inadmissible. A decision-maker cannot be blamed for not knowing what was unknowable. This system enforces that boundary automatically.
+                  </p>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4 mt-4">
+                  <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-4">
+                    <h4 className="font-semibold text-sm text-destructive mb-2 flex items-center gap-2">
+                      <Ban className="w-4 h-4" />
+                      Not Admissible
+                    </h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• "Why did the project fail?"</li>
+                      <li>• "What went wrong with the launch?"</li>
+                      <li>• "Why did we miss the target?"</li>
+                      <li>• "Should they have known this would happen?"</li>
+                    </ul>
+                  </div>
+                  <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
+                    <h4 className="font-semibold text-sm text-emerald-700 dark:text-emerald-300 mb-2 flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4" />
+                      Admissible
+                    </h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• "Were standard procedures followed?"</li>
+                      <li>• "What information was available at the time?"</li>
+                      <li>• "Were there documented constraints?"</li>
+                      <li>• "Was the escalation pathway used?"</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Decision-Time Boundary */}
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+              <h3 className="font-display font-semibold text-lg text-foreground mb-3 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-amber-600" />
+                Decision-Time Boundary
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                The specific moment or period when a decision was made. Analysis is restricted to information, constraints, and options that existed at that boundary—not what became known later.
+              </p>
+              <div className="bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-400 p-3 rounded-r-md">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  <strong>Key principle:</strong> "What was knowable then?" not "What do we know now?"
+                </p>
+              </div>
+            </div>
+
+            {/* Category Error */}
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+              <h3 className="font-display font-semibold text-lg text-foreground mb-3 flex items-center gap-2">
+                <Gavel className="w-5 h-5 text-purple-600" />
+                Category Error
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                A question that requires a type of judgment outside this system's scope. Moral judgments, legal liability, and normative assessments require human expertise (counsel, ethics boards, etc.) rather than governance analytics.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <strong>Example:</strong> "Was this negligent?" → Requires legal counsel, not governance AI.
+              </p>
+            </div>
+
+            {/* Sealed Parameter */}
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+              <h3 className="font-display font-semibold text-lg text-foreground mb-3 flex items-center gap-2">
+                <Lock className="w-5 h-5 text-amber-600" />
+                Sealed Parameter
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                When the system performs calculations, proprietary decision factors are marked as <code className="bg-muted px-1 py-0.5 rounded text-xs">[SEALED]</code>. The arithmetic is shown and verifiable, but the specific internal values are protected for IP safety.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You can verify the math is correct without seeing the confidential inputs.
+              </p>
             </div>
           </div>
         </section>

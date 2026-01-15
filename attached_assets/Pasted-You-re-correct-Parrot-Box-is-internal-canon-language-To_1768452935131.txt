@@ -1,0 +1,99 @@
+You’re correct. “Parrot Box” is internal canon language. To an outside reader it reads like inside baseball, which breaks trust instead of building it.
+
+You do not need to remove it. You need to translate it and give the user a one-click way to learn it without derailing the conversation.
+
+What to do: keep the concept, rename the surface label
+
+External label (what users see)
+
+Use a plain-language banner title like:
+	•	Outcome-Blindness Rule
+	•	Decision-Time Boundary
+	•	Admissibility Gate
+	•	Hindsight Not Allowed
+
+Internal reference (what you keep for canon / audit)
+
+Still store:
+	•	PARROT_BOX
+	•	canon citation
+	•	section/page references
+
+But don’t lead with the term.
+
+⸻
+
+Where the user learns it (must exist in-app)
+
+You need two learning paths:
+	1.	Inline “What is this?” tooltip (best)
+
+	•	Whenever a refusal banner appears, the banner includes:
+	•	“Why am I seeing this?” (click)
+	•	expands to a 3–5 sentence explanation + one example
+
+	2.	Glossary / How It Works
+
+	•	A left-nav item already exists (“How It Works”)
+	•	Add a section:
+	•	Outcome-Blindness (Parrot Box)
+	•	short explanation
+	•	examples of admissible vs inadmissible questions
+
+This keeps buyer flow intact: they can learn without leaving the moment.
+
+⸻
+
+Exactly what to tell the agent (paste this)
+
+Instruction to Agent — Replace “Parrot Box” with Buyer-Facing Language + Inline Explain
+	1.	Do not show the phrase “Parrot Box” to users by default.
+
+	•	Treat “Parrot Box” as an internal codename only.
+
+	2.	Update refusal UI copy:
+
+	•	Replace banner header with one of:
+	•	“Outcome-Blindness Rule”
+	•	“Decision-Time Boundary”
+	•	“Hindsight Not Admissible”
+	•	Add a small link: “What does this mean?”
+
+	3.	Clicking “What does this mean?” expands an inline explainer:
+
+	•	3–5 sentences, plain language
+	•	One concrete example
+	•	One “What you can ask instead” line
+
+	4.	Add a glossary entry in “How It Works”:
+
+	•	Title: “Outcome-Blindness (internal: Parrot Box)”
+	•	Include:
+	•	definition
+	•	why it exists
+	•	examples (admissible vs inadmissible)
+	•	This page must be reachable in one click from the refusal banner.
+
+	5.	Citations:
+
+	•	Continue citing the Parrot Box canon internally and in audit logs.
+	•	In the UI, display the citation as:
+	•	“Policy Basis: Outcome-Blindness Rule (Canon)”
+	•	not “Parrot Box”
+
+Success criterion:
+A new user should understand the refusal in under 10 seconds without prior knowledge of internal terms.
+
+⸻
+
+Why this matters commercially
+
+Buyers don’t pay for clever names. They pay for:
+	•	clarity under pressure
+	•	defensible reasoning
+	•	language they can repeat in meetings
+
+Right now “Parrot Box” reads like a cult term.
+After this change it becomes a governance feature.
+
+If you want, I can also rewrite the exact refusal text into “admin English” (tight, authoritative, non-weird) and give you a small set of standardized refusal templates.

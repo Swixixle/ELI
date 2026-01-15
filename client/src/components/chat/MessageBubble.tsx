@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { Message, Citation, IPSafetyFlag } from "@/lib/types";
 import { CitationCard } from "./CitationCard";
 import { CalculationProof } from "./CalculationProof";
-import { AlertTriangle, ShieldAlert, Bot, Info, Scale, HeartPulse, Gavel, Clock } from "lucide-react";
+import { AlertTriangle, ShieldAlert, Bot, Info, Scale, HeartPulse, Gavel, Clock, HelpCircle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
 
@@ -9,14 +10,51 @@ interface MessageBubbleProps {
   message: Message;
 }
 
+// Buyer-facing labels for internal refusal types
+const REFUSAL_LABELS: Record<string, { title: string; explainer: string; example: string; alternative: string }> = {
+  parrot_box: {
+    title: "Decision-Time Boundary",
+    explainer: "This system is designed to evaluate decisions using only the information that was available at the time the decision was made. Using knowledge of what happened afterward (hindsight) would make any conclusion unfair and inadmissible in governance contexts.",
+    example: "\"Why did the project fail?\" requires knowing the outcome, which wasn't available when decisions were made.",
+    alternative: "Ask about process adequacy, information availability, or system constraints at decision time."
+  },
+  temporal_boundary: {
+    title: "Outcome-Blindness Rule",
+    explainer: "Questions that require explaining outcomes after the fact import inadmissible hindsight. The system cannot use knowledge of what happened to judge what 'should have been known' at the time.",
+    example: "\"What went wrong?\" assumes we can trace causation backward from an outcome—which is hindsight reasoning.",
+    alternative: "Ask about decision-time conditions, available information, or procedural compliance."
+  },
+  category_error: {
+    title: "Outside Epistemic Scope",
+    explainer: "This question requires a type of judgment (moral, legal, or normative) that falls outside what this system is authorized to evaluate. The system handles procedural and factual governance questions only.",
+    example: "\"Was this negligent?\" requires legal/moral judgment that must come from qualified counsel.",
+    alternative: "Ask about process compliance, information adequacy, or documented constraints."
+  },
+  medical_safety: {
+    title: "Protected Health Boundary",
+    explainer: "This system does not access, store, or process patient-identifiable health information. PHI requires HIPAA-compliant systems with appropriate audit trails.",
+    example: "Requests for patient names, records, or medical histories are not processed.",
+    alternative: "Describe the situation without patient identifiers for governance analysis."
+  }
+};
+
 export function MessageBubble({ message }: MessageBubbleProps) {
+  const [showExplainer, setShowExplainer] = useState(false);
   const isUser = message.role === "user";
   const hasParrotBox = message.ipFlags?.some(f => f.type === "parrot_box");
+  const hasTemporalBoundary = message.ipFlags?.some(f => f.type === "temporal_boundary");
   const hasCategoryError = message.ipFlags?.some(f => f.type === "category_error");
   const hasMedicalSafety = message.ipFlags?.some(f => f.type === "medical_safety");
   const hasTemporalPublicData = message.ipFlags?.some(f => f.type === "temporal_public_data");
-  const hasAnyRefusal = hasParrotBox || hasCategoryError || hasMedicalSafety || hasTemporalPublicData;
+  const hasAnyRefusal = hasParrotBox || hasTemporalBoundary || hasCategoryError || hasMedicalSafety || hasTemporalPublicData;
   const hasPublicData = message.citations?.some(c => c.sourceType === "public_dataset");
+  
+  // Determine refusal type for explainer
+  const refusalType = hasMedicalSafety ? "medical_safety" : 
+                      hasCategoryError ? "category_error" : 
+                      hasTemporalBoundary ? "temporal_boundary" :
+                      hasParrotBox ? "parrot_box" : null;
+  const refusalInfo = refusalType ? REFUSAL_LABELS[refusalType] : null;
 
   return (
     <div className={cn("flex w-full mb-6", isUser ? "justify-end" : "justify-start")}>
@@ -51,27 +89,61 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                hasTemporalPublicData ? "border-amber-500 bg-amber-50 dark:bg-amber-900/10" :
                "border-destructive bg-destructive/5"
              )}>
-               <div className={cn(
-                 "flex items-center gap-2 font-bold mb-2",
-                 hasMedicalSafety ? "text-rose-700 dark:text-rose-300" :
-                 hasCategoryError ? "text-purple-700 dark:text-purple-300" :
-                 hasTemporalPublicData ? "text-amber-700 dark:text-amber-300" :
-                 "text-destructive"
-               )}>
-                 {hasMedicalSafety ? <HeartPulse className="w-5 h-5" /> :
-                  hasCategoryError ? <Gavel className="w-5 h-5" /> :
-                  hasTemporalPublicData ? <Clock className="w-5 h-5" /> :
-                  <ShieldAlert className="w-5 h-5" />}
-                 <span>
-                   {hasMedicalSafety ? "Medical Safety Boundary" :
-                    hasCategoryError ? "Category Error" :
-                    hasTemporalPublicData ? "Temporal Data Constraint" :
-                    "Epistemic Refusal"}
-                 </span>
+               <div className="flex items-center justify-between mb-2">
+                 <div className={cn(
+                   "flex items-center gap-2 font-bold",
+                   hasMedicalSafety ? "text-rose-700 dark:text-rose-300" :
+                   hasCategoryError ? "text-purple-700 dark:text-purple-300" :
+                   hasTemporalPublicData ? "text-amber-700 dark:text-amber-300" :
+                   "text-destructive"
+                 )}>
+                   {hasMedicalSafety ? <HeartPulse className="w-5 h-5" /> :
+                    hasCategoryError ? <Gavel className="w-5 h-5" /> :
+                    hasTemporalPublicData ? <Clock className="w-5 h-5" /> :
+                    <ShieldAlert className="w-5 h-5" />}
+                   <span>
+                     {refusalInfo?.title || (hasTemporalPublicData ? "Temporal Data Constraint" : "Decision-Time Boundary")}
+                   </span>
+                 </div>
+                 {refusalInfo && (
+                   <button
+                     onClick={() => setShowExplainer(!showExplainer)}
+                     className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                     data-testid="btn-what-is-this"
+                   >
+                     <HelpCircle className="w-3.5 h-3.5" />
+                     <span>What is this?</span>
+                     {showExplainer ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                   </button>
+                 )}
                </div>
-               <p className="text-foreground text-sm font-medium whitespace-pre-wrap leading-relaxed">
+               
+               {/* Inline Explainer */}
+               {showExplainer && refusalInfo && (
+                 <div className="mb-4 p-3 bg-background/50 rounded-md border border-border/50 text-sm space-y-2">
+                   <p className="text-foreground leading-relaxed">{refusalInfo.explainer}</p>
+                   <div className="text-muted-foreground">
+                     <span className="font-semibold">Example: </span>
+                     <span className="italic">{refusalInfo.example}</span>
+                   </div>
+                   <div className="text-muted-foreground">
+                     <span className="font-semibold">Instead: </span>
+                     {refusalInfo.alternative}
+                   </div>
+                   <a 
+                     href="/about#glossary" 
+                     className="inline-flex items-center gap-1 text-primary hover:underline text-xs mt-1"
+                     data-testid="link-learn-more"
+                   >
+                     <ExternalLink className="w-3 h-3" />
+                     Learn more in How It Works
+                   </a>
+                 </div>
+               )}
+               
+               <div className="text-foreground text-sm font-medium whitespace-pre-wrap leading-relaxed">
                  {message.content}
-               </p>
+               </div>
              </div>
           ) : (
             <div className="whitespace-pre-wrap leading-relaxed">
