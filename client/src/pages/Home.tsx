@@ -1,8 +1,8 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { MessageBubble } from "@/components/chat/MessageBubble";
-import { INITIAL_MESSAGES, Message, SCENARIO_RESPONSES } from "@/lib/types";
+import { INITIAL_MESSAGES, Message, SCENARIO_RESPONSES, CANONICAL_INTENTS } from "@/lib/types";
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel, FolderOpen } from "lucide-react";
+import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel, FolderOpen, CheckCircle, AlertCircle, AlertTriangle, ArrowRight, CheckSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -12,6 +12,17 @@ import { queryClient } from "@/lib/queryClient";
 import { CaseSelector } from "@/components/cases/CaseSelector";
 import type { Case } from "@shared/schema";
 import { normalizeQuestion, isMetaQuery, getMetaHelpResponse } from "@/lib/questionNormalizer";
+
+const INTENT_ICONS: Record<string, React.ReactNode> = {
+  "readiness": <CheckCircle className="w-3.5 h-3.5" />,
+  "sufficiency": <FileText className="w-3.5 h-3.5" />,
+  "gaps": <AlertCircle className="w-3.5 h-3.5" />,
+  "limits": <Ban className="w-3.5 h-3.5" />,
+  "risks": <AlertTriangle className="w-3.5 h-3.5" />,
+  "next_action": <ArrowRight className="w-3.5 h-3.5" />,
+  "closure": <CheckSquare className="w-3.5 h-3.5" />,
+  "defensibility": <Shield className="w-3.5 h-3.5" />
+};
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -284,6 +295,56 @@ export default function Home() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  const handleIntentClick = async (question: string) => {
+    if (showDemo) setShowDemo(false);
+    
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: question,
+      timestamp: Date.now(),
+      temporalContext: decisionTime 
+        ? `Decision Time: ${format(decisionTime, "yyyy-MM-dd")}` 
+        : "Decision Time: Now (Default)"
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setIsTyping(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: question, mode })
+      });
+      
+      const data = await response.json();
+      
+      const assistantMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: data.content || "",
+        citations: data.citations?.map((c: any, idx: number) => ({
+          id: `cite-${idx}`,
+          sourceType: c.type === "canon" ? "private_canon" : "public_dataset",
+          title: c.source,
+          version: c.version,
+          section: c.section,
+          canonTier: c.canonTier
+        })),
+        timestamp: Date.now(),
+        temporalContext: userMsg.temporalContext,
+        userSummary: data.userSummary
+      };
+
+      setMessages(prev => [...prev, assistantMsg]);
+    } catch (error) {
+      console.error("Intent error:", error);
+    } finally {
+      setIsTyping(false);
     }
   };
 
@@ -563,6 +624,27 @@ export default function Home() {
                <HelpCircle className="w-3 h-3" />
                Ask how to use me
              </button>
+          )}
+
+          {/* Intent Buttons - Quick access to canonical questions */}
+          {activeCase && (
+            <div className="mb-3">
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">Quick Review</div>
+              <div className="flex flex-wrap gap-2">
+                {CANONICAL_INTENTS.slice(0, 6).map((intent) => (
+                  <button
+                    key={intent.id}
+                    onClick={() => handleIntentClick(intent.question)}
+                    disabled={isTyping}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted/50 hover:bg-muted border border-border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    data-testid={`intent-${intent.id}`}
+                  >
+                    {INTENT_ICONS[intent.id]}
+                    {intent.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
           <div className="relative shadow-lg rounded-xl overflow-hidden border border-border bg-background focus-within:ring-2 focus-within:ring-primary/20 transition-all">

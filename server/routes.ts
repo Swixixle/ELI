@@ -333,6 +333,297 @@ interface ChatResponse {
   userSummary?: UserSummary;
 }
 
+// Canonical Intent types
+type CanonicalIntent = "readiness" | "sufficiency" | "gaps" | "limits" | "risks" | "next_action" | "closure" | "defensibility";
+
+// Intent classification patterns
+const INTENT_PATTERNS: { intent: CanonicalIntent; patterns: RegExp[] }[] = [
+  {
+    intent: "readiness",
+    patterns: [
+      /\b(is|are) (this|the|it) (case |)(ready|prepared)\b/,
+      /\bready (for|to) (review|evaluate|assess|decide)\b/,
+      /\bcan (we|I) (start|begin|proceed with) (the |a )?(review|evaluation|assessment)\b/,
+      /\b(review|audit)(-| )?ready\b/
+    ]
+  },
+  {
+    intent: "sufficiency",
+    patterns: [
+      /\b(do|have) (we|I) have (enough|all|sufficient|all the|the) (documentation|documents|evidence|info|information)\b/,
+      /\bis (there|this) enough (documentation|evidence|info|information)\b/,
+      /\b(documentation|evidence|information) (is |)(complete|sufficient|enough)\b/,
+      /\bhave (everything|what) we need\b/,
+      /\b(enough|sufficient) (to|for) (decide|determine|conclude|review)\b/
+    ]
+  },
+  {
+    intent: "gaps",
+    patterns: [
+      /\bwhat('s| is| are) missing\b/,
+      /\bis (anything|something) missing\b/,
+      /\bwhat (do we|else do we) need\b/,
+      /\bwhat('s| is) (weak|incomplete|lacking)\b/,
+      /\bgaps? in (the |)(evidence|documentation|case)\b/
+    ]
+  },
+  {
+    intent: "limits",
+    patterns: [
+      /\bwhat (can('t| not)|cannot) (be |)(concluded|determined|decided|known)\b/,
+      /\blimits? (of|on) (the |this |)(analysis|review|determination)\b/,
+      /\bwhat (are |is )?(the |)limit(s|ations)\b/,
+      /\bcannot (be |)(determined|concluded|decided)\b/
+    ]
+  },
+  {
+    intent: "risks",
+    patterns: [
+      /\b(red flags?|concerns?|warning signs?)\b/,
+      /\bis (anything|something) (concerning|wrong|problematic)\b/,
+      /\b(are there|is there) (any |)(concerns?|issues?|problems?|risks?)\b/,
+      /\bwhat (should|could) (we|I) (be |)worried about\b/
+    ]
+  },
+  {
+    intent: "next_action",
+    patterns: [
+      /\bwhat (should|do) (we|I) do next\b/,
+      /\bwhat('s| is) (the |)next step\b/,
+      /\bnext (step|action|move)\b/,
+      /\bwhat now\b/,
+      /\bhow (should|do) (we|I) proceed\b/
+    ]
+  },
+  {
+    intent: "closure",
+    patterns: [
+      /\bcan (this|the|we) (case |)(be |)closed\b/,
+      /\bclose (this|the) (case|review|matter)\b/,
+      /\b(ready|able) to close\b/,
+      /\bclosure (eligible|ready|possible)\b/
+    ]
+  },
+  {
+    intent: "defensibility",
+    patterns: [
+      /\b(is|can) (this|the|it) (decision |)(be |)(defensible|justified|supported)\b/,
+      /\bcan (we|I) (defend|justify|support) (this|the)\b/,
+      /\bwill (this|it) (hold up|stand up|withstand) (to |)(scrutiny|audit|review)\b/
+    ]
+  }
+];
+
+function classifyIntent(message: string): CanonicalIntent | null {
+  const lowerMessage = message.toLowerCase();
+  for (const { intent, patterns } of INTENT_PATTERNS) {
+    if (patterns.some(p => p.test(lowerMessage))) {
+      return intent;
+    }
+  }
+  return null;
+}
+
+function getIntentResponse(intent: CanonicalIntent, citations: Citation[]): ChatResponse {
+  switch (intent) {
+    case "readiness":
+      return {
+        content: `## Readiness Assessment
+
+Based on the documents in this case:
+
+**Current State:**
+- Case structure is established
+- Source documents are present
+- Temporal boundaries need confirmation
+
+**Readiness Determination:**
+The case is ready for preliminary review. A final determination requires temporal markers and independent verification.`,
+        citations,
+        userSummary: {
+          status: "can_proceed",
+          statusLabel: "Ready for preliminary review",
+          meaning: "The case has enough structure to begin review, but not enough for a final decision.",
+          nextStep: "Start the review or add more documentation for a complete determination."
+        }
+      };
+    
+    case "sufficiency":
+      return {
+        content: `## Sufficiency Assessment
+
+**What's Present:**
+- Case container with documentation
+- Source documents available
+
+**What's Needed for Full Determination:**
+- Decision date markers on evidence
+- Independent verification of key claims
+- Clear policy application documentation
+
+**Determination:**
+Sufficient for preliminary review; not sufficient for final determination.`,
+        citations,
+        userSummary: {
+          status: "needs_more",
+          statusLabel: "Partial sufficiency",
+          meaning: "You have enough to start a review, but not enough to reach a final decision.",
+          missing: ["Decision date markers", "Independent verification", "Policy application evidence"],
+          nextStep: "Upload additional evidence or proceed with a preliminary review."
+        }
+      };
+    
+    case "gaps":
+      return {
+        content: `## Gap Analysis
+
+**Missing Elements Identified:**
+
+1. **Temporal Markers** - Evidence lacks clear decision-time stamps
+2. **Independent Verification** - No third-party confirmation of claims
+3. **Policy Application** - How policies were applied at decision time
+4. **Resource Context** - Information about constraints at decision time
+
+**Priority Order:**
+Address temporal markers first, as they unlock outcome-blind evaluation.`,
+        citations,
+        userSummary: {
+          status: "needs_more",
+          statusLabel: "Gaps identified",
+          meaning: "Several key elements are missing that would be needed for a complete evaluation.",
+          missing: ["Temporal markers on evidence", "Independent verification", "Policy application records", "Resource context"],
+          nextStep: "Upload documents that address these gaps, starting with temporal markers."
+        }
+      };
+    
+    case "limits":
+      return {
+        content: `## Evaluation Limits
+
+**What Cannot Be Determined:**
+
+1. **Individual Fault** - Blame requires moral judgment outside scope
+2. **Outcome Causation** - What "caused" the outcome is inadmissible
+3. **Should-Have-Known** - Hindsight judgments are blocked
+4. **Future Predictions** - Outcomes cannot be predicted
+
+**What CAN Be Determined:**
+- Whether procedures were followed
+- What information was available at decision time
+- Whether the decision was procedurally admissible`,
+        citations,
+        userSummary: {
+          status: "can_proceed",
+          statusLabel: "Limits defined",
+          meaning: "The system cannot assign blame, predict outcomes, or use hindsight. It CAN evaluate procedural compliance.",
+          nextStep: "Ask about procedural compliance or decision-time information availability."
+        }
+      };
+    
+    case "risks":
+      return {
+        content: `## Risk Assessment
+
+**Potential Concerns:**
+
+Based on the case materials, no critical red flags have been identified. However, the following warrant attention:
+
+1. **Incomplete Temporal Context** - Missing decision dates could affect admissibility
+2. **Unverified Claims** - Some assertions lack independent confirmation
+3. **Scope Ambiguity** - Evaluation boundaries may need clarification
+
+**Risk Level:** Low to Moderate
+
+**Recommendation:** Address temporal context before proceeding to final review.`,
+        citations,
+        userSummary: {
+          status: "needs_more",
+          statusLabel: "Low-moderate risk",
+          meaning: "No critical issues found, but some areas need attention before final review.",
+          missing: ["Complete temporal context", "Independent verification of claims"],
+          nextStep: "Address the temporal context and verify key claims before final review."
+        }
+      };
+    
+    case "next_action":
+      return {
+        content: `## Recommended Next Steps
+
+**Immediate Actions:**
+
+1. **Confirm Decision Date** - Lock the temporal boundary for evaluation
+2. **Upload Supporting Evidence** - Add any missing documentation
+3. **Request Preliminary Review** - Get initial procedural assessment
+
+**After Those:**
+4. Address any gaps identified in preliminary review
+5. Request final determination when all evidence is in place`,
+        citations,
+        userSummary: {
+          status: "can_proceed",
+          statusLabel: "Clear path forward",
+          meaning: "The next step is to confirm the decision date and add any missing documentation.",
+          nextStep: "Set the decision date in the interface, then upload any additional evidence."
+        }
+      };
+    
+    case "closure":
+      return {
+        content: `## Closure Eligibility
+
+**Current Status:**
+The case is NOT ready for closure.
+
+**Remaining Requirements:**
+
+1. Complete temporal boundary establishment
+2. Final procedural determination
+3. Documentation of evaluation outcome
+4. Audit trail completion
+
+**Closure Criteria:**
+All Canon evaluation steps must complete with either a positive determination, negative determination, or explicit refusal with documented reason.`,
+        citations,
+        userSummary: {
+          status: "needs_more",
+          statusLabel: "Not ready to close",
+          meaning: "The case cannot be closed yet. Several steps remain before closure is appropriate.",
+          missing: ["Temporal boundary confirmation", "Final determination", "Audit trail completion"],
+          nextStep: "Complete the remaining evaluation steps before requesting closure."
+        }
+      };
+    
+    case "defensibility":
+      return {
+        content: `## Defensibility Assessment
+
+**Current Defensibility Status:**
+
+A determination made now would have PARTIAL defensibility:
+
+**Strong Points:**
+- Documented source materials
+- Clear procedural framework
+- Outcome-blind evaluation approach
+
+**Weak Points:**
+- Incomplete temporal markers
+- Unverified independent claims
+- Potential scope ambiguity
+
+**Recommendation:** Strengthen weak points before making a determination that needs to withstand scrutiny.`,
+        citations,
+        userSummary: {
+          status: "needs_more",
+          statusLabel: "Partially defensible",
+          meaning: "A decision made now could be defended, but has weak points that may be challenged.",
+          missing: ["Complete temporal documentation", "Independent verification"],
+          nextStep: "Address the weak points before making a determination that needs to withstand audit."
+        }
+      };
+  }
+}
+
 function generateEpistemicResponse(message: string, chunks: CanonChunk[], mode: string): ChatResponse {
   const lowerMessage = message.toLowerCase();
   
@@ -343,6 +634,12 @@ function generateEpistemicResponse(message: string, chunks: CanonChunk[], mode: 
     version: chunk.version || undefined,
     canonTier: chunk.canonTier
   }));
+
+  // CANONICAL INTENT CLASSIFICATION - Check for standardized intents first
+  const intent = classifyIntent(message);
+  if (intent) {
+    return getIntentResponse(intent, citations);
+  }
 
   // FINANCIAL INTERPRETATION LAYER - Scenario analysis, not templates
   const financialPatterns = [
