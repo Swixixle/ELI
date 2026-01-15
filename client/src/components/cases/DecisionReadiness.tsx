@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   CheckCircle2, 
   XCircle, 
@@ -9,9 +10,38 @@ import {
   Unlock,
   ArrowRight,
   Target,
-  AlertCircle
+  AlertCircle,
+  HelpCircle
 } from "lucide-react";
 import type { DecisionReadiness, CasePhase, RequirementCategory } from "@/lib/types";
+
+const CRITERIA_EXPLAINER = [
+  {
+    name: "Temporal Verification",
+    question: "When was the decision made?",
+    why: "Without this, you cannot prevent hindsight bias, lock admissible evidence, or define what was knowable at the time."
+  },
+  {
+    name: "Evidence Sufficiency",
+    question: "What information was actually available at that time?",
+    why: "This separates 'We knew X' from 'We learned X later.' Without this, outcomes rewrite memory."
+  },
+  {
+    name: "Independent Verification",
+    question: "Was any of that information independently corroborated?",
+    why: "This prevents self-report bias, single-source hallucination, and narrative laundering. Every audit system requires this."
+  },
+  {
+    name: "Policy Application",
+    question: "What rule, policy, or standard governed the decision?",
+    why: "Without this, decisions become ad hoc, power replaces process, and you cannot distinguish judgment from preference."
+  },
+  {
+    name: "Contextual Constraints",
+    question: "What constraints shaped the decision-maker's options?",
+    why: "Time pressure, staffing, resources, emergency conditions. Without this, you punish people for not doing the impossible."
+  }
+];
 
 const PHASE_CONFIG: Record<CasePhase, { label: string; description: string; order: number }> = {
   intake: { label: "Intake", description: "Get the case into a reviewable state", order: 1 },
@@ -184,12 +214,43 @@ export function DecisionReadinessPanel({ readiness, onSetDecisionTarget }: Decis
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Requirements</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium">Review Readiness</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-muted-foreground hover:text-foreground transition-colors" data-testid="btn-why-criteria">
+                    <HelpCircle className="h-3.5 w-3.5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="start">
+                  <div className="p-3 border-b bg-muted/30">
+                    <p className="text-xs font-semibold">Why these 5 conditions?</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      These criteria recur across law, audit, safety engineering, and ethics. They are the smallest complete set required for procedurally legitimate review.
+                    </p>
+                  </div>
+                  <div className="p-2 max-h-64 overflow-y-auto">
+                    {CRITERIA_EXPLAINER.map((c, i) => (
+                      <div key={i} className="p-2 rounded hover:bg-muted/50">
+                        <p className="text-xs font-medium">{c.name}</p>
+                        <p className="text-xs text-muted-foreground italic mt-0.5">"{c.question}"</p>
+                        <p className="text-xs text-muted-foreground mt-1">{c.why}</p>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
             <span className="text-sm font-medium">
-              {readiness.totalSatisfied} / {readiness.totalRequired}
+              {readiness.totalSatisfied} / {readiness.totalRequired} conditions
             </span>
           </div>
           <Progress value={progressPercent} className="h-2" />
+          <p className={`text-xs ${readiness.permitted ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
+            {readiness.permitted 
+              ? "This case can be fairly evaluated." 
+              : "This case cannot yet be fairly evaluated."}
+          </p>
         </div>
 
         {readiness.categories.length > 0 && (
