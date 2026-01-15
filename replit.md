@@ -1,5 +1,21 @@
 # ELI Expert
 
+## BASE CAMP — v1.0 Complete (January 2026)
+
+This checkpoint represents the complete procedural evaluation system ready for:
+- Regulatory sandbox demonstrations
+- Procurement conversations
+- Compliance reviews
+- Strategic partner demos
+
+**Key commits to return to:**
+- `06cff98` - Integration positioning docs added
+- `431a28a` - Published app
+- `bb5a03d` - Demo banner added
+- `af9bde4` - UX improvements complete
+
+---
+
 ## Overview
 
 ELI Expert is a governance-grade epistemic assistant designed to provide verifiable, outcome-blind answers grounded strictly in authoritative documentation ("Canon") and public data sources. Unlike general-purpose chatbots, this system enforces strict admissibility rules, refuses to speculate or invent claims, and can prove its computations step-by-step without exposing proprietary logic.
