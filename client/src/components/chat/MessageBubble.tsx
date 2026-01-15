@@ -1,7 +1,7 @@
 import { Message, Citation, IPSafetyFlag } from "@/lib/types";
 import { CitationCard } from "./CitationCard";
 import { CalculationProof } from "./CalculationProof";
-import { AlertTriangle, ShieldAlert, Bot } from "lucide-react";
+import { AlertTriangle, ShieldAlert, Bot, Info, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
 
@@ -12,6 +12,7 @@ interface MessageBubbleProps {
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const hasParrotBox = message.ipFlags?.some(f => f.type === "parrot_box");
+  const hasPublicData = message.citations?.some(c => c.sourceType === "public_dataset");
 
   return (
     <div className={cn("flex w-full mb-6", isUser ? "justify-end" : "justify-start")}>
@@ -19,12 +20,20 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         
         {/* Assistant Header */}
         {!isUser && (
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center">
-              <Bot className="w-4 h-4" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center">
+                <Bot className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">ELI Expert</span>
             </div>
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">ELI Expert</span>
-            <span className="text-[10px] text-muted-foreground/50 font-mono">v4.0.1</span>
+            {/* Epistemic Status Line */}
+            <div className="text-[10px] text-muted-foreground/70 font-mono border border-border px-2 py-0.5 rounded-full flex items-center gap-1.5">
+              <Scale className="w-3 h-3" />
+              <span>
+                Status: {hasParrotBox ? "REFUSAL" : "OK"} • {message.temporalContext || "Canon v4.0"} • {message.calcProof ? "Audited" : "Cited"}
+              </span>
+            </div>
           </div>
         )}
 
@@ -43,14 +52,28 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           ) : (
             <div className="whitespace-pre-wrap leading-relaxed">
               {message.content.split(/(\[CITATION:[^\]]+\])/).map((part, i) => {
-                 // Simple parser to inject citation cards if we were using raw text tags, 
-                 // but currently we just append citations at the end or assume the text is clean.
-                 // For this mock, we'll just render the text.
                  return part;
               })}
             </div>
           )}
         </div>
+
+        {/* Public Data Provenance Banner (Inline) */}
+        {!isUser && hasPublicData && message.citations?.filter(c => c.sourceType === "public_dataset").map(citation => (
+          <div key={citation.id} className="mt-3 bg-blue-50/50 dark:bg-blue-900/10 border-l-2 border-blue-400 p-3 rounded-r-sm text-xs">
+            <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200 font-semibold mb-1">
+              <Info className="w-3 h-3" />
+              <span>Public Data Provenance: {citation.provenance?.institution || "External Source"}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-blue-700/80 dark:text-blue-300/80 font-mono text-[10px]">
+              <span>Dataset: {citation.title}</span>
+              <span>As of: {citation.date}</span>
+              {citation.provenance?.limitations && (
+                <span className="col-span-2 italic opacity-80">Note: {citation.provenance.limitations}</span>
+              )}
+            </div>
+          </div>
+        ))}
 
         {/* Citations Footer */}
         {!isUser && message.citations && message.citations.length > 0 && (

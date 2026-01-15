@@ -8,6 +8,10 @@ export type Citation = {
   url?: string;
   datasetId?: string;
   date?: string;
+  provenance?: {
+    institution: string;
+    limitations?: string;
+  };
 };
 
 export type CalcStep = {
@@ -44,6 +48,7 @@ export type Message = {
   visualSpec?: VisualSpec;
   ipFlags?: IPSafetyFlag[];
   timestamp: number;
+  temporalContext?: string; // e.g., "Decision Time: 2024-01-01" or "Current Context"
 };
 
 export const MOCK_CITATIONS: Record<string, Citation> = {
@@ -69,7 +74,11 @@ export const MOCK_CITATIONS: Record<string, Citation> = {
     title: "Bureau of Labor Statistics",
     datasetId: "CPI-U-2025",
     url: "https://bls.gov/cpi",
-    date: "2025-09-01"
+    date: "2025-09-01",
+    provenance: {
+      institution: "U.S. Department of Labor",
+      limitations: "Seasonally adjusted; subject to revision"
+    }
   }
 };
 
@@ -78,7 +87,8 @@ export const INITIAL_MESSAGES: Message[] = [
     id: "welcome",
     role: "assistant",
     content: "ELI Expert System initialized. \n\nI am a governance-grade assistant grounded in **Canon v4.0**. I can assist with financial analysis, compliance queries, and strategic positioning.\n\n*Note: All outputs are outcome-blind and strictly cited.*",
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    temporalContext: "Decision Time: Now (Default)"
   }
 ];
 
@@ -131,6 +141,22 @@ export const SCENARIO_RESPONSES: Record<string, Partial<Message>> = {
           ["Audit Cost", "$50k/yr", "$35k/yr", "-30%"]
         ]
       }
+    }
+  },
+  "cpi_query": {
+    content: "The latest inflation data indicates a **3.2% increase** in the Consumer Price Index (CPI-U) over the last 12 months. This external benchmark suggests a need to re-evaluate our cost-of-labor assumptions for the upcoming fiscal year.",
+    citations: [MOCK_CITATIONS["c3"]],
+    calcProof: {
+       inputs: [
+         { label: "Previous Index", value: "305.2", sourceRef: "c3" },
+         { label: "Current Index", value: "315.0", sourceRef: "c3" }
+       ],
+       steps: [
+         { description: "Calculate Percentage Change", operation: "((315.0 - 305.2) / 305.2) * 100", result: "3.21%" },
+         { description: "Rounding", operation: "Round to nearest tenth", result: "3.2%" }
+       ],
+       finalResult: "3.2%",
+       sensitivityNote: "Based on unadjusted data. Seasonally adjusted figures may differ."
     }
   }
 };
