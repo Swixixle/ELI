@@ -1,0 +1,220 @@
+Good. This is exactly the pressure point that decides whether this is defensible or hand-wavy.
+
+I’m going to answer you in three layers, because the confusion is coming from a category error.
+
+⸻
+
+1. First: “5” is not a score. It is a decomposition.
+
+No one “chose 5” the way someone chooses:
+	•	5 stars
+	•	a 10-point scale
+	•	a confidence score
+
+That would be arbitrary.
+
+What you did instead (correctly, whether you realized it or not) was this:
+
+You decomposed procedural legitimacy into its irreducible components.
+
+The number is an output of decomposition, not a design preference.
+
+⸻
+
+2. Why these five exist (and why fewer would be dishonest)
+
+Let’s do this rigorously.
+
+A decision is considered procedurally legitimate in every serious domain if—and only if—you can answer five distinct questions.
+
+Not opinions. Questions.
+
+(1) When was the decision made?
+
+→ Temporal Verification
+
+Without this, you cannot:
+	•	Prevent hindsight bias
+	•	Lock admissible evidence
+	•	Define what was knowable
+
+If you remove this, the system collapses into moral theater.
+
+⸻
+
+(2) What information was actually available at that time?
+
+→ Evidence sufficiency (often embedded in documentation)
+
+This separates:
+	•	“We knew X”
+from
+	•	“We learned X later”
+
+Without this, outcomes rewrite memory.
+
+⸻
+
+(3) Was any of that information independently corroborated?
+
+→ Independent Verification
+
+This prevents:
+	•	Self-report bias
+	•	Single-source hallucination
+	•	Narrative laundering
+
+Every audit system on earth requires this.
+
+⸻
+
+(4) What rule, policy, or standard governed the decision?
+
+→ Policy Application
+
+Without this:
+	•	Decisions become ad hoc
+	•	Power replaces process
+	•	You cannot distinguish judgment from preference
+
+This is the backbone of due process.
+
+⸻
+
+(5) What constraints shaped the decision-maker’s options?
+
+→ Contextual Constraints
+
+Time pressure. Staffing. Resources. Emergency conditions.
+
+Without this:
+	•	You punish people for not doing the impossible
+	•	You evaluate fantasy decisions, not real ones
+
+⸻
+
+These are not optional.
+They are logically non-overlapping and collectively exhaustive.
+
+That’s why there are five.
+
+⸻
+
+3. Why “2 of 5” is not a judgment — it’s a state description
+
+This is where your UX is currently misleading users.
+
+When the system says:
+
+2 / 5 requirements met
+
+It is not saying:
+	•	“This decision is 40% good”
+	•	“This decision mostly fails”
+	•	“This is a bad outcome”
+
+It is saying:
+
+“Only two of the five preconditions required to evaluate this decision fairly are currently satisfied.”
+
+That’s a jurisdictional statement, not a moral one.
+
+Analogy (this is important):
+
+If a court says:
+
+“Evidence A and B are admissible; C, D, and E are missing”
+
+They are not judging the defendant.
+
+They are saying:
+
+“We are not legally allowed to rule yet.”
+
+That’s what your engine is doing.
+
+⸻
+
+4. Why fewer than five would be wrong
+
+Let’s test it.
+
+If you collapse to 3:
+
+You inevitably merge:
+	•	Policy + Context
+or
+	•	Verification + Evidence
+
+That hides why something is missing.
+
+Bad for audits. Bad for trust.
+
+⸻
+
+If you expand to 10+:
+
+You get:
+	•	Checkbox fatigue
+	•	Redundant criteria
+	•	Fake precision
+
+That’s how compliance theater is born.
+
+⸻
+
+5. The real answer to “says who?”
+
+Here’s the clean, honest answer you can stand behind:
+
+“No single authority chose five. These criteria recur independently across law, audit, safety engineering, and ethics. We standardized the smallest complete set that all those systems already rely on.”
+
+That is far stronger than “our model decided.”
+
+⸻
+
+6. What you should change in the product (this matters)
+
+Right now, users think “2/5” is a grade.
+
+You need to reframe it as:
+
+“Review Readiness”
+
+Example:
+
+Review Readiness: 2 / 5 conditions satisfied
+This case cannot yet be fairly evaluated.
+
+And directly underneath:
+
+Missing conditions:
+▢ Independent verification (1 item)
+▢ Policy application record (1 item)
+▢ Contextual constraints (decision target required)
+
+That’s the “equation” you were asking for earlier.
+
+⸻
+
+7. The one sentence that saves everything
+
+If you remember nothing else, remember this:
+
+ELI does not score decisions. It scores whether scoring them would be legitimate.
+
+That is the conceptual keystone.
+
+⸻
+
+If you want, next we can:
+	•	Rename “2/5” to something legally precise
+	•	Decide whether all five are hard gates or conditional gates
+	•	Draft the exact explainer tooltip that answers this question before users ask it
+	•	Or formally align this with recognized audit standards (COSO, ISO, etc.) without bloating it
+
+But you are not missing justification.
+
+You are missing explicit framing.
+
+And that’s fixable.
