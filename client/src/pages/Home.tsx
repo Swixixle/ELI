@@ -254,11 +254,24 @@ export default function Home() {
         {/* Top Bar */}
         <div className="flex items-center justify-between px-8 py-4 border-b bg-background/95 backdrop-blur z-10 sticky top-0">
           <div>
-            <h2 className="text-lg font-semibold font-display text-foreground">
-              {mode === "advisor" ? "Strategic Advisor" : "Sales Enablement"}
+            <h2 className="text-lg font-semibold font-display text-foreground flex items-center gap-2">
+              {showDemo && messages.length === 0 ? (
+                <>
+                  <span className="text-muted-foreground">No Case Loaded</span>
+                </>
+              ) : (
+                <>
+                  {mode === "advisor" ? "Case Analysis" : "Sales Review"}
+                  <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-mono">Active</span>
+                </>
+              )}
             </h2>
             <p className="text-xs text-muted-foreground">
-              {mode === "advisor" ? "Neutral • Outcome-Blind • Governance-First" : "Persuasive • Canon-Bounded • Objection Handling"}
+              {showDemo && messages.length === 0 
+                ? "Select an option below to begin" 
+                : mode === "advisor" 
+                  ? "Outcome-Blind • Auditable • Canon-Cited" 
+                  : "Canon-Bounded • Objection Handling"}
             </p>
           </div>
           
@@ -332,29 +345,76 @@ export default function Home() {
         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6 scroll-smooth">
           {showDemo && messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center space-y-8 animate-in fade-in duration-700">
-               <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-xl">
-                 <Shield className="w-8 h-8 text-primary-foreground" />
+               {/* No Case Loaded Banner */}
+               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6 max-w-lg w-full">
+                 <div className="flex items-start gap-4">
+                   <div className="w-10 h-10 bg-amber-100 dark:bg-amber-800 rounded-lg flex items-center justify-center shrink-0">
+                     <FileText className="w-5 h-5 text-amber-700 dark:text-amber-200" />
+                   </div>
+                   <div>
+                     <h3 className="font-semibold text-amber-900 dark:text-amber-100 mb-1">No Case Loaded</h3>
+                     <p className="text-sm text-amber-800/80 dark:text-amber-200/80 leading-relaxed">
+                       To begin analysis, you must open or upload source materials. This system works on files, not ad-hoc queries.
+                     </p>
+                   </div>
+                 </div>
                </div>
+               
                <div className="text-center space-y-2 max-w-md">
-                 <h1 className="text-3xl font-display font-bold text-foreground tracking-tight">ELI Expert</h1>
+                 <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">Start a Case</h1>
                  <p className="text-muted-foreground text-sm leading-relaxed">
-                   A governance-grade assistant that enforces epistemic boundaries. 
-                   Outcome-blind. Auditable. Citation-based.
+                   Choose how you want to begin your governance analysis.
                  </p>
                </div>
                
-               <div className="flex flex-col gap-3 w-full max-w-xs">
+               {/* Case-Centric CTAs */}
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-2xl">
+                 <a 
+                   href="/canon"
+                   className="flex flex-col items-center gap-3 p-6 bg-card border-2 border-border rounded-xl hover:border-primary/50 hover:shadow-lg transition-all text-center group"
+                   data-testid="cta-upload-documents"
+                 >
+                   <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                     <FileText className="w-6 h-6" />
+                   </div>
+                   <div>
+                     <div className="font-semibold text-foreground">Upload Documents</div>
+                     <div className="text-xs text-muted-foreground mt-1">Add source materials to Canon</div>
+                   </div>
+                 </a>
+                 
                  <button 
                    onClick={runDemo}
-                   className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                   className="flex flex-col items-center gap-3 p-6 bg-card border-2 border-primary rounded-xl hover:shadow-lg transition-all text-center group"
+                   data-testid="cta-sample-case"
                  >
-                   <Play className="w-4 h-4 fill-current" />
-                   Run Guided Demo
+                   <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center">
+                     <Play className="w-6 h-6 fill-current" />
+                   </div>
+                   <div>
+                     <div className="font-semibold text-foreground">Review Sample Case</div>
+                     <div className="text-xs text-muted-foreground mt-1">Board-level governance dispute</div>
+                   </div>
                  </button>
-                 <div className="text-center">
-                    <span className="text-[10px] text-muted-foreground/50 font-mono uppercase tracking-widest">or just start typing below</span>
-                 </div>
+                 
+                 <button
+                   onClick={() => { setShowDemo(false); }}
+                   className="flex flex-col items-center gap-3 p-6 bg-card border-2 border-border rounded-xl hover:border-primary/50 hover:shadow-lg transition-all text-center group"
+                   data-testid="cta-open-case"
+                 >
+                   <div className="w-12 h-12 rounded-xl bg-muted text-muted-foreground flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                     <Briefcase className="w-6 h-6" />
+                   </div>
+                   <div>
+                     <div className="font-semibold text-foreground">Open Existing Case</div>
+                     <div className="text-xs text-muted-foreground mt-1">Continue prior analysis</div>
+                   </div>
+                 </button>
                </div>
+
+               <p className="text-xs text-muted-foreground max-w-md text-center">
+                 This system enforces decision-time boundaries and requires all claims to cite Canon or verified data sources.
+               </p>
             </div>
           ) : (
             <>

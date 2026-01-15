@@ -6,7 +6,9 @@ import {
   Files, 
   Info, 
   LogOut,
-  Shield
+  Shield,
+  FolderOpen,
+  ClipboardList
 } from "lucide-react";
 import { Badge } from "@/components/shared/Badge";
 
@@ -14,8 +16,9 @@ export function Sidebar() {
   const [location] = useLocation();
 
   const navItems = [
-    { icon: LayoutDashboard, label: "Advisor", href: "/" },
-    { icon: Files, label: "Canon Library", href: "/canon" },
+    { icon: FolderOpen, label: "Cases", href: "/" },
+    { icon: Files, label: "Documents", href: "/canon" },
+    { icon: ClipboardList, label: "Audit Log", href: "/audit", disabled: true },
     { icon: Info, label: "How It Works", href: "/about" },
   ];
 
@@ -37,19 +40,30 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-6 space-y-1">
         {navItems.map((item) => (
-          <Link 
-            key={item.href} 
-            href={item.href} 
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
-              location === item.href 
-                ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" 
-                : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-            )}
-          >
-            <item.icon className="w-4 h-4" />
-            {item.label}
-          </Link>
+          item.disabled ? (
+            <div
+              key={item.href}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-sidebar-foreground/40 cursor-not-allowed"
+            >
+              <item.icon className="w-4 h-4" />
+              {item.label}
+              <Badge variant="outline" className="ml-auto h-4 text-[8px] px-1 py-0 opacity-50">Soon</Badge>
+            </div>
+          ) : (
+            <Link 
+              key={item.href} 
+              href={item.href} 
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+                location === item.href 
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" 
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+              )}
+            >
+              <item.icon className="w-4 h-4" />
+              {item.label}
+            </Link>
+          )
         ))}
       </nav>
 

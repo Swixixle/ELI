@@ -1,0 +1,170 @@
+You’re right. As shown, the homepage is functionally opaque. It fails at first-contact orientation and violates several baseline principles for governance-grade tools.
+
+Below is a precise diagnosis and concrete remediation plan.
+
+⸻
+
+1. Core Failure: No Case-File Orientation
+
+Observed problem
+	•	The page presents ELI Expert as an abstract capability (“governance-grade assistant”) without anchoring the user to any object of work.
+	•	There is no visible concept of:
+	•	a case file
+	•	a dossier
+	•	an uploaded document
+	•	an existing analysis
+	•	or even an example corpus
+
+Result
+The user has no answer to:
+
+“What am I supposed to analyze with this?”
+
+For a governance system, that is a fatal first impression.
+
+⸻
+
+2. Misplaced CTA: “Run Guided Demo”
+
+Why this fails
+	•	“Run Guided Demo” is a capability-first CTA.
+	•	Governance tools must be case-first, not feature-first.
+
+A serious user expects:
+	•	“Open a case”
+	•	“Review an analysis”
+	•	“Upload materials”
+	•	“Continue prior file”
+
+Instead, they get a demo button with no indication of:
+	•	What data it uses
+	•	What type of output it produces
+	•	Whether it is safe, mock, or binding
+
+This signals product marketing, not decision infrastructure.
+
+⸻
+
+3. The Input Box Is Contextless
+
+“Ask a governance or financial question…”
+
+This implies:
+	•	ad-hoc Q&A
+	•	conversational improvisation
+	•	no persistent state
+
+That directly contradicts:
+	•	auditability
+	•	citation discipline
+	•	decision traceability
+
+A governance system should never look like a blank ChatGPT prompt.
+
+⸻
+
+4. Missing Mental Model: No “Working Unit”
+
+Right now, the UI does not establish the unit of work.
+
+There is no visible concept of:
+	•	Case File
+	•	Engagement
+	•	Decision Packet
+	•	Review Session
+	•	Dossier
+
+Without that, the system feels:
+	•	unserious
+	•	unsafe
+	•	non-binding
+
+⸻
+
+5. What the Homepage MUST Do Instead
+
+A. Establish the Object of Work (Top Priority)
+
+The homepage should immediately force one of three paths:
+
+Primary CTAs (above the fold):
+	1.	Open Case File
+	2.	Upload Documents
+	3.	View Example Case
+
+This tells the user:
+
+“This system works on files, not vibes.”
+
+⸻
+
+B. Replace the Empty State With a Case-Centric Empty State
+
+Instead of a blank canvas, show:
+
+No case loaded
+
+To begin analysis, you must:
+• Upload source materials
+• Open an existing case
+• Or review a sample governance file
+
+Buttons underneath.
+
+This is non-negotiable for credibility.
+
+⸻
+
+C. Reframe the Demo as a Sample Case
+
+“Run Guided Demo” should become something like:
+
+Review Sample Case
+Board-level governance dispute (sanitized)
+
+That instantly communicates:
+	•	seriousness
+	•	scope
+	•	expected output quality
+
+⸻
+
+D. Sidebar Needs a “Cases” Anchor
+
+Left nav should include:
+	•	Cases
+	•	Documents
+	•	Canon Library (already present, good)
+	•	Audit Log
+
+“Advisor” alone is too abstract.
+
+⸻
+
+6. Minimal Structural Fix (Low Engineering Cost)
+
+You can fix 80% of this with:
+	•	One explicit Case Selector modal
+	•	A persistent “No Case Loaded” banner
+	•	Reworded CTAs
+	•	Renamed demo
+
+No backend rearchitecture required.
+
+⸻
+
+7. Bottom Line
+
+As it stands, the homepage:
+	•	Communicates capability but not use
+	•	Signals intelligence but not process
+	•	Looks polished but feels ungrounded
+
+For a governance-first system, that is the wrong tradeoff.
+
+If you want, next we can:
+	•	Draft exact replacement homepage copy (headline + CTAs)
+	•	Design a minimal Case File flow
+	•	Or define the canonical “ELI Case File” object schema
+
+Just tell me which layer you want to fix first.
