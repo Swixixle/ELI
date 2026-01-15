@@ -1,0 +1,218 @@
+This is the right question, and it means you’ve crossed from debugging into designing the product.
+
+The short answer is: yes, you standardize the questions—and you absolutely make them do the work for the customer. But the way you do it matters, or you’ll accidentally turn the product into a rigid checklist instead of an intelligent guide.
+
+Let me lay this out cleanly and concretely.
+
+⸻
+
+The core principle (anchor this)
+
+Customers should never have to figure out what to ask.
+They should only have to choose what they want to understand.
+
+So you don’t standardize questions.
+You standardize interpretive work.
+
+⸻
+
+What “doing the work for the customer” actually means
+
+Right now, the burden is on the user to:
+	•	Frame intent
+	•	Use the right language
+	•	Avoid forbidden grammar
+	•	Understand the system’s limits
+	•	Ask follow-ups correctly
+
+That is backwards.
+
+Instead, the system should:
+	1.	Identify the small set of legitimate interpretations of a case
+	2.	Pre-compute how each interpretation is evaluated
+	3.	Present those interpretations as clear lenses
+	4.	Let the user select, not compose
+
+⸻
+
+The correct abstraction: Question = View
+
+A standardized question is not text.
+It is a named evaluation path.
+
+For example:
+	•	“Do we have enough documentation?”
+	•	“What’s missing?”
+	•	“Can a decision be made?”
+	•	“What are the limits?”
+	•	“What should we do next?”
+
+Each of those is really a function call, not a sentence.
+
+The sentence is just the label.
+
+⸻
+
+Step 1: Define a finite set of Canonical Intents
+
+You only need 8–12. More than that is noise.
+
+Here is a clean, sufficient set for what you’re building:
+
+Core Intents (the real product)
+	1.	Readiness
+→ Is this case ready to be reviewed or decided?
+	2.	Sufficiency
+→ Do we have enough information?
+	3.	Gaps / Missing Information
+→ What’s missing or weak?
+	4.	Limits
+→ What can’t be concluded yet?
+	5.	Risk / Red Flags
+→ Is anything concerning or invalid?
+	6.	Next Action
+→ What should happen next?
+	7.	Closure Eligibility
+→ Can this be closed responsibly?
+	8.	Defensibility
+→ Can this decision be justified under scrutiny?
+
+That’s it.
+Everything else maps to one of these.
+
+⸻
+
+Step 2: Pre-bind each intent to engine logic
+
+This is where you do the work instead of the customer.
+
+Each intent maps to:
+	•	A fixed Canon evaluation path
+	•	A fixed output structure
+	•	A fixed refusal behavior
+
+For example:
+
+Intent: Sufficiency
+
+Internal action:
+	•	Run Canon gatekeeping
+	•	Assess evidence completeness
+	•	Check admissibility thresholds
+
+User never sees this.
+
+They just see:
+
+“Do we have enough documentation?”
+
+⸻
+
+Step 3: Standardize the output format, not just the question
+
+This is crucial.
+
+Every standardized question should return the same shape of answer, every time.
+
+Example: Sufficiency output (always)
+	•	Status: Yes / Not yet / Cannot determine
+	•	Meaning: One plain-English sentence
+	•	What’s missing: Bullet list (or “Nothing”)
+	•	Next step: One concrete action
+
+No deviations.
+No essays.
+No frameworks.
+
+This is how you make the system feel reliable.
+
+⸻
+
+Step 4: Make free-text secondary, not primary
+
+Free-text input should still exist—but as:
+	•	An override
+	•	An advanced path
+	•	A power-user feature
+
+The default experience should be:
+
+“How would you like to review this case?”
+▸ Readiness
+▸ What’s missing
+▸ Next steps
+▸ Limits
+▸ Audit reasoning
+
+Clicking one does the work.
+
+⸻
+
+Step 5: If the user does type, snap it to an intent
+
+If someone types:
+	•	“do we have all the documentation?”
+	•	“is this enough?”
+	•	“are we missing anything?”
+
+You don’t ask them to rephrase.
+
+You silently map:
+→ Intent: Sufficiency
+
+Then you run the same standardized logic and return the same structured answer.
+
+The user should never know there was ambiguity.
+
+⸻
+
+Why this is not dumbing it down (important)
+
+This approach:
+	•	Increases rigor (fewer malformed queries)
+	•	Improves auditability (same logic every time)
+	•	Reduces hallucination risk
+	•	Builds trust (predictable outputs)
+	•	Scales across users and industries
+
+This is how serious systems work:
+	•	Aviation checklists
+	•	Clinical decision support
+	•	Legal discovery tools
+	•	Financial risk dashboards
+
+They don’t ask users to invent the right question.
+
+⸻
+
+The mental reframe that makes this all click
+
+You are not building a chatbot.
+
+You are building a decision-reading instrument.
+
+Instruments:
+	•	Have modes
+	•	Have lenses
+	•	Have known outputs
+	•	Do not improvise
+
+Once you accept that, everything you’re proposing becomes obvious.
+
+⸻
+
+Concrete next step (one, not ten)
+
+If you want a single action to move forward:
+
+👉 Define the 8–12 canonical intents and lock them.
+Everything else—UI, prompts, modes—hangs off that.
+
+If you want, next I can:
+	•	Write the exact intent → logic → output map
+	•	Help you name these in a way that feels humane, not bureaucratic
+	•	Or help you decide which intents auto-run when a case opens
+
+But you’re no longer circling the problem.
+
+You’re designing the solution.

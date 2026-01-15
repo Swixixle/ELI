@@ -48,6 +48,36 @@ export type UserLayerSummary = {
   nextStep: string;
 };
 
+// Canonical Intents - The 8 standardized evaluation paths
+export type CanonicalIntent = 
+  | "readiness"      // Is this case ready to be reviewed or decided?
+  | "sufficiency"    // Do we have enough information?
+  | "gaps"           // What's missing or weak?
+  | "limits"         // What can't be concluded yet?
+  | "risks"          // Is anything concerning or invalid?
+  | "next_action"    // What should happen next?
+  | "closure"        // Can this be closed responsibly?
+  | "defensibility"; // Can this decision be justified under scrutiny?
+
+export type IntentConfig = {
+  id: CanonicalIntent;
+  label: string;
+  description: string;
+  icon: string;
+  question: string;
+}
+
+export const CANONICAL_INTENTS: IntentConfig[] = [
+  { id: "readiness", label: "Readiness", description: "Is this case ready to be reviewed?", icon: "CheckCircle", question: "Is this case ready for review?" },
+  { id: "sufficiency", label: "Sufficiency", description: "Do we have enough information?", icon: "FileText", question: "Do we have enough documentation?" },
+  { id: "gaps", label: "What's Missing", description: "What's missing or weak?", icon: "AlertCircle", question: "What's missing from this case?" },
+  { id: "limits", label: "Limits", description: "What can't be concluded yet?", icon: "Ban", question: "What can't be determined yet?" },
+  { id: "risks", label: "Red Flags", description: "Is anything concerning?", icon: "AlertTriangle", question: "Are there any red flags or concerns?" },
+  { id: "next_action", label: "Next Steps", description: "What should happen next?", icon: "ArrowRight", question: "What should we do next?" },
+  { id: "closure", label: "Closure", description: "Can this be closed?", icon: "CheckSquare", question: "Can this case be closed?" },
+  { id: "defensibility", label: "Defensibility", description: "Can this be justified?", icon: "Shield", question: "Is this decision defensible?" }
+];
+
 export type Message = {
   id: string;
   role: "user" | "assistant";
