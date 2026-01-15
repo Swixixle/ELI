@@ -264,11 +264,11 @@ Until context is provided, the safest governance position is:
     };
   }
   
-  // TEMPORAL BOUNDARY VIOLATIONS - Hindsight language
+  // TEMPORAL BOUNDARY VIOLATIONS - Hindsight language with Governance Synthesis
   const temporalPatterns = [
     /\bshould have\b/,
     /\bwhy didn't\b/,
-    /\bwhy did (we|they|you) miss\b/,
+    /\bwhy did (we|they|you|it) miss\b/,
     /\bmiss(ed)? the\b/,
     /\bfailed to\b/,
     /\bcould have been avoided\b/,
@@ -277,45 +277,172 @@ Until context is provided, the safest governance position is:
     /\bin hindsight\b/,
     /\blooking back\b/,
     /\bwith the benefit of\b/,
-    /\bif only\b/
+    /\bif only\b/,
+    /\bwhy was the target\b/,
+    /\bwhy did .* (fail|miss|lose)\b/,
+    /\bwhy did (the|this|it) .* fail\b/,
+    /\bwhat went wrong\b/,
+    /\bwhat caused the (failure|error|miss)\b/
   ];
   
   if (temporalPatterns.some(pattern => pattern.test(lowerMessage))) {
+    // Detect what kind of outcome question this is for targeted synthesis
+    const isTargetQuestion = /\b(target|goal|objective|quota|forecast)\b/.test(lowerMessage);
+    const isFailureQuestion = /\b(fail|failure|error|mistake)\b/.test(lowerMessage);
+    const isMissQuestion = /\bmiss(ed)?\b/.test(lowerMessage);
+    
+    let admissibleAnalysis = "";
+    let concreteInputs = "";
+    
+    if (isTargetQuestion || isMissQuestion) {
+      admissibleAnalysis = `### Admissible Adjacent Analysis
+Instead of explaining the miss, I can evaluate:
+- **Target-setting legitimacy**: Were the assumptions reasonable given available data?
+- **Planning adequacy**: Did governance controls flag risk before the outcome?
+- **Information quality**: Was decision-time data sufficient for the forecast?
+- **Resource alignment**: Were constraints acknowledged in the plan?`;
+      concreteInputs = `### To Proceed, Provide
+- The assumptions used when the target was set
+- The controls or checkpoints that were in place
+- What data was available at planning time
+- Any risk signals documented pre-outcome`;
+    } else if (isFailureQuestion) {
+      admissibleAnalysis = `### Admissible Adjacent Analysis
+Instead of explaining the failure, I can evaluate:
+- **Process adequacy**: Were standard procedures followed?
+- **Information availability**: Did decision-makers have what they needed?
+- **System constraints**: Were there structural barriers to success?
+- **Escalation pathways**: Were appropriate channels available?`;
+      concreteInputs = `### To Proceed, Provide
+- The decision context at the time of action
+- What information was available to the actor
+- What constraints or pressures existed
+- The policy or procedure in force`;
+    } else {
+      admissibleAnalysis = `### Admissible Adjacent Analysis
+I can evaluate decision-time conditions:
+- **Information adequacy**: What was knowable at the time?
+- **Process compliance**: Were required steps followed?
+- **Resource constraints**: What limitations existed?
+- **Governance controls**: What oversight was in place?`;
+      concreteInputs = `### To Proceed, Provide
+- The decision date and context
+- What information was available
+- What constraints existed
+- The relevant policy or procedure`;
+    }
+    
     return {
-      content: "",
-      citations: [],
+      content: `## Procedural Determination: Outcome Explanation Not Admissible
+
+Explaining why something "was missed" or "failed" requires outcome knowledge and causal reconstruction that was not available at decision time. This violates temporal admissibility.
+
+### Reason
+Questions framed around outcomes presuppose hindsight:
+- The outcome itself was not knowable when decisions were made
+- Causal attribution after the fact imports inadmissible information
+- "Why did X happen?" assumes X was predictable—which is the question, not the answer
+
+${admissibleAnalysis}
+
+${concreteInputs}
+
+### Governance-Safe Position
+> "Outcome explanation is not admissible under decision-time constraints. Analysis should focus on whether planning, controls, and information were adequate at the time—not on explaining results."`,
+      citations,
       refusalType: "temporal_boundary",
-      refusalReason: "This question uses outcome-laden language that presupposes hindsight knowledge. ELI cannot evaluate what 'should have' been known—only what was knowable at decision time. Please rephrase without retrospective framing."
+      refusalReason: "Outcome explanation requires hindsight knowledge that violates temporal admissibility."
     };
   }
   
-  // CATEGORY ERRORS - Normative judgments
+  // CATEGORY ERRORS - Normative judgments with Governance Synthesis
   if (lowerMessage.includes("negligent") || lowerMessage.includes("malpractice") || lowerMessage.includes("blame") || lowerMessage.includes("fault")) {
     return {
-      content: "",
-      citations: [],
+      content: `## Procedural Determination: Normative Judgment Not Admissible
+
+Determinations of negligence, blame, or fault require moral or legal evaluation outside ELI's epistemic scope.
+
+### Reason
+Normative judgments presuppose:
+- Moral standards that vary by jurisdiction and context
+- Legal frameworks ELI is not authorized to interpret
+- Individual culpability assessments requiring human judgment
+
+### Admissible Adjacent Analysis
+I can evaluate epistemic conditions instead:
+- **Information adequacy**: Did the actor have sufficient data?
+- **Process compliance**: Were required procedures followed?
+- **System factors**: Did structural issues contribute?
+- **Resource constraints**: Were limitations documented?
+
+### To Proceed, Provide
+- The decision context and available information
+- The applicable policy or procedure
+- Any documented constraints or pressures
+
+### Governance-Safe Position
+> "Fault attribution is not procedurally admissible. Review should assess system factors and information adequacy rather than individual culpability."
+
+For legal liability determinations, consult qualified counsel.`,
+      citations,
       refusalType: "category_error",
-      refusalReason: "Normative judgments about blame, fault, or negligence require moral evaluation that ELI cannot provide. ELI measures epistemic conditions, not moral culpability. For legal determinations, consult qualified counsel."
+      refusalReason: "Normative judgments require moral evaluation outside ELI's scope."
     };
   }
   
-  // MEDICAL SAFETY
+  // MEDICAL SAFETY with Governance Synthesis
   if (lowerMessage.includes("patient") && (lowerMessage.includes("name") || lowerMessage.includes("record") || lowerMessage.includes("medical history"))) {
     return {
-      content: "",
-      citations: [],
+      content: `## Procedural Determination: PHI Access Not Permitted
+
+ELI does not access, store, or process protected health information.
+
+### Reason
+- Patient-identifiable data requires HIPAA-compliant systems
+- ELI is a governance tool, not a clinical records system
+- PHI handling requires audit trails ELI does not provide
+
+### What I Can Do Instead
+If you have a governance question about a clinical case:
+- Describe the situation without patient identifiers
+- Focus on process, policy, or decision-context questions
+- Ask about system factors rather than individual records
+
+### Governance-Safe Position
+> "PHI-related queries must be directed to authorized clinical systems. Governance analysis can proceed on de-identified case descriptions."`,
+      citations,
       refusalType: "medical_safety",
-      refusalReason: "ELI does not access, store, or process protected health information (PHI). For patient-specific questions, use authorized clinical systems."
+      refusalReason: "PHI access is not permitted under ELI's safety constraints."
     };
   }
   
-  // NO CANON FOUND
+  // NO CANON FOUND with Governance Synthesis
   if (chunks.length === 0) {
     return {
-      content: "",
+      content: `## Procedural Determination: No Canon Authority Found
+
+I cannot make claims on this topic without authoritative documentation.
+
+### Reason
+ELI only speaks from Canon. Without documented authority:
+- Any response would be speculation
+- No citation would be available
+- The claim would be epistemically illegitimate
+
+### What You Can Do
+- Rephrase using terms that may be in the Canon
+- Confirm this topic is covered in your document library
+- Ask a related question that Canon does address
+
+### Topics I Can Address
+Based on current Canon, I can evaluate:
+- Epistemic governance and admissibility
+- Decision-time constraints and Parrot Box rules
+- Gatekeeper substrate and temporal boundaries
+- Discipline, fault, and outcome-blindness`,
       citations: [],
       refusalType: "parrot_box",
-      refusalReason: "No Canon source found for this query. ELI cannot make claims without authoritative documentation. Please rephrase your question or confirm the topic is covered in the Canon library."
+      refusalReason: "No Canon source found. ELI cannot make unsupported claims."
     };
   }
   

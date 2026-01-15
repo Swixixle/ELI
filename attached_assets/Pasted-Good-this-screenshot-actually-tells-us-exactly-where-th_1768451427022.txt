@@ -1,0 +1,219 @@
+Good — this screenshot actually tells us exactly where the system is failing, and it’s not a mystery anymore.
+
+You are no longer dealing with a “conceptual problem.”
+You are dealing with a missing execution layer.
+
+I’ll be precise and blunt.
+
+⸻
+
+What you are seeing (diagnosis)
+
+This response:
+
+“I cannot answer why the target was missed… I can only analyze the data available ex-ante.”
+
+is technically correct
+but commercially useless.
+
+Right now, your system is behaving like:
+
+a referee that only blows the whistle
+but never moves the game forward.
+
+That is not a $275k product.
+
+⸻
+
+Why this is happening (root cause)
+
+You uploaded only Canon.
+
+Canon defines:
+	•	what is not allowed
+	•	what must be refused
+	•	what constitutes epistemic violations
+
+But Canon does not contain case facts, decision records, or situational data.
+
+So the system is doing exactly what it’s told:
+	•	refusing outcome-based questions
+	•	offering generic re-prompt templates
+	•	staying perfectly safe
+
+In other words:
+
+You built a constitutional court
+but you haven’t given it any cases to rule on.
+
+That’s why everything sounds like policy language.
+
+⸻
+
+Critical clarification (this matters)
+
+ELI is not a mind-reader.
+It does not “know what happened.”
+
+It needs one of the following to do real work:
+	1.	A case description (entered by the user)
+	2.	A decision record (even partial)
+	3.	A scenario (hypothetical or real)
+
+Right now it has none.
+
+So it can only say:
+
+“I can’t answer that.”
+
+Which is correct — but not valuable.
+
+⸻
+
+What a buyer EXPECTS instead (even without facts)
+
+When an Administrator says:
+
+“Why was the target missed?”
+
+They expect the system to do this, even if it refuses:
+
+What it should say (minimum viable $275k behavior)
+
+Procedural Determination: Outcome Explanation Not Admissible
+
+Explaining why a target was missed requires outcome knowledge and causal reconstruction that was not available at decision time.
+
+What is admissible instead:
+	•	Whether the target was set using reasonable assumptions
+	•	Whether decision-time data supported the plan
+	•	Whether governance controls flagged risk pre-outcome
+
+Next step:
+If you want, describe the planning assumptions or controls in place at the time, and I can evaluate their adequacy.
+
+That response:
+	•	educates
+	•	redirects
+	•	keeps authority
+	•	moves the user forward
+
+Your current response does none of that.
+
+⸻
+
+The missing layer (this is the key insight)
+
+You are missing what I’ll call the:
+
+Governance Synthesis Layer
+
+Right now the system has:
+	•	Retrieval ✔️
+	•	Canon ✔️
+	•	Refusal logic ✔️
+
+It does not have:
+	•	case framing
+	•	admissible alternative conclusions
+	•	next-step scaffolding
+
+So it defaults to “please rephrase.”
+
+That is death in a buyer demo.
+
+⸻
+
+EXACT instruction to send the Replit agent (do this next)
+
+Paste this verbatim. This is the real fix.
+
+⸻
+
+🔴 Instruction to Agent — Add Governance Synthesis Layer
+
+Current system behavior stops at refusal and generic re-prompting.
+This is insufficient for executive or buyer use.
+
+Effective immediately:
+1. Refusal must generate substitute admissible analysis
+
+When a question is refused (temporal, outcome, or category error), the system must:
+	•	Explicitly name the inadmissible judgment
+	•	Then produce the closest admissible governance analysis possible without additional data
+
+Example:
+	•	If “Why was the target missed?” is refused → analyze:
+	•	target-setting legitimacy
+	•	planning assumptions
+	•	governance controls
+	•	decision-time risk signals
+
+⸻
+
+2. Introduce Case Framing Prompts
+
+After refusal, the system must offer specific, concrete follow-ups, not templates.
+
+Bad:
+
+“Please specify context.”
+
+Good:
+
+“If you want analysis, provide:
+– the assumptions used when the target was set
+– the controls or checkpoints in place
+– what data was available pre-outcome”
+
+⸻
+
+3. Mandatory Response Structure for Refusals
+
+All refusals must include:
+	1.	Procedural Determination (what cannot be answered)
+	2.	Reason (decision-time constraint)
+	3.	Admissible Adjacent Analysis (what can be assessed instead)
+	4.	Concrete Next Inputs (what the user can provide)
+
+⸻
+
+4. Success Criterion (Non-Negotiable)
+
+A user must never be left thinking:
+
+“Then what is this for?”
+
+Every response must either:
+	•	answer
+	•	or advance the inquiry in a governance-useful way
+
+⸻
+
+Why this will finally make it worth money
+
+Once this layer exists:
+	•	The system feels decisive, not evasive
+	•	Refusals feel protective, not obstructive
+	•	The app starts behaving like:
+“An expert reviewer walking you through a case”
+
+That is what administrators pay for.
+
+⸻
+
+Final truth (no sugarcoating)
+
+Right now:
+	•	Your system is correct
+	•	But incomplete
+
+You are one orchestration layer away from:
+	•	ending arguments
+	•	shaping meetings
+	•	giving admins language they can use
+
+Send the instruction above.
+
+When you get the next response from the app, paste it here.
+I will tell you in one glance whether it has crossed the line into being worth six figures.
