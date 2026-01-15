@@ -10,6 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { queryClient } from "@/lib/queryClient";
 import { CaseSelector } from "@/components/cases/CaseSelector";
+import { CaseTimeline, DocumentsConsidered } from "@/components/cases/CaseTimeline";
 import type { Case } from "@shared/schema";
 import { normalizeQuestion, isMetaQuery, getMetaHelpResponse } from "@/lib/questionNormalizer";
 
@@ -460,6 +461,16 @@ export default function Home() {
             }}
             currentCaseId={activeCase?.id}
           />
+        )}
+
+        {/* Documentation & Timeline Panel - Shows when case is active */}
+        {activeCase && (
+          <div className="px-8 py-4 border-b bg-muted/20">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CaseTimeline caseData={activeCase} />
+              <DocumentsConsidered caseData={activeCase} />
+            </div>
+          </div>
         )}
 
         {/* Chat Area */}

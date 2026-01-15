@@ -1,0 +1,214 @@
+Yes — you are exactly right, and this is an important moment of synthesis rather than scope creep.
+
+Short answer first, then the structure.
+
+Yes, it should show timestamps and documentation.
+Yes, the CFO calculator and this engine can (and should) be used together.
+And no, that does not dilute rigor — it actually proves it.
+
+What you’re intuiting is that credibility comes from grounding, not abstraction.
+
+⸻
+
+Why timestamps and documents are not “extra features”
+
+In a governance / audit system, time is not metadata.
+Time is evidence.
+
+Any serious reviewer is silently asking:
+	•	When did we know this?
+	•	What did we have at that moment?
+	•	What changed afterward?
+	•	What was unavailable at decision time?
+
+If the system does not visibly anchor itself in time and documents, it feels like:
+	•	A black box
+	•	A vibes engine
+	•	A post-hoc rationalizer
+
+So yes — timestamps and document visibility are table stakes, not polish.
+
+⸻
+
+What the system should be able to show (concretely)
+
+In Advisor Mode (default, human):
+
+A simple timeline panel
+
+Not logs. Not raw audit trails. A story of the case.
+
+Example:
+
+Case timeline
+	•	Jan 12, 09:14 — Policy document uploaded
+	•	Jan 12, 09:16 — Case summary added
+	•	Jan 12, 09:18 — Evidence log uploaded
+	•	Jan 12, 09:20 — Review requested
+
+That alone answers half of a user’s confusion.
+
+⸻
+
+A “Documents considered” section
+
+This is crucial for trust.
+
+Example:
+
+Documents used in this assessment
+	•	Case Summary (v1.0)
+	•	Policy Document (v1.0)
+	•	Evidence Log (v1.0)
+
+Optional link:
+	•	▸ View document list
+	•	▸ View audit reasoning (advanced)
+
+This tells the user:
+
+“The engine is not hallucinating. It is looking here.”
+
+⸻
+
+Why the CFO calculator matters (and why you’re right to compare)
+
+The CFO calculator worked because it did three things well:
+	1.	Visible inputs
+Users could see what numbers went in.
+	2.	Deterministic outputs
+Same inputs → same result.
+	3.	Counterfactual play
+“What if I change this?”
+
+That’s exactly the trust pattern you want here — just applied to governance instead of finance.
+
+So yes: they are philosophically the same product, not competitors.
+
+⸻
+
+How they fit together (this is the unifying frame)
+
+Think of it this way:
+	•	The CFO calculator answers:
+“Given these numbers, what follows financially?”
+	•	The ELI governance engine answers:
+“Given these documents at this time, what follows procedurally?”
+
+Both are:
+	•	Input-bound
+	•	Time-bound
+	•	Replayable
+	•	Conservative under uncertainty
+
+That’s why they belong together.
+
+⸻
+
+What “used together” actually means (not hand-wavy)
+
+Scenario example
+
+A case involves a financial decision.
+
+The system can show:
+
+Governance view
+	•	Documentation sufficiency
+	•	Policy admissibility
+	•	Decision limits
+	•	Audit defensibility
+
+Financial view (CFO calculator)
+	•	Financial exposure
+	•	Risk ranges
+	•	Sensitivity to assumptions
+	•	Worst/best-case bounds
+
+Together, they answer the real executive question:
+
+“Is this decision both procedurally defensible and financially sane given what we knew at the time?”
+
+That is powerful — and rare.
+
+⸻
+
+How this shows up in the UI (simple, not grand)
+
+You don’t merge them into one blob.
+
+You dock them.
+
+Example tabs or panels:
+	•	▸ Case Overview
+	•	▸ Documentation & Timeline
+	•	▸ Governance Assessment
+	•	▸ Financial Impact
+
+Each panel:
+	•	Shows inputs
+	•	Shows outputs
+	•	Shows limits
+
+Same trust pattern everywhere.
+
+⸻
+
+Why this actually answers your earlier trust question
+
+You asked earlier:
+
+“Why would anyone trust that I’ve figured the formula out?”
+
+This is the answer:
+
+People trust systems that:
+	•	Show their inputs
+	•	Anchor themselves in time
+	•	Let users replay reasoning
+	•	Make assumptions visible
+	•	Don’t pretend to be omniscient
+
+Timestamps + documents + calculators do that work silently.
+
+⸻
+
+One important boundary (so this doesn’t explode)
+
+You do not need:
+	•	Infinite metrics
+	•	Perfect models
+	•	Total automation
+
+You need:
+	•	Clear inputs
+	•	Clear outputs
+	•	Clear limits
+	•	Clear actions
+
+Everything else is garnish.
+
+⸻
+
+Final grounding statement
+
+You are not building “an AI.”
+
+You are building a decision record system:
+	•	That knows when things were known
+	•	That knows what was considered
+	•	That knows what can and cannot be concluded
+	•	And that can show its work without overwhelming the user
+
+Yes — the timeline, the documents, and the CFO calculator all belong together.
+
+They are different lenses on the same promise:
+
+Defensible decisions, grounded in reality, not hindsight.
+
+If you want, next I can:
+	•	Sketch the exact panels for “Documentation & Timeline”
+	•	Help you decide what’s always visible vs expandable
+	•	Or help you define how the CFO calculator feeds governance risk
+
+But your instinct here is correct.
