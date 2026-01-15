@@ -137,43 +137,129 @@ function generateEpistemicResponse(message: string, chunks: CanonChunk[], mode: 
   if (governancePatterns.some(pattern => pattern.test(lowerMessage))) {
     // This is a governance judgment question - apply procedural admissibility evaluation
     
+    // Check for normative/moral judgment FIRST (blame, fault, guilt) - these get specific response
+    const normativeIndicators = [
+      /\bwho is (at fault|to blame|responsible)\b/,
+      /\bwho('s| is) (guilty|negligent)\b/,
+      /\b(blame|fault) for\b/,
+      /\bwhose fault\b/
+    ];
+    
+    if (normativeIndicators.some(p => p.test(lowerMessage))) {
+      return {
+        content: `## Procedural Determination: Fault Attribution Not Admissible
+
+Individual fault attribution requires moral or legal judgment that falls outside epistemic governance scope.
+
+### Reason
+Assigning blame presupposes:
+- That the actor had the information necessary to act differently
+- That deviation from expectation constitutes culpable failure
+- That outcome reflects individual rather than systemic factors
+
+None of these can be established from outcome data alone.
+
+### What IS Admissible
+- Assessment of decision-time information adequacy
+- Evaluation of resource constraints and workload
+- Identification of system-level gaps
+- Process improvement recommendations
+
+### What is NOT Admissible
+- Individual blame or fault finding
+- Moral culpability determination
+- Legal liability conclusions
+- "Should have known" assertions
+
+### Governance-Safe Conclusion
+> "The available evidence does not support individual fault attribution. Review should focus on system factors that contributed to the outcome rather than actor-level accountability."
+
+This language may be used verbatim in review documentation. For legal liability or HR determinations, consult qualified counsel.`,
+        citations,
+        refusalType: "category_error",
+        refusalReason: "Fault attribution requires normative judgment outside ELI's scope."
+      };
+    }
+    
+    // Check if discipline/punishment related
+    const disciplineIndicators = [
+      /\bdisciplin(e|ary|ing)\b/,
+      /\bpunish(ment|ing)?\b/,
+      /\bfire\b/,
+      /\bterminate\b/,
+      /\breprimand\b/,
+      /\bhold (them |the |)accountable\b/
+    ];
+    
+    const isDisciplineQuestion = disciplineIndicators.some(p => p.test(lowerMessage));
+    
     // Check if outcome-based (uses outcome knowledge to justify judgment)
     const outcomeIndicators = [
       /\bfor this outcome\b/,
       /\bbecause (of|it) (the )?(result|outcome|failure|error)\b/,
       /\bthe (result|outcome) was\b/,
-      /\bafter (the|this) (happened|occurred|failed)\b/
+      /\bafter (the|this) (happened|occurred|failed)\b/,
+      /\bfor the failure\b/,
+      /\bfor the error\b/
     ];
     
     const isOutcomeBased = outcomeIndicators.some(p => p.test(lowerMessage));
     
-    if (isOutcomeBased) {
+    if (isDisciplineQuestion || isOutcomeBased) {
       return {
-        content: "**Procedural Determination: Inadmissible**\n\nDisciplinary or evaluative judgment based solely on outcome information is not permitted under Canon constraints.\n\n**Reason:** Outcome information alone does not establish:\n- Policy violation at decision-time\n- Individual fault or responsibility\n- That the decision-maker could have known or acted differently\n\n**Required for admissibility:**\n1. Evidence of the policy in force at decision-time\n2. The decision context available to the actor\n3. Proof that a violation was knowable pre-outcome\n\nOutcome data may inform *system-level review* but cannot justify *unit-level discipline*.",
+        content: `## Procedural Determination: Discipline Not Admissible
+
+Based on Canon constraints, unit-level discipline cannot be procedurally justified using outcome information alone.
+
+### Reason
+Disciplinary action requires evidence that a policy violation or negligent decision was knowable and avoidable at decision time. No such determination can be made without:
+- The policy version in force at decision-time
+- The decision context available to the unit
+- Evidence of deviation from required procedure
+
+### What IS Admissible
+- System-level review of staffing, workload, and escalation pathways
+- Identification of structural contributors to the outcome
+- Forward-looking process correction
+- Resource adequacy assessment
+
+### What is NOT Admissible
+- Unit discipline based on outcome
+- Individual fault attribution
+- Retrospective "should have known" claims
+- Performance action triggered by result alone
+
+### Governance-Safe Conclusion
+> "This case supports system remediation, not disciplinary action. Outcome information may inform process improvement but does not establish individual fault under decision-time constraints."
+
+This language may be used verbatim in review documentation.`,
         citations,
         refusalType: "temporal_boundary",
-        refusalReason: "Discipline based on outcome knowledge violates temporal admissibility. The question presupposes hindsight."
+        refusalReason: "Discipline based on outcome knowledge violates temporal admissibility."
       };
     }
     
-    // Check for normative/moral judgment (blame, fault, guilt)
-    const normativeIndicators = [
-      /\b(blame|fault|guilty|negligent|responsible for)\b/,
-      /\bshould be (punished|fired|held accountable)\b/
-    ];
-    
-    if (normativeIndicators.some(p => p.test(lowerMessage))) {
-      return {
-        content: "**Procedural Determination: Category Error**\n\nThis question requests a normative judgment (blame, fault, guilt) which falls outside ELI's epistemic scope.\n\n**ELI can determine:**\n- Whether the epistemic conditions at decision-time were adequate\n- Whether the information available supported the action taken\n- Whether the decision context was appropriately resourced\n\n**ELI cannot determine:**\n- Moral culpability\n- Legal liability\n- Individual punishment\n\nFor normative determinations, consult qualified legal or HR counsel.",
-        citations,
-        refusalType: "category_error",
-        refusalReason: "Normative judgments require moral evaluation that ELI cannot provide."
-      };
-    }
-    
-    // Generic governance question without sufficient context
+    // Generic governance question - still provide actionable structure
     return {
-      content: "**Procedural Evaluation Required**\n\nTo assess the admissibility of this governance action, I need:\n\n1. **Temporal context**: What was the decision date?\n2. **Policy context**: What rules or standards were in force?\n3. **Decision context**: What information was available to the actor?\n4. **Action taken**: What specific action is being evaluated?\n\nWithout this information, I cannot make a procedural determination. Please provide the decision-time record.",
+      content: `## Procedural Evaluation: Additional Context Required
+
+To issue a governance determination, I need decision-time evidence:
+
+### Required Information
+1. **Decision Date**: When was the action taken?
+2. **Policy Context**: What standards were in force?
+3. **Available Information**: What did the actor know?
+4. **Constraints**: What resources/time were available?
+
+### What I Can Determine Once Provided
+- Whether the decision was procedurally supportable
+- Whether information adequacy was sufficient
+- Whether system factors contributed to outcome
+- What governance conclusions are admissible
+
+### Preliminary Guidance
+Until context is provided, the safest governance position is:
+> "No individual-level determination can be made without decision-time evidence. System review is appropriate; actor judgment is premature."`,
       citations
     };
   }
