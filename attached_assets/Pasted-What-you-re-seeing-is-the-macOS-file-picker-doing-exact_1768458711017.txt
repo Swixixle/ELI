@@ -1,0 +1,110 @@
+What you’re seeing is the macOS file picker doing exactly what your <input type="file"> is telling it to do: your file input is currently restricted to a file type that doesn’t match anything in that folder (most commonly PDF-only), so macOS greys everything out and won’t let you select it.
+
+In other words: this is not a Replit bug. It’s your accept= filter (or equivalent) doing its job.
+
+Why nothing is selectable
+
+If your UI uses something like:
+
+<input type="file" accept="application/pdf" />
+
+…then only PDFs are selectable. In your screenshot, you’re looking at .dmg, .jpeg, .png, .txt, etc., so everything is disabled.
+
+⸻
+
+Fix 1: Allow multiple file types (frontend)
+
+Decide what you want to accept. Example: PDF, images, and text.
+
+Plain HTML
+
+<input
+  type="file"
+  multiple
+  accept=".pdf,.png,.jpg,.jpeg,.txt,.doc,.docx"
+/>
+
+React / Next.js / Remix style
+
+<input
+  type="file"
+  multiple
+  accept=".pdf,.png,.jpg,.jpeg,.txt,.doc,.docx"
+  onChange={(e) => handleFiles(e.target.files)}
+/>
+
+“Allow anything”
+
+If you want the picker to allow any file type, remove accept entirely:
+
+<input type="file" multiple />
+
+That will stop macOS from greying things out.
+
+⸻
+
+Fix 2: Make sure your backend also allows those types
+
+Even if the picker allows selection, your server may still reject uploads (common). You need both:
+	•	Frontend accept (UX filter)
+	•	Backend MIME/extension validation (security)
+
+If you’re using multer (Express)
+
+import multer from "multer";
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+  fileFilter: (req, file, cb) => {
+    const allowed = new Set([
+      "application/pdf",
+      "image/png",
+      "image/jpeg",
+      "text/plain",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // docx
+      "application/msword" // doc
+    ]);
+    cb(null, allowed.has(file.mimetype));
+  }
+});
+
+app.post("/api/upload", upload.array("files", 10), (req, res) => {
+  res.json({ ok: true, count: req.files.length });
+});
+
+If you’re using something else (Formidable, Busboy, etc.), the same principle applies: expand allowed MIME types.
+
+⸻
+
+Fix 3: If you’re only seeing “PDF” in the chooser
+
+On macOS, the chooser sometimes shows a “Format” drop-down (e.g., “PDF”) at the bottom. That is also driven by accept. If you broaden accept or remove it, that drop-down won’t trap you.
+
+⸻
+
+Minimal “good default” I recommend for your app
+
+Since you’re building case-document ingestion, this is a sane starting set:
+	•	PDFs
+	•	Images (JPG/PNG)
+	•	Text
+	•	DOCX
+
+Frontend:
+
+<input type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.txt,.docx" />
+
+Backend allowed MIME list:
+	•	application/pdf
+	•	image/png
+	•	image/jpeg
+	•	text/plain
+	•	application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+⸻
+
+Quick diagnostic (so we don’t guess)
+
+Search your code for accept= or application/pdf.
+	•	If you paste the component that renders the upload button / file input (or the upload route handler), I’ll tell you exactly what line is causing the “can’t select anything” behavior and give you the precise patch.

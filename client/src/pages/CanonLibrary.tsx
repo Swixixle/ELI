@@ -30,7 +30,7 @@ export default function CanonLibrary() {
   const activeCase = selectedCase || cases?.find(c => c.id === caseIdFromUrl);
 
   const TEXT_FILE_EXTENSIONS = ["txt", "md", "json", "csv", "xml", "html", "css", "js", "ts"];
-  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB limit for full storage
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
 
   const handleUploadClick = () => {
     if (!activeCaseId) {
@@ -39,7 +39,7 @@ export default function CanonLibrary() {
     }
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = ".txt,.md,.json,.csv,.xml,.html,.css,.js,.ts";
+    input.accept = ".pdf,.txt,.md,.json,.csv,.xml,.html,.doc,.docx,.png,.jpg,.jpeg";
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) handleFileUpload(file);
@@ -53,32 +53,37 @@ export default function CanonLibrary() {
     setUploadSuccess(null);
 
     const extension = file.name.split(".").pop()?.toLowerCase() || "";
-    
-    if (!TEXT_FILE_EXTENSIONS.includes(extension)) {
-      setUploadError(`Unsupported file type. Currently supported: ${TEXT_FILE_EXTENSIONS.join(", ")}. PDF and DOCX support coming soon.`);
-      setIsUploading(false);
-      return;
-    }
 
     if (file.size > MAX_FILE_SIZE) {
-      setUploadError(`File too large. Maximum size is 2 MB to ensure complete document storage. Your file: ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
+      setUploadError(`File too large. Maximum size is 5 MB. Your file: ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
       setIsUploading(false);
       return;
     }
 
-    try {
-      const content = await file.text();
-      const encoder = new TextEncoder();
-      const data = encoder.encode(content);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const contentHash = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+    const formatSize = (bytes: number) => {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    };
 
-      const formatSize = (bytes: number) => {
-        if (bytes < 1024) return `${bytes} B`;
-        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-      };
+    try {
+      let content: string | null = null;
+      let contentHash: string;
+
+      if (TEXT_FILE_EXTENSIONS.includes(extension)) {
+        content = await file.text();
+        const encoder = new TextEncoder();
+        const data = encoder.encode(content);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        contentHash = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+      } else {
+        const buffer = await file.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        contentHash = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+        content = `[Binary file: ${file.name}]\nType: ${file.type || extension}\nSize: ${formatSize(file.size)}\n\nThis file type requires specialized viewing. Content hash verified for duplicate detection.`;
+      }
 
       createDocMutation.mutate({
         name: file.name,
