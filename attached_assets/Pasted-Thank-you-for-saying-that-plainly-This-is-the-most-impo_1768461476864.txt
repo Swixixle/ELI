@@ -1,0 +1,131 @@
+Thank you for saying that plainly. This is the most important message in the whole thread.
+
+You are not failing to understand it.
+It is failing to explain itself.
+
+What you’re feeling is exactly what a normal, intelligent human should feel when confronted with engine-internal reasoning being dumped into the UI. That’s on the product, not you.
+
+Let me translate what you’re seeing into one clear sentence, then we’ll talk about how the product must change.
+
+⸻
+
+What that wall of text is actually saying (in plain English)
+
+Translation:
+
+“Before we can say whether this case has enough documentation, we first have to decide how we’re allowed to judge it. We are not allowed to use hindsight, outcomes, or blame. We can only use what was available at the time. After checking that, we may approve, reject, or refuse to decide.”
+
+That’s it.
+That entire block collapses to one idea.
+
+You were expecting:
+
+“Yes, this is enough” or “No, it isn’t” or “We need X more things.”
+
+Instead, you got the judge’s rulebook, not the ruling.
+
+That’s why it feels hostile and useless.
+
+⸻
+
+Why your reaction is correct
+
+A user asking:
+
+“Do we have enough documentation for this case?”
+
+is asking for:
+	•	Orientation
+	•	Status
+	•	Next steps
+
+They are not asking for:
+	•	Epistemology
+	•	Canon enforcement
+	•	Adjudication theory
+
+The system just violated a basic UX rule:
+
+Never show internal reasoning modes to the user unless they explicitly ask for them.
+
+You didn’t ask how it reasons.
+You asked where you stand.
+
+⸻
+
+What the system SHOULD have said instead
+
+Here is the human-correct response to your question:
+
+“Right now, the case contains a case summary, a policy document, and an evidence log. That is enough to begin a review, but not enough to reach a final determination. To move forward, we would need either third-party evidence or confirmation of how the policy was applied.”
+
+That’s it.
+No Canon. No rules. No scolding.
+
+If you want the rules, they can be behind a “Show reasoning” toggle.
+
+⸻
+
+Why you “hate it” (and you’re right to)
+
+Because right now the product is doing this:
+	•	Treating you like an auditor
+	•	While you’re acting like a user
+	•	Forcing you to read engine scaffolding
+	•	Making you feel stupid for not liking it
+
+That’s a product smell.
+
+A strong system:
+	•	Does the hard thinking silently
+	•	Explains conclusions simply
+	•	Escalates detail only when requested
+
+Right now, ELI Expert is inverted.
+
+⸻
+
+The single most important product fix (non-technical)
+
+You need two layers of output:
+
+1. User layer (default)
+	•	Plain English
+	•	Status + meaning + next step
+	•	2–4 sentences max
+
+2. Canon layer (optional / expandable)
+	•	Procedural sequence
+	•	Constraints
+	•	Citations
+	•	Audit language
+
+You already have layer 2.
+Layer 1 is missing — and that’s why this feels awful.
+
+⸻
+
+Let me rewrite the current answer the way it should appear
+
+What you should see:
+
+Status: Review can begin
+What this means: The case has enough documentation to start evaluation, but not enough to reach a final decision.
+What’s missing: Independent evidence or confirmation of policy application.
+Next step: Upload supporting evidence or request a preliminary review.
+
+Then, optionally:
+
+▸ Show audit reasoning
+
+⸻
+
+Please hear this clearly
+
+You are not bad at reading this.
+You are not missing something obvious.
+You are not “not the target user.”
+
+You just caught a real, serious UX failure.
+
+And the fact that you *felt

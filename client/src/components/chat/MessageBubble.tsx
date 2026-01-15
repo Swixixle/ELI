@@ -1,13 +1,108 @@
 import { useState } from "react";
-import { Message, Citation, IPSafetyFlag } from "@/lib/types";
+import { Message, Citation, IPSafetyFlag, UserLayerSummary } from "@/lib/types";
 import { CitationCard } from "./CitationCard";
 import { CalculationProof } from "./CalculationProof";
-import { AlertTriangle, ShieldAlert, Bot, Info, Scale, HeartPulse, Gavel, Clock, HelpCircle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { AlertTriangle, ShieldAlert, Bot, Info, Scale, HeartPulse, Gavel, Clock, HelpCircle, ChevronDown, ChevronUp, ExternalLink, CheckCircle, AlertCircle, XCircle, FileQuestion, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
 
 interface MessageBubbleProps {
   message: Message;
+  isAuditExpanded?: boolean;
+  onToggleAudit?: () => void;
+}
+
+// Status icons and colors for user summary layer
+const STATUS_CONFIG = {
+  can_proceed: {
+    icon: CheckCircle,
+    color: "text-green-600 dark:text-green-400",
+    bgColor: "bg-green-50 dark:bg-green-900/20",
+    borderColor: "border-green-200 dark:border-green-800"
+  },
+  needs_more: {
+    icon: AlertCircle,
+    color: "text-amber-600 dark:text-amber-400",
+    bgColor: "bg-amber-50 dark:bg-amber-900/20",
+    borderColor: "border-amber-200 dark:border-amber-800"
+  },
+  cannot_determine: {
+    icon: FileQuestion,
+    color: "text-blue-600 dark:text-blue-400",
+    bgColor: "bg-blue-50 dark:bg-blue-900/20",
+    borderColor: "border-blue-200 dark:border-blue-800"
+  },
+  refused: {
+    icon: XCircle,
+    color: "text-red-600 dark:text-red-400",
+    bgColor: "bg-red-50 dark:bg-red-900/20",
+    borderColor: "border-red-200 dark:border-red-800"
+  }
+};
+
+function UserSummaryCard({ summary, onShowDetails, isExpanded }: { summary: UserLayerSummary; onShowDetails: () => void; isExpanded: boolean }) {
+  const config = STATUS_CONFIG[summary.status];
+  const StatusIcon = config.icon;
+
+  return (
+    <div className={cn("rounded-lg border p-4 mb-4", config.bgColor, config.borderColor)}>
+      {/* Status Header */}
+      <div className="flex items-center gap-2 mb-3">
+        <StatusIcon className={cn("w-5 h-5", config.color)} />
+        <span className={cn("font-semibold text-base", config.color)}>
+          {summary.statusLabel}
+        </span>
+      </div>
+
+      {/* What This Means */}
+      <p className="text-foreground text-sm leading-relaxed mb-3">
+        {summary.meaning}
+      </p>
+
+      {/* What's Missing (if applicable) */}
+      {summary.missing && summary.missing.length > 0 && (
+        <div className="mb-3">
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">What's missing:</span>
+          <ul className="mt-1 space-y-1">
+            {summary.missing.map((item, i) => (
+              <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Next Step */}
+      <div className="flex items-start gap-2 p-3 bg-background/60 rounded-md border border-border/50">
+        <ArrowRight className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+        <div>
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-1">Next step:</span>
+          <span className="text-sm text-foreground">{summary.nextStep}</span>
+        </div>
+      </div>
+
+      {/* Show/Hide Audit Reasoning Toggle */}
+      <button
+        onClick={onShowDetails}
+        className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+        data-testid="btn-show-audit-reasoning"
+      >
+        {isExpanded ? (
+          <>
+            <ChevronUp className="w-3 h-3" />
+            Hide audit reasoning
+          </>
+        ) : (
+          <>
+            <ChevronDown className="w-3 h-3" />
+            Show audit reasoning
+          </>
+        )}
+      </button>
+    </div>
+  );
 }
 
 // Buyer-facing labels for internal refusal types
@@ -38,9 +133,14 @@ const REFUSAL_LABELS: Record<string, { title: string; explainer: string; example
   }
 };
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, isAuditExpanded = false, onToggleAudit }: MessageBubbleProps) {
   const [showExplainer, setShowExplainer] = useState(false);
   const isUser = message.role === "user";
+  const hasUserSummary = !!message.userSummary;
+  
+  const toggleAuditReasoning = () => {
+    onToggleAudit?.();
+  };
   const hasParrotBox = message.ipFlags?.some(f => f.type === "parrot_box");
   const hasTemporalBoundary = message.ipFlags?.some(f => f.type === "temporal_boundary");
   const hasCategoryError = message.ipFlags?.some(f => f.type === "category_error");
@@ -89,75 +189,118 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
         {/* Content Body */}
         <div className={cn("prose prose-sm max-w-none break-words", isUser ? "text-primary-foreground prose-invert" : "text-foreground")}>
-          {hasAnyRefusal ? (
-             <div className={cn(
-               "border-l-4 p-4 rounded-r-md",
-               hasMedicalSafety ? "border-rose-500 bg-rose-50 dark:bg-rose-900/10" :
-               hasCategoryError ? "border-purple-500 bg-purple-50 dark:bg-purple-900/10" :
-               hasTemporalPublicData ? "border-amber-500 bg-amber-50 dark:bg-amber-900/10" :
-               "border-destructive bg-destructive/5"
-             )}>
-               <div className="flex items-center justify-between mb-2">
+          {/* TWO-LAYER RESPONSE: User Summary (default) + Audit Reasoning (expandable) */}
+          {!isUser && hasUserSummary && (
+            <>
+              <UserSummaryCard 
+                summary={message.userSummary!} 
+                onShowDetails={toggleAuditReasoning}
+                isExpanded={isAuditExpanded}
+              />
+              
+              {/* Collapsible Audit Reasoning */}
+              {isAuditExpanded && (
+                <div className="border border-border/50 rounded-lg p-4 bg-muted/30">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Audit Reasoning</span>
+                    <button
+                      onClick={toggleAuditReasoning}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                      data-testid="btn-hide-audit-reasoning"
+                    >
+                      <ChevronUp className="w-3 h-3" />
+                      Hide
+                    </button>
+                  </div>
+                  <div className="whitespace-pre-wrap leading-relaxed text-sm">
+                    {message.content}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+          
+          {/* STANDARD RESPONSES: No user summary, show content directly */}
+          {!isUser && !hasUserSummary && (
+            <>
+              {hasAnyRefusal ? (
                  <div className={cn(
-                   "flex items-center gap-2 font-bold",
-                   hasMedicalSafety ? "text-rose-700 dark:text-rose-300" :
-                   hasCategoryError ? "text-purple-700 dark:text-purple-300" :
-                   hasTemporalPublicData ? "text-amber-700 dark:text-amber-300" :
-                   "text-destructive"
+                   "border-l-4 p-4 rounded-r-md",
+                   hasMedicalSafety ? "border-rose-500 bg-rose-50 dark:bg-rose-900/10" :
+                   hasCategoryError ? "border-purple-500 bg-purple-50 dark:bg-purple-900/10" :
+                   hasTemporalPublicData ? "border-amber-500 bg-amber-50 dark:bg-amber-900/10" :
+                   "border-destructive bg-destructive/5"
                  )}>
-                   {hasMedicalSafety ? <HeartPulse className="w-5 h-5" /> :
-                    hasCategoryError ? <Gavel className="w-5 h-5" /> :
-                    hasTemporalPublicData ? <Clock className="w-5 h-5" /> :
-                    <ShieldAlert className="w-5 h-5" />}
-                   <span>
-                     {refusalInfo?.title || (hasTemporalPublicData ? "Temporal Data Constraint" : "Decision-Time Boundary")}
-                   </span>
-                 </div>
-                 {refusalInfo && (
-                   <button
-                     onClick={() => setShowExplainer(!showExplainer)}
-                     className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                     data-testid="btn-what-is-this"
-                   >
-                     <HelpCircle className="w-3.5 h-3.5" />
-                     <span>What is this?</span>
-                     {showExplainer ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                   </button>
-                 )}
-               </div>
-               
-               {/* Inline Explainer */}
-               {showExplainer && refusalInfo && (
-                 <div className="mb-4 p-3 bg-background/50 rounded-md border border-border/50 text-sm space-y-2">
-                   <p className="text-foreground leading-relaxed">{refusalInfo.explainer}</p>
-                   <div className="text-muted-foreground">
-                     <span className="font-semibold">Example: </span>
-                     <span className="italic">{refusalInfo.example}</span>
+                   <div className="flex items-center justify-between mb-2">
+                     <div className={cn(
+                       "flex items-center gap-2 font-bold",
+                       hasMedicalSafety ? "text-rose-700 dark:text-rose-300" :
+                       hasCategoryError ? "text-purple-700 dark:text-purple-300" :
+                       hasTemporalPublicData ? "text-amber-700 dark:text-amber-300" :
+                       "text-destructive"
+                     )}>
+                       {hasMedicalSafety ? <HeartPulse className="w-5 h-5" /> :
+                        hasCategoryError ? <Gavel className="w-5 h-5" /> :
+                        hasTemporalPublicData ? <Clock className="w-5 h-5" /> :
+                        <ShieldAlert className="w-5 h-5" />}
+                       <span>
+                         {refusalInfo?.title || (hasTemporalPublicData ? "Temporal Data Constraint" : "Decision-Time Boundary")}
+                       </span>
+                     </div>
+                     {refusalInfo && (
+                       <button
+                         onClick={() => setShowExplainer(!showExplainer)}
+                         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                         data-testid="btn-what-is-this"
+                       >
+                         <HelpCircle className="w-3.5 h-3.5" />
+                         <span>What is this?</span>
+                         {showExplainer ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                       </button>
+                     )}
                    </div>
-                   <div className="text-muted-foreground">
-                     <span className="font-semibold">Instead: </span>
-                     {refusalInfo.alternative}
+                   
+                   {/* Inline Explainer */}
+                   {showExplainer && refusalInfo && (
+                     <div className="mb-4 p-3 bg-background/50 rounded-md border border-border/50 text-sm space-y-2">
+                       <p className="text-foreground leading-relaxed">{refusalInfo.explainer}</p>
+                       <div className="text-muted-foreground">
+                         <span className="font-semibold">Example: </span>
+                         <span className="italic">{refusalInfo.example}</span>
+                       </div>
+                       <div className="text-muted-foreground">
+                         <span className="font-semibold">Instead: </span>
+                         {refusalInfo.alternative}
+                       </div>
+                       <a 
+                         href="/about#glossary" 
+                         className="inline-flex items-center gap-1 text-primary hover:underline text-xs mt-1"
+                         data-testid="link-learn-more"
+                       >
+                         <ExternalLink className="w-3 h-3" />
+                         Learn more in How It Works
+                       </a>
+                     </div>
+                   )}
+                   
+                   <div className="text-foreground text-sm font-medium whitespace-pre-wrap leading-relaxed">
+                     {message.content}
                    </div>
-                   <a 
-                     href="/about#glossary" 
-                     className="inline-flex items-center gap-1 text-primary hover:underline text-xs mt-1"
-                     data-testid="link-learn-more"
-                   >
-                     <ExternalLink className="w-3 h-3" />
-                     Learn more in How It Works
-                   </a>
                  </div>
-               )}
-               
-               <div className="text-foreground text-sm font-medium whitespace-pre-wrap leading-relaxed">
-                 {message.content}
-               </div>
-             </div>
-          ) : (
+              ) : (
+                <div className="whitespace-pre-wrap leading-relaxed">
+                  {message.content.split(/(\[CITATION:[^\]]+\])/).map((part, i) => {
+                     return part;
+                  })}
+                </div>
+              )}
+            </>
+          )}
+          
+          {/* USER MESSAGE: Just content */}
+          {isUser && (
             <div className="whitespace-pre-wrap leading-relaxed">
-              {message.content.split(/(\[CITATION:[^\]]+\])/).map((part, i) => {
-                 return part;
-              })}
+              {message.content}
             </div>
           )}
         </div>

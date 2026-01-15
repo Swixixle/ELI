@@ -313,6 +313,14 @@ interface Citation {
   asOf?: string;
 }
 
+interface UserSummary {
+  status: "can_proceed" | "needs_more" | "cannot_determine" | "refused";
+  statusLabel: string;
+  meaning: string;
+  missing?: string[];
+  nextStep: string;
+}
+
 interface ChatResponse {
   content: string;
   citations: Citation[];
@@ -322,6 +330,7 @@ interface ChatResponse {
     steps: string[];
     sealedParams: string[];
   };
+  userSummary?: UserSummary;
 }
 
 function generateEpistemicResponse(message: string, chunks: CanonChunk[], mode: string): ChatResponse {
@@ -566,7 +575,13 @@ None of these can be established from outcome data alone.
 This language may be used verbatim in review documentation. For legal liability or HR determinations, consult qualified counsel.`,
         citations,
         refusalType: "category_error",
-        refusalReason: "Fault attribution requires normative judgment outside ELI's scope."
+        refusalReason: "Fault attribution requires normative judgment outside ELI's scope.",
+        userSummary: {
+          status: "refused",
+          statusLabel: "Cannot Determine",
+          meaning: "Assigning individual blame requires moral or legal judgment that this system isn't designed to make. We can help you evaluate the system and processes instead.",
+          nextStep: "Ask about decision-time conditions, available information, or process gaps that may have contributed to the outcome."
+        }
       };
     }
     
@@ -624,7 +639,14 @@ Disciplinary action requires evidence that a policy violation or negligent decis
 This language may be used verbatim in review documentation.`,
         citations,
         refusalType: "temporal_boundary",
-        refusalReason: "Discipline based on outcome knowledge violates temporal admissibility."
+        refusalReason: "Discipline based on outcome knowledge violates temporal admissibility.",
+        userSummary: {
+          status: "refused",
+          statusLabel: "Cannot Justify Discipline",
+          meaning: "Disciplinary action can't be supported using only outcome information. We can't use hindsight to determine what someone 'should have known' at decision time.",
+          missing: ["Policy version in force at decision time", "Decision context available to the unit", "Evidence of deviation from required procedure"],
+          nextStep: "Focus on system improvements rather than individual discipline, or provide decision-time evidence if available."
+        }
       };
     }
     
@@ -649,7 +671,14 @@ To issue a governance determination, I need decision-time evidence:
 ### Preliminary Guidance
 Until context is provided, the safest governance position is:
 > "No individual-level determination can be made without decision-time evidence. System review is appropriate; actor judgment is premature."`,
-      citations
+      citations,
+      userSummary: {
+        status: "needs_more",
+        statusLabel: "More Information Needed",
+        meaning: "I can help evaluate this, but I need to know what information and constraints were present when the decision was made.",
+        missing: ["Decision date", "Policy context at the time", "What the actor knew", "Resource/time constraints"],
+        nextStep: "Provide the decision date and describe the context that was available at that time."
+      }
     };
   }
   

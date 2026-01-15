@@ -40,6 +40,14 @@ export type VisualSpec = {
   data: any;
 };
 
+export type UserLayerSummary = {
+  status: "can_proceed" | "needs_more" | "cannot_determine" | "refused";
+  statusLabel: string;
+  meaning: string;
+  missing?: string[];
+  nextStep: string;
+};
+
 export type Message = {
   id: string;
   role: "user" | "assistant";
@@ -52,6 +60,7 @@ export type Message = {
   temporalContext?: string;
   interpretation?: string;
   normalizedQuery?: string;
+  userSummary?: UserLayerSummary;
 };
 
 export const MOCK_CITATIONS: Record<string, Citation> = {

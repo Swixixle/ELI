@@ -23,7 +23,20 @@ export default function Home() {
   const [showTryPanel, setShowTryPanel] = useState(false);
   const [activeCase, setActiveCase] = useState<Case | null>(null);
   const [showCaseSelector, setShowCaseSelector] = useState(false);
+  const [expandedAuditMessages, setExpandedAuditMessages] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const toggleAuditExpanded = (messageId: string) => {
+    setExpandedAuditMessages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,6 +49,7 @@ export default function Home() {
   const runDemo = () => {
     setShowDemo(false);
     setMessages([INITIAL_MESSAGES[0]]);
+    setExpandedAuditMessages(new Set());
     setIsTyping(true);
     
     // Scripted Demo Sequence
@@ -235,6 +249,10 @@ export default function Home() {
         };
       }
 
+      if (data.userSummary) {
+        responseData.userSummary = data.userSummary;
+      }
+
       const assistantMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -243,7 +261,8 @@ export default function Home() {
         calcProof: responseData.calcProof,
         ipFlags: responseData.ipFlags,
         timestamp: Date.now(),
-        temporalContext: userMsg.temporalContext
+        temporalContext: userMsg.temporalContext,
+        userSummary: responseData.userSummary
       };
 
       setMessages(prev => [...prev, assistantMsg]);
@@ -375,6 +394,8 @@ export default function Home() {
             onSelectCase={(c) => {
               setActiveCase(c);
               setShowDemo(false);
+              setMessages([]);
+              setExpandedAuditMessages(new Set());
             }}
             currentCaseId={activeCase?.id}
           />
@@ -458,7 +479,12 @@ export default function Home() {
           ) : (
             <>
               {messages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} />
+                <MessageBubble 
+                  key={msg.id} 
+                  message={msg}
+                  isAuditExpanded={expandedAuditMessages.has(msg.id)}
+                  onToggleAudit={() => toggleAuditExpanded(msg.id)}
+                />
               ))}
             </>
           )}
