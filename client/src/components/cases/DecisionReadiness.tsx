@@ -17,35 +17,47 @@ import {
   Clock,
   Users,
   BookOpen,
-  Gauge
+  Gauge,
+  FileText
 } from "lucide-react";
+import { Link } from "wouter";
 import type { DecisionReadiness, CasePhase, RequirementCategory } from "@/lib/types";
 
 const CRITERIA_EXPLAINER = [
   {
+    id: "decision_target",
+    name: "Decision Target",
+    question: "What ruling are you asking for?",
+    why: "Without a specific, answerable question, the system cannot determine jurisdiction. This is not 'what happened?' — it is 'what procedural determination do you need?'",
+    satisfiedBy: "A yes/no governance question. Example: 'Was the decision at 03:14 procedurally defensible given information available at that time?'"
+  },
+  {
+    id: "temporal",
     name: "Temporal Verification",
     question: "When was the decision made?",
-    why: "Without this, you cannot prevent hindsight bias, lock admissible evidence, or define what was knowable at the time."
+    why: "Without this, you cannot prevent hindsight bias, lock admissible evidence, or define what was knowable at the time.",
+    satisfiedBy: "A timestamped decision record, dated memo, or documented decision point with explicit date/time."
   },
   {
-    name: "Evidence Sufficiency",
-    question: "What information was actually available at that time?",
-    why: "This separates 'We knew X' from 'We learned X later.' Without this, outcomes rewrite memory."
-  },
-  {
+    id: "independent",
     name: "Independent Verification",
     question: "Was any of that information independently corroborated?",
-    why: "This prevents self-report bias, single-source hallucination, and narrative laundering. Every audit system requires this."
+    why: "A system cannot independently verify itself. This prevents self-report bias and narrative laundering.",
+    satisfiedBy: "A document from someone other than the decision-maker: witness statement, third-party report, external audit, or consult note."
   },
   {
+    id: "policy",
     name: "Policy Application",
-    question: "What rule, policy, or standard governed the decision?",
-    why: "Without this, decisions become ad hoc, power replaces process, and you cannot distinguish judgment from preference."
+    question: "What rule governed the decision, and how was it applied?",
+    why: "Having a policy is not enough. You must show how the policy was applied (or why deviation was justified).",
+    satisfiedBy: "Completed checklist, protocol adherence log, deviation justification note, or documented policy application record."
   },
   {
+    id: "contextual",
     name: "Contextual Constraints",
     question: "What constraints shaped the decision-maker's options?",
-    why: "Time pressure, staffing, resources, emergency conditions. Without this, you punish people for not doing the impossible."
+    why: "Time pressure, staffing, resources, emergency conditions. Without this, you punish people for not doing the impossible.",
+    satisfiedBy: "Operational status log, resource documentation, staffing record, or contemporaneous notes about constraints."
   }
 ];
 
@@ -76,6 +88,7 @@ interface ConditionCardProps {
 function ConditionCard({ id, name, status, gapExpression, evidence, description }: ConditionCardProps) {
   const Icon = CONDITION_ICONS[id] || FileCheck;
   const isSatisfied = status === "satisfied";
+  const explainer = CRITERIA_EXPLAINER.find(c => c.id === id);
   
   return (
     <div 
@@ -108,8 +121,23 @@ function ConditionCard({ id, name, status, gapExpression, evidence, description 
             )}
           </div>
           
+          {/* Show the key question for this prerequisite */}
+          {explainer && !isSatisfied && (
+            <p className="text-xs text-muted-foreground mt-1 italic">"{explainer.question}"</p>
+          )}
+          
           {description && (
             <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          )}
+          
+          {/* Show what satisfies this prerequisite when missing */}
+          {explainer && !isSatisfied && (
+            <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+              <p className="text-xs text-blue-700 dark:text-blue-400">
+                <span className="font-medium">To satisfy: </span>
+                {explainer.satisfiedBy}
+              </p>
+            </div>
           )}
           
           {gapExpression && !isSatisfied && (
@@ -273,18 +301,28 @@ export function DecisionReadinessPanel({ readiness, onSetDecisionTarget }: Decis
         ) : (
           <button 
             onClick={onSetDecisionTarget}
-            className="w-full p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-left hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+            className="w-full p-4 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-300 dark:border-amber-700 rounded-lg text-left hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
             data-testid="set-decision-target-btn"
           >
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
-                  No decision target set
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-amber-100 dark:bg-amber-800 rounded-lg">
+                <Target className="h-5 w-5 text-amber-600 dark:text-amber-300" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">
+                  Set Decision Target to Begin
                 </p>
-                <p className="text-xs text-amber-600/80 dark:text-amber-400/80 mt-0.5">
-                  Click to define what decision this case is trying to support
+                <p className="text-xs text-amber-700/80 dark:text-amber-400/80 mb-3">
+                  This is not "what happened?" — it is the specific procedural question you need answered.
                 </p>
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-amber-700 dark:text-amber-400">Example decision targets:</p>
+                  <ul className="text-xs text-amber-600/90 dark:text-amber-400/80 space-y-1 ml-3">
+                    <li>"Was the clinical decision at 03:14 procedurally defensible?"</li>
+                    <li>"Does the record support that protocol deviation was justified?"</li>
+                    <li>"Does the case meet minimum procedural standards?"</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </button>
@@ -310,19 +348,25 @@ export function DecisionReadinessPanel({ readiness, onSetDecisionTarget }: Decis
                     <HelpCircle className="h-3.5 w-3.5" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-0" align="start">
+                <PopoverContent className="w-96 p-0" align="start">
                   <div className="p-3 border-b bg-muted/30">
                     <p className="text-xs font-semibold">Why these 5 procedural prerequisites?</p>
                     <p className="text-xs text-muted-foreground mt-1">
                       These are not arbitrary conditions. They are the minimum basis set for defensible procedural evaluation — recurring across administrative law, root cause analysis, and regulatory enforcement.
                     </p>
                   </div>
-                  <div className="p-2 max-h-64 overflow-y-auto">
+                  <div className="p-2 max-h-80 overflow-y-auto">
                     {CRITERIA_EXPLAINER.map((c, i) => (
-                      <div key={i} className="p-2 rounded hover:bg-muted/50">
-                        <p className="text-xs font-medium">{c.name}</p>
+                      <div key={i} className="p-2.5 rounded hover:bg-muted/50 border-b last:border-b-0">
+                        <p className="text-xs font-semibold text-foreground">{c.name}</p>
                         <p className="text-xs text-muted-foreground italic mt-0.5">"{c.question}"</p>
-                        <p className="text-xs text-muted-foreground mt-1">{c.why}</p>
+                        <p className="text-xs text-muted-foreground mt-1.5">{c.why}</p>
+                        <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                          <p className="text-xs text-blue-700 dark:text-blue-400">
+                            <span className="font-medium">Satisfied by: </span>
+                            {c.satisfiedBy}
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -388,6 +432,22 @@ export function DecisionReadinessPanel({ readiness, onSetDecisionTarget }: Decis
                   {readiness.nextPhaseUnlocks}
                 </p>
               </div>
+            )}
+
+            {readiness.totalSatisfied < readiness.totalRequired && (
+              <Link href="/canon?tab=templates">
+                <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <p className="text-sm text-primary font-medium">
+                      Need help creating documents?
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    View document templates for Independent Verification, Policy Application, and more
+                  </p>
+                </div>
+              </Link>
             )}
           </TabsContent>
           

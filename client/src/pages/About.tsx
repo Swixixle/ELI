@@ -14,6 +14,7 @@ import {
   Clock,
   Gavel
 } from "lucide-react";
+import { ProceduralEquation } from "@/components/cases/ProceduralEquation";
 
 export default function About() {
   return (
@@ -321,6 +322,19 @@ export default function About() {
               </p>
             </div>
           </div>
+        </section>
+
+        {/* Procedural Equation */}
+        <section className="mb-16">
+          <h2 className="text-2xl font-display font-bold text-foreground mb-6 flex items-center gap-3">
+            <Scale className="w-6 h-6 text-primary" />
+            The Procedural Equation
+          </h2>
+          <p className="text-muted-foreground mb-6 leading-relaxed">
+            Before any case can be evaluated, it must satisfy the minimum structural basis for procedural review.
+            This equation determines <strong>jurisdiction</strong> — not judgment.
+          </p>
+          <ProceduralEquation satisfied={0} />
         </section>
 
         {/* What This Is NOT */}

@@ -1,12 +1,14 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/shared/Badge";
-import { FileText, Upload, Trash2, Calendar, Shield, FolderOpen, ArrowLeft, ExternalLink, AlertCircle, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import { FileText, Upload, Trash2, Calendar, Shield, FolderOpen, ArrowLeft, ExternalLink, AlertCircle, CheckCircle, FileCode } from "lucide-react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { Case, CanonDocument } from "@shared/schema";
 import { useCases, useCaseDocuments, useCreateCaseDocument, useDeleteCaseDocument } from "@/lib/casesApi";
 import { CaseSelector } from "@/components/cases/CaseSelector";
 import { useSearch, Link, useLocation } from "wouter";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DocumentTemplates } from "@/components/cases/DocumentTemplates";
 
 export default function CanonLibrary() {
   const [isUploading, setIsUploading] = useState(false);
@@ -19,6 +21,26 @@ export default function CanonLibrary() {
   const search = useSearch();
   const urlParams = new URLSearchParams(search);
   const caseIdFromUrl = urlParams.get("caseId");
+  const tabFromUrl = urlParams.get("tab");
+  const [activeTab, setActiveTab] = useState(tabFromUrl === "templates" ? "templates" : "documents");
+  
+  useEffect(() => {
+    if (tabFromUrl === "templates") {
+      setActiveTab("templates");
+    } else if (tabFromUrl === "documents" || !tabFromUrl) {
+      setActiveTab("documents");
+    }
+  }, [tabFromUrl]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const newParams = new URLSearchParams(search);
+    newParams.set("tab", value);
+    if (activeCaseId) {
+      newParams.set("caseId", activeCaseId);
+    }
+    navigate(`/canon?${newParams.toString()}`);
+  };
   
   const { data: cases } = useCases();
   const activeCaseId = selectedCase?.id || caseIdFromUrl;
@@ -174,7 +196,7 @@ export default function CanonLibrary() {
         ) : (
           <>
             {/* Header with Case Context */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-6">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
@@ -189,28 +211,48 @@ export default function CanonLibrary() {
                     {activeCase?.name || "Case"}
                   </button>
                 </div>
-                <h1 className="text-2xl font-display font-bold text-foreground">Case Documents</h1>
-                <p className="text-muted-foreground mt-1">Manage source materials for this case.</p>
+                <h1 className="text-2xl font-display font-bold text-foreground">Canon Library</h1>
+                <p className="text-muted-foreground mt-1">Manage source materials and access document templates.</p>
               </div>
-              <button 
-                onClick={handleUploadClick}
-                disabled={isUploading}
-                className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-all shadow-sm font-medium text-sm disabled:opacity-70 disabled:cursor-not-allowed"
-                data-testid="button-upload-document"
-              >
-                {isUploading ? (
-                  <>
-                     <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                     <span>Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4" />
-                    <span>Upload Document</span>
-                  </>
-                )}
-              </button>
             </div>
+
+            {/* Tab Navigation */}
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6">
+              <div className="flex items-center justify-between">
+                <TabsList>
+                  <TabsTrigger value="documents" className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Documents
+                  </TabsTrigger>
+                  <TabsTrigger value="templates" className="flex items-center gap-2">
+                    <FileCode className="w-4 h-4" />
+                    Templates
+                  </TabsTrigger>
+                </TabsList>
+                
+                {activeTab === "documents" && (
+                  <button 
+                    onClick={handleUploadClick}
+                    disabled={isUploading}
+                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-all shadow-sm font-medium text-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                    data-testid="button-upload-document"
+                  >
+                    {isUploading ? (
+                      <>
+                         <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                         <span>Processing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4" />
+                        <span>Upload Document</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
+              <TabsContent value="documents" className="mt-6">
 
         {/* Upload Status Feedback */}
         {(uploadError || uploadSuccess || isUploading) && (
@@ -332,6 +374,12 @@ export default function CanonLibrary() {
              )}
            </div>
         </div>
+              </TabsContent>
+
+              <TabsContent value="templates" className="mt-6">
+                <DocumentTemplates />
+              </TabsContent>
+            </Tabs>
           </>
         )}
 
