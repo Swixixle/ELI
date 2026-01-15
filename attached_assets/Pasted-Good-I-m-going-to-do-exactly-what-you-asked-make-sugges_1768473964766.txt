@@ -1,0 +1,251 @@
+Good — I’m going to do exactly what you asked: make suggestions, choose a path, and give the Replit agent a clear, unambiguous directive.
+
+I’ll be decisive here, because indecision is what’s burning your energy.
+
+⸻
+
+FINAL CALL (NO HEDGING)
+
+Choose Path #2: “Risk Management / Just Culture Engine”
+
+with Path #4 (Consultancy) as the initial wrapper.
+
+You should not open-source this now.
+You should not lead with the CFO engine yet.
+You should not frame this as an academic standard first.
+
+Why this is the correct call
+	1.	This is where the value is already obvious
+	•	You’ve built a procedural legitimacy engine, not a forecasting engine.
+	•	Risk, liability, peer review, and discipline are where hindsight bias causes the most damage today.
+	2.	Hospitals already pay for this problem
+	•	Risk management
+	•	Peer review
+	•	M&M conferences
+	•	Legal defense
+	•	“Just Culture” theater
+ELI replaces performative fairness with provable fairness.
+	3.	Consultancy-first removes product risk
+	•	You don’t need perfect UX.
+	•	You don’t need feature completeness.
+	•	You do need credibility and receipts.
+	•	You already have the hardest part: outcome-blind procedural locking.
+	4.	This path preserves all others
+	•	Consultancy → SaaS
+	•	Risk tool → CFO engine
+	•	Proprietary → standard (later, from strength)
+
+⸻
+
+REFRAME THE PRODUCT (THIS IS CRITICAL)
+
+You are not selling software yet.
+
+You are selling:
+
+Outcome-Blind Procedural Review as a Service
+
+The software is the proof mechanism, not the product.
+
+⸻
+
+WHAT SUCCESS LOOKS LIKE (CONCRETE)
+
+A hospital pays you to answer one question:
+
+“Was this clinician decision procedurally defensible given what was known at the time?”
+
+You deliver:
+	•	A locked case
+	•	An outcome-blind review
+	•	A Determination Receipt
+	•	A defensible conclusion:
+	•	Procedurally permissible
+	•	Procedurally blocked
+	•	High procedural risk due to missing evidence
+
+That’s it. That’s the win.
+
+⸻
+
+NOW: EXACT INSTRUCTIONS FOR REPLIT AGENT
+
+Paste the following verbatim.
+
+⸻
+
+🔧 REPLIT AGENT — IMPLEMENTATION DIRECTIVE
+
+Objective
+Prepare ELI to function as a third-party outcome-blind procedural review engine suitable for medico-legal, peer review, and risk management use.
+
+This is not a general chatbot.
+This is not a productivity app.
+This is an audit instrument.
+
+⸻
+
+1️⃣ LOCK THE PRODUCT SCOPE (MANDATORY)
+
+Remove / de-emphasize:
+	•	Free-form “ask anything” chat
+	•	Exploratory prompts
+	•	Long philosophical explanations by default
+
+Make first-class:
+	•	Decision Target
+	•	Decision Time
+	•	Decision Readiness Checklist
+	•	Gaps / Equation View
+	•	Determination Receipt
+
+⸻
+
+2️⃣ DEFAULT MODE = “Third-Party Review”
+
+Rename modes:
+	•	❌ Advisor / Expert
+	•	✅ Reviewer Mode (Default)
+	•	✅ Audit Detail Mode (Collapsed)
+
+Reviewer Mode must:
+	•	Never reveal outcomes
+	•	Never speculate
+	•	Never provide advice beyond procedural permission
+
+⸻
+
+3️⃣ DECISION READINESS IS THE PRIMARY OUTPUT
+
+The main screen must always show:
+
+Decision Target
+Decision Time
+Readiness Equation
+
+Example (exact pattern):
+
+Procedural Readiness: 3 / 5 prerequisites satisfied
+Status: Decision Permitted (High Risk)
+
+Missing:
+• Independent Verification → need 1 usable interview OR 1 independent document
+• Policy Application → need 1 contemporaneous policy application record
+
+No narrative required. Narrative is secondary.
+
+⸻
+
+4️⃣ DETERMINATION RECEIPT IS THE PRODUCT
+
+Every review must produce a signed Determination Receipt.
+
+Receipt must include:
+	•	Decision Target
+	•	Decision Time
+	•	Canon version
+	•	Threshold policy (e.g., 3 of 5)
+	•	Evidence hashes
+	•	Checklist results
+	•	Gaps equation
+	•	Case-state hash
+	•	Cryptographic signature
+
+Add:
+	•	Export PDF
+	•	Export JSON
+	•	Export Audit Packet (ZIP)
+
+This is what gets sent to:
+	•	Legal
+	•	Risk
+	•	Regulators
+	•	Unions
+
+⸻
+
+5️⃣ ADD “CONSULTANT FLOW”
+
+Add a role or toggle:
+
+“Third-Party Reviewer”
+
+Effects:
+	•	Cannot edit documents
+	•	Cannot change decision target after lock
+	•	Cannot see outcome fields
+	•	Can only generate and export receipts
+
+This supports consultancy use immediately.
+
+⸻
+
+6️⃣ COPY / LANGUAGE (STRICT)
+
+Replace all vague language with:
+	•	“Procedurally Permitted”
+	•	“Procedurally Blocked”
+	•	“Advisory Only — Insufficient for Disciplinary Action”
+	•	“Outcome-Blind Review”
+
+Never say:
+	•	“Correct”
+	•	“Incorrect”
+	•	“Right”
+	•	“Wrong”
+	•	“Safe”
+	•	“Unsafe”
+
+⸻
+
+7️⃣ REMOVE FEAR FROM THE UI
+
+For every critical action, add a single line:
+
+“This does not judge outcomes. It evaluates procedural legitimacy based on contemporaneous information.”
+
+This must appear:
+	•	Near the readiness meter
+	•	On the receipt
+	•	In Audit Mode
+
+⸻
+
+PRODUCT POSITIONING (FOR YOU, NOT THE AGENT)
+
+You are building the polygraph of procedural fairness.
+
+Not:
+	•	AI decision making
+	•	Prediction
+	•	Safety scoring
+
+But:
+	•	Was this decision allowed to exist, given reality at the time?
+
+That is rare.
+That is valuable.
+That is defensible.
+
+⸻
+
+FINAL WORD (IMPORTANT)
+
+You are not stuck because this is unclear.
+
+You’re stuck because you were trying to make one system serve four masters at once.
+
+You don’t need to choose forever.
+You need to choose first.
+
+Consultant-first, risk-management-focused, outcome-blind review is the correct first road.
+
+Everything else becomes easier after credibility.
+
+If you want, next we can:
+	•	Draft the one-page consulting pitch
+	•	Write the email to a CMO / CRO
+	•	Or design the Shadow Review demo case that proves bias reduction
+
+But for now:
+Paste the Replit directive and ship toward one target.

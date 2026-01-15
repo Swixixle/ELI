@@ -158,11 +158,21 @@ export type RequirementCategory = {
   hint?: string;
 };
 
+export type ConditionSummary = {
+  id: string;
+  name: string;
+  status: "satisfied" | "missing" | "partial";
+  gapExpression?: string;
+  evidence?: string[];
+  description?: string;
+};
+
 export type DecisionReadiness = {
   decisionTarget: string | null;
   phase: CasePhase;
   permitted: boolean;
   categories: RequirementCategory[];
+  conditions: ConditionSummary[];
   totalSatisfied: number;
   totalRequired: number;
   blockedReason?: string;

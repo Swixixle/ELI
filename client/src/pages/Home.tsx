@@ -23,6 +23,7 @@ function computeDecisionReadiness(caseData: Case | null, documentCount: number):
       phase: "intake",
       permitted: false,
       categories: [],
+      conditions: [],
       totalSatisfied: 0,
       totalRequired: 0
     };
@@ -109,11 +110,53 @@ function computeDecisionReadiness(caseData: Case | null, documentCount: number):
   const currentPhase = (caseData.phase as CasePhase) || "intake";
   const permitted = totalSatisfied >= 3 && hasDecisionTarget;
 
+  const conditions = [
+    {
+      id: "decision_target",
+      name: "Decision Target",
+      status: hasDecisionTarget ? "satisfied" as const : "missing" as const,
+      gapExpression: hasDecisionTarget ? undefined : "NEED(decision_target) = 1 statement",
+      evidence: hasDecisionTarget ? [caseData.decisionTarget!.substring(0, 30) + "..."] : undefined,
+      description: "What decision is this case trying to support?"
+    },
+    {
+      id: "temporal",
+      name: "Temporal Verification",
+      status: hasMultipleDocuments ? "satisfied" as const : hasDocuments ? "partial" as const : "missing" as const,
+      gapExpression: !hasDocuments ? "NEED(timestamp) = 2 time verifiers" : !hasMultipleDocuments ? "NEED(sequence) = 1 more timestamped document" : undefined,
+      evidence: hasDocuments ? [`${documentCount} document(s) with dates`] : undefined,
+      description: "When was this decision made? Can we verify the timeline?"
+    },
+    {
+      id: "independent",
+      name: "Independent Verification",
+      status: "missing" as const,
+      gapExpression: "NEED(corroboration) = 1 interview OR 1 independent document",
+      description: "Is there third-party confirmation of claims?"
+    },
+    {
+      id: "policy",
+      name: "Policy Application",
+      status: "missing" as const,
+      gapExpression: "NEED(policy_record) = 1 policy application record",
+      description: "What rule, policy, or standard governed this decision?"
+    },
+    {
+      id: "contextual",
+      name: "Contextual Constraints",
+      status: hasDecisionTarget ? "satisfied" as const : "missing" as const,
+      gapExpression: hasDecisionTarget ? undefined : "NEED(constraints) = 1 constraint artifact",
+      evidence: hasDecisionTarget ? ["Decision context defined"] : undefined,
+      description: "What constraints shaped the decision-maker's options?"
+    }
+  ];
+
   return {
     decisionTarget: caseData.decisionTarget || null,
     phase: currentPhase,
     permitted,
     categories,
+    conditions,
     totalSatisfied,
     totalRequired,
     blockedReason: !hasDecisionTarget 

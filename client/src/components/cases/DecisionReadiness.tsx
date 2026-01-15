@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   CheckCircle2, 
   XCircle, 
@@ -11,7 +12,12 @@ import {
   ArrowRight,
   Target,
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  FileCheck,
+  Clock,
+  Users,
+  BookOpen,
+  Gauge
 } from "lucide-react";
 import type { DecisionReadiness, CasePhase, RequirementCategory } from "@/lib/types";
 
@@ -49,6 +55,88 @@ const PHASE_CONFIG: Record<CasePhase, { label: string; description: string; orde
   decision: { label: "Decision", description: "Record a defensible determination", order: 3 },
   closure: { label: "Closure", description: "Preserve record for audit", order: 4 }
 };
+
+const CONDITION_ICONS: Record<string, typeof Target> = {
+  "decision_target": Target,
+  "temporal": Clock,
+  "independent": Users,
+  "policy": BookOpen,
+  "contextual": Gauge
+};
+
+interface ConditionCardProps {
+  id: string;
+  name: string;
+  status: "satisfied" | "missing" | "partial";
+  gapExpression?: string;
+  evidence?: string[];
+  description?: string;
+}
+
+function ConditionCard({ id, name, status, gapExpression, evidence, description }: ConditionCardProps) {
+  const Icon = CONDITION_ICONS[id] || FileCheck;
+  const isSatisfied = status === "satisfied";
+  
+  return (
+    <div 
+      className={`p-3 rounded-lg border transition-colors ${
+        isSatisfied 
+          ? "border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-900/10" 
+          : status === "partial"
+            ? "border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-900/10"
+            : "border-border bg-muted/30"
+      }`}
+      data-testid={`condition-card-${id}`}
+    >
+      <div className="flex items-start gap-2">
+        <div className={`p-1.5 rounded ${
+          isSatisfied ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"
+        }`}>
+          <Icon className={`h-4 w-4 ${
+            isSatisfied ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+          }`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium">{name}</h4>
+            {isSatisfied ? (
+              <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+            ) : status === "partial" ? (
+              <Circle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+            ) : (
+              <XCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+            )}
+          </div>
+          
+          {description && (
+            <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          )}
+          
+          {gapExpression && !isSatisfied && (
+            <div className="mt-2 p-2 bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Gap Equation</p>
+              <code className="text-xs font-mono text-slate-700 dark:text-slate-300">{gapExpression}</code>
+            </div>
+          )}
+          
+          {evidence && evidence.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {evidence.map((item, idx) => (
+                <Badge 
+                  key={idx} 
+                  variant="secondary" 
+                  className="text-xs px-1.5 py-0"
+                >
+                  {item}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function PhaseIndicator({ currentPhase }: { currentPhase: CasePhase }) {
   const phases: CasePhase[] = ["intake", "review", "decision", "closure"];
@@ -261,31 +349,58 @@ export function DecisionReadinessPanel({ readiness, onSetDecisionTarget }: Decis
           </div>
         </div>
 
-        {readiness.categories.length > 0 && (
-          <div className="space-y-3">
-            {readiness.categories.map((category) => (
-              <CategorySection key={category.name} category={category} />
-            ))}
-          </div>
-        )}
+        <Tabs defaultValue="quick" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-3">
+            <TabsTrigger value="quick" data-testid="tab-quick-review">Quick Review</TabsTrigger>
+            <TabsTrigger value="audit" data-testid="tab-audit-details">Audit Details</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="quick" className="mt-0">
+            {readiness.conditions && readiness.conditions.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {readiness.conditions.map((condition) => (
+                  <ConditionCard 
+                    key={condition.id}
+                    id={condition.id}
+                    name={condition.name}
+                    status={condition.status}
+                    gapExpression={condition.gapExpression}
+                    evidence={condition.evidence}
+                    description={condition.description}
+                  />
+                ))}
+              </div>
+            )}
+            
+            {readiness.blockedReason && !readiness.permitted && (
+              <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-700 dark:text-red-400">
+                  <span className="font-medium">Blocked: </span>
+                  {readiness.blockedReason}
+                </p>
+              </div>
+            )}
 
-        {readiness.blockedReason && !readiness.permitted && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-sm text-red-700 dark:text-red-400">
-              <span className="font-medium">Blocked: </span>
-              {readiness.blockedReason}
-            </p>
-          </div>
-        )}
-
-        {readiness.nextPhaseUnlocks && !readiness.permitted && (
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <p className="text-sm text-blue-700 dark:text-blue-400">
-              <span className="font-medium">To proceed: </span>
-              {readiness.nextPhaseUnlocks}
-            </p>
-          </div>
-        )}
+            {readiness.nextPhaseUnlocks && !readiness.permitted && (
+              <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-sm text-blue-700 dark:text-blue-400">
+                  <span className="font-medium">To proceed: </span>
+                  {readiness.nextPhaseUnlocks}
+                </p>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="audit" className="mt-0">
+            {readiness.categories.length > 0 && (
+              <div className="space-y-3">
+                {readiness.categories.map((category) => (
+                  <CategorySection key={category.name} category={category} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
 
         {/* Jurisdictional framing - what this means */}
         <div className="p-3 bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2">
