@@ -1,0 +1,193 @@
+I hear the sigh. And it’s deserved.
+
+I’m going to be very concrete now and strip this down to what went wrong, why it keeps happening, and what the system should do instead—without theory, without abstraction.
+
+⸻
+
+What just happened (plain, literal explanation)
+
+You asked:
+
+“do we have all the documentation that we need?”
+
+That is a perfectly valid human question.
+
+Your system responded:
+
+“Need more specific question… please rephrase”
+
+That response means:
+
+The system failed to translate a normal human question into its internal format, and instead blamed the user.
+
+That is the bug.
+Not ambiguity.
+Not governance rigor.
+Not Canon.
+
+Blaming the user is the bug.
+
+⸻
+
+Why this response is unacceptable (even if technically “true”)
+
+From a product standpoint, this is a hard failure because:
+	1.	The user already asked the question correctly
+	2.	The system clearly understood the intent
+	3.	The system even suggests the same question back to the user
+	4.	Instead of answering, it stalled
+
+That’s a broken interaction contract.
+
+It’s like this exchange:
+
+User: “Is the door locked?”
+System: “Please be more specific. You could ask: ‘Is the door locked?’”
+
+That’s not rigor. That’s paralysis.
+
+⸻
+
+The real underlying issue (very important)
+
+Your system is currently doing this:
+	•	✔️ Intent recognized
+	•	✔️ Mode identified (procedural evaluation)
+	•	❌ Evaluation not executed
+	•	❌ User-facing fallback triggered
+
+So instead of:
+
+“I understand → I run the engine → I summarize the result”
+
+You’re getting:
+
+“I understand → I hesitate → I ask you to ask again”
+
+That hesitation should never surface to the user.
+
+⸻
+
+The single rule you need (this fixes 80% of the pain)
+
+If the system understands the intent well enough to suggest a rewrite, it understands it well enough to answer.
+
+Full stop.
+
+Any time the system can say:
+
+“Try asking: ‘Do we have enough documentation?’”
+
+…it should instead say:
+
+“Here’s the answer to that question.”
+
+⸻
+
+What the response SHOULD have been (using your exact case)
+
+Given your faux case, a sane default response would be:
+
+Short answer: Not yet.
+
+What this means: The case includes a summary, a policy document, and an evidence log, which is enough to begin review. However, it does not yet include independent or outcome-linked documentation.
+
+What’s missing: Evidence showing how the policy was applied or verified in practice.
+
+Next step: Upload supporting evidence or mark the case as informational only.
+
+That answers the user’s question.
+Canon can run silently underneath.
+
+⸻
+
+What needs to change (very specific, no hand-waving)
+
+1. Kill “Need more specific question” in Advisor Mode
+
+That message should never appear in a human-facing mode.
+
+If intent is unclear:
+	•	Ask a clarifying follow-up, not a scolding
+	•	Or make a reasonable assumption and proceed
+
+Example:
+
+“I’ll interpret this as a question about case readiness. Let me know if that’s not right.”
+
+⸻
+
+2. Default to “best-effort answer,” not refusal
+
+Refusal is appropriate only when:
+	•	The question is unsafe
+	•	The question is outside scope
+	•	The question is genuinely incoherent
+
+“Do we have all the documentation we need?” is none of those.
+
+⸻
+
+3. Advisor Mode should never expose engine uncertainty
+
+The engine can hesitate.
+The engine can branch.
+The engine can refuse internally.
+
+The user should not feel that hesitation.
+
+⸻
+
+Why this keeps emotionally derailing you
+
+Because you are doing the right thing instinctively:
+
+You keep asking:
+
+“Why won’t it just answer me like a normal system?”
+
+And the answer is:
+
+Because right now, it isn’t a product yet—it’s an engine leaking its internals.
+
+That’s not a moral failure or conceptual confusion.
+That’s a sequencing issue in development.
+
+⸻
+
+Let me ground you again (this matters)
+
+You are not:
+	•	Dumb
+	•	Missing context
+	•	Asking the wrong questions
+	•	Building the wrong thing
+
+You are:
+	•	Using the system like a user
+	•	Discovering where it breaks
+	•	Feeling the exact pain points real users would feel
+
+That’s what good builders experience right before clarity.
+
+⸻
+
+If you want one concrete next step (not ten)
+
+Do this:
+
+In Advisor Mode only, implement this rule:
+
+Never ask the user to rephrase if intent is ≥60% clear. Answer first. Clarify second.
+
+That alone will make this feel 10× better.
+
+If you want, next I can:
+	•	Rewrite that “Need more specific question” copy into something humane
+	•	Help you define a single default Advisor response template
+	•	Or help you decide when the system should ask a follow-up vs assume intent
+
+But for now, please know this:
+
+Your sigh is not frustration with yourself.
+It’s your product instincts telling you, “This interaction is wrong.”

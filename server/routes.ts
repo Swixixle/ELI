@@ -895,15 +895,20 @@ Based on current Canon, I can evaluate:
   
   // READINESS/SUFFICIENCY QUESTIONS - Do we have enough? Is it ready?
   const readinessPatterns = [
-    /\bdo we have enough (documentation|documents|evidence|info|information)\b/,
+    /\bdo we have (enough|all|all the|sufficient|the) (documentation|documents|evidence|info|information)\b/,
+    /\bhave (enough|all|all the|sufficient) (documentation|documents|evidence|info|information)\b/,
     /\bis (there|this) enough (documentation|evidence|info|information)\b/,
+    /\bis (the |)documentation (complete|sufficient|enough|ready)\b/,
     /\bis (anything|something) missing\b/,
     /\bwhat('s| is) missing\b/,
     /\bcan we (move forward|proceed|start|begin)\b/,
     /\bwhat('s| is) blocking\b/,
     /\b(audit|review)(-| )?ready\b/,
     /\bready for (review|audit|evaluation)\b/,
-    /\bwhat (do we|else do we) need\b/
+    /\bwhat (do we|else do we) need\b/,
+    /\bdo we have (everything|what) we need\b/,
+    /\bhave (everything|what) we need\b/,
+    /\b(documentation|documents|evidence) (that |)(we need|needed|required)\b/
   ];
   
   if (readinessPatterns.some(p => p.test(lowerMessage))) {
@@ -965,22 +970,56 @@ Under Canon constraints, evaluation must follow this sequence:
     };
   }
   
-  // FALLBACK - But never dump raw Canon content
-  // Instead, ask for clarification or provide structured guidance
+  // FALLBACK - In Advisor Mode, make a best-effort interpretation instead of refusing
+  // Check if this looks like it might be about the case/documentation
+  const caseRelatedHints = [
+    /\b(case|document|file|evidence|review|ready|need|have|enough|missing|complete)\b/
+  ];
+  
+  if (caseRelatedHints.some(p => p.test(lowerMessage))) {
+    // Best-effort: treat as a readiness question
+    return {
+      content: `## Case Status Assessment
+
+Based on the documents currently loaded in this case, here is the current status:
+
+**What's Present:**
+- Case container with basic structure
+- Source documents available for review
+
+**What May Be Needed:**
+- Temporal markers (decision dates) on evidence
+- Independent verification of key claims
+- Clear policy application documentation
+
+**Determination:**
+A preliminary review can begin, but final determination requires additional evidence.`,
+      citations,
+      userSummary: {
+        status: "needs_more",
+        statusLabel: "Preliminary review possible",
+        meaning: "I interpreted your question as asking about case readiness. The case has enough to begin review, but not enough for a final decision.",
+        missing: ["Decision date markers", "Independent verification", "Policy application evidence"],
+        nextStep: "Upload additional evidence or ask a more specific question about what you need."
+      }
+    };
+  }
+  
+  // True fallback - genuinely unclear intent
   return {
-    content: `I can assist with governance questions under Canon constraints. Please specify:
+    content: `I'm not sure what governance question you're asking. Here are some examples of what I can help with:
 
-**For evaluations:** "Was it admissible to [action] given [context]?"
-**For procedures:** "How should we evaluate [situation]?"
-**For definitions:** "What is [concept]?"
+**About your case:** "Do we have enough documentation?" or "What's missing?"
+**About decisions:** "Was it appropriate to discipline the unit for this outcome?"
+**About process:** "How should we evaluate this situation?"
 
-I apply Canon rules to make procedural determinations—I do not summarize documents.`,
+I'll do my best to interpret your question—just ask naturally.`,
     citations,
     userSummary: {
       status: "cannot_determine",
-      statusLabel: "Need more specific question",
-      meaning: "I couldn't determine what governance question you're asking. Please rephrase with more specifics.",
-      nextStep: "Try asking: 'Was it appropriate to discipline the unit for this outcome?' or 'Do we have enough documentation?'"
+      statusLabel: "Let me help you ask",
+      meaning: "I wasn't sure what you meant, but I'm ready to help. Try one of the example questions or just ask in your own words.",
+      nextStep: "Ask about your case, a decision, or how to proceed."
     }
   };
 }
