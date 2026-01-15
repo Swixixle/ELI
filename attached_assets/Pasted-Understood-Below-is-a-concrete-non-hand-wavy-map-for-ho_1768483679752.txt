@@ -1,0 +1,214 @@
+Understood. Below is a concrete, non-hand-wavy map for how ELI Expert plugs into existing legitimacy channels without diluting its logic, exposing internals, or pretending to be something it is not.
+
+This is written as if you were explaining the integration to a regulator, GC, or procurement lead.
+
+⸻
+
+How ELI Expert Plugs Into Existing Channels
+
+(Without Becoming “Just Another AI Tool”)
+
+Core Positioning (Anchor This First)
+
+ELI Expert is not an evaluator of outcomes.
+It is a procedural admissibility gate that runs before any substantive evaluation, audit, or judgment.
+
+“ELI determines whether a case is structurally fit to be reviewed at all.”
+
+This single sentence is what allows clean integration downstream.
+
+⸻
+
+1. Alignment With NIST AI Risk Management Framework
+
+Where ELI Fits in NIST RMF
+
+NIST RMF has four functions:
+	•	GOVERN
+	•	MAP
+	•	MEASURE
+	•	MANAGE
+
+ELI sits entirely inside GOVERN.
+
+Specifically:
+	•	Governance preconditions
+	•	Role clarity
+	•	Documentation sufficiency
+	•	Audit readiness
+	•	Procedural defensibility
+
+You are not competing with risk measurement tools.
+You are enabling them to operate safely.
+
+How to Say This (Externally)
+
+“ELI operationalizes the GOVERN function of the NIST AI RMF by enforcing procedural prerequisites before risk measurement or mitigation is attempted.”
+
+That sentence alone unlocks:
+	•	procurement conversations
+	•	compliance interest
+	•	insurance relevance
+
+No one will ask you to expose weights after that.
+
+⸻
+
+2. Regulatory Sandbox Entry (UK / EU)
+
+Target: UK AI Safety Institute
+
+They care about:
+	•	process
+	•	traceability
+	•	epistemic restraint
+	•	refusal conditions
+
+They do not want:
+	•	new black-box optimizers
+	•	outcome claims
+	•	“trust us” logic
+
+How ELI Enters the Sandbox
+
+You do not submit ELI as a model.
+
+You submit it as:
+
+Evaluation infrastructure for third-party review processes
+
+In practice:
+	•	ELI is used to screen cases before they enter regulatory or audit review
+	•	The Institute evaluates:
+	•	refusal correctness
+	•	documentation discipline
+	•	procedural clarity
+	•	audit trails
+
+This is attractive because it reduces regulator load.
+
+⸻
+
+3. Procurement & Enterprise Governance Pipelines
+
+Target Buyers
+	•	Internal audit
+	•	Compliance
+	•	Risk committees
+	•	Healthcare QA
+	•	Financial services model risk management
+
+Where ELI Sits in the Stack
+
+Case Submitted
+     ↓
+ELI Expert (Procedural Gate)
+     ↓
+Approved → Substantive Review / Model / Human Panel
+Rejected → Advisory Only / Insufficient Basis
+
+Why This Is Procurement-Safe
+	•	You are not making decisions for the enterprise
+	•	You are enforcing their own procedural standards
+	•	You generate defensible refusal records
+
+Procurement people like tools that say “no” safely.
+
+⸻
+
+4. Red-Teaming & Evaluation Programs (Without Exposure)
+
+Interaction With Red-Teamers
+
+Red teams hate:
+	•	ambiguous scopes
+	•	undocumented assumptions
+	•	post-hoc rationalization
+
+ELI gives them:
+	•	a clean jurisdictional boundary
+	•	documented constraints
+	•	explicit refusal logic
+
+Key Advantage
+
+Red teams don’t have to argue:
+
+“Should we even be evaluating this?”
+
+ELI has already answered that — with receipts.
+
+⸻
+
+5. How “Good Ones Get Routed” (This Is the Important Part)
+
+ELI does not route models.
+
+It routes cases.
+
+That distinction matters.
+
+What ELI Outputs
+	•	Procedural readiness score (0–5)
+	•	Signed determination record
+	•	Canonical document set
+	•	Explicit refusal reason (if applicable)
+
+Who Can Accept Those Outputs
+	•	Regulators
+	•	Insurers
+	•	Auditors
+	•	Internal review boards
+	•	External evaluators
+
+ELI becomes a passport, not a judge.
+
+⸻
+
+6. What You Should Never Claim (This Protects You)
+
+Do not say:
+	•	“ELI determines fairness”
+	•	“ELI ensures compliance”
+	•	“ELI guarantees defensibility”
+	•	“ELI replaces review committees”
+
+Always say:
+	•	“ELI determines whether review is procedurally admissible”
+	•	“ELI refuses when epistemic entitlement is absent”
+
+That restraint is why this integrates cleanly.
+
+⸻
+
+7. One-Sentence Integration Summary (Memorize This)
+
+“ELI Expert is a governance-grade procedural gate that enforces jurisdictional prerequisites before any substantive AI, legal, or compliance review occurs — reducing unsafe evaluations and improving audit defensibility across NIST-aligned and regulatory workflows.”
+
+That sentence is enough to:
+	•	get a second meeting
+	•	survive skeptical questioning
+	•	avoid category confusion
+
+⸻
+
+Final Reality Check
+
+There is no existing platform that can absorb ELI wholesale — and that is not a flaw.
+
+ELI is infrastructure, not a contestant.
+
+It plugs in:
+	•	before benchmarks
+	•	before red-teams
+	•	before regulators
+	•	before audits
+
+That upstream position is rare — and valuable.
+
+If you want next, we can:
+	•	rehearse hostile questions from a regulator or GC
+	•	draft a one-page “where this sits” diagram
+	•	design a mock sandbox submission narrative
+
+Just say the word.
