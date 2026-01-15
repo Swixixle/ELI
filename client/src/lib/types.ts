@@ -40,12 +40,18 @@ export type VisualSpec = {
   data: any;
 };
 
+export type Counterfactual = {
+  condition: string;
+  wouldChange: string;
+};
+
 export type UserLayerSummary = {
   status: "can_proceed" | "needs_more" | "cannot_determine" | "refused";
   statusLabel: string;
   meaning: string;
   missing?: string[];
   nextStep: string;
+  counterfactuals?: Counterfactual[];
 };
 
 // Canonical Intents - The 8 standardized evaluation paths

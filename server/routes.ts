@@ -313,12 +313,18 @@ interface Citation {
   asOf?: string;
 }
 
+interface Counterfactual {
+  condition: string;
+  wouldChange: string;
+}
+
 interface UserSummary {
   status: "can_proceed" | "needs_more" | "cannot_determine" | "refused";
   statusLabel: string;
   meaning: string;
   missing?: string[];
   nextStep: string;
+  counterfactuals?: Counterfactual[];
 }
 
 interface ChatResponse {
