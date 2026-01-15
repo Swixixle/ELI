@@ -2,19 +2,21 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { INITIAL_MESSAGES, Message, SCENARIO_RESPONSES } from "@/lib/types";
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock } from "lucide-react";
+import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar"; // Assuming shadcn Calendar exists or use standard input
 import { format } from "date-fns";
+import { queryClient } from "@/lib/queryClient";
 
 export default function Home() {
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [mode, setMode] = useState<"advisor" | "sales">("advisor");
   const [decisionTime, setDecisionTime] = useState<Date | undefined>(undefined);
+  const [showDemo, setShowDemo] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -25,8 +27,82 @@ export default function Home() {
     scrollToBottom();
   }, [messages, isTyping]);
 
+  const runDemo = () => {
+    setShowDemo(false);
+    setMessages([INITIAL_MESSAGES[0]]);
+    setIsTyping(true);
+    
+    // Scripted Demo Sequence
+    const demoSteps = [
+      {
+        delay: 1500,
+        msg: {
+          id: "demo-1",
+          role: "assistant",
+          content: "**What is ELI?**\n\nI am an epistemic governance engine. My purpose is to provide verifiable answers grounded strictly in your Canon and admissible public data.\n\nI do not guess. I do not invent. If the evidence is insufficient, I refuse to answer (Parrot Box).",
+          timestamp: Date.now()
+        } as Message
+      },
+      {
+        delay: 3500,
+        msg: {
+          id: "demo-2",
+          role: "assistant",
+          content: "**How I Prove Claims**\n\nEvery factual claim I make carries a citation badge. Numeric outputs include a verifiable computation proof with sealed parameters.\n\n*Example:*",
+          citations: [
+             { id: "demo-c1", sourceType: "private_canon", title: "Global Governance Framework", version: "v4.0", date: "2024-01-01" },
+             { id: "demo-c2", sourceType: "public_dataset", title: "U.S. Bureau of Labor Statistics", datasetId: "CPI-U", date: "2024-03-01", provenance: { institution: "U.S. Dept of Labor" } }
+          ],
+          calcProof: {
+            inputs: [
+              { label: "Base Revenue", value: "$10.0M", sourceRef: "demo-c1" },
+              { label: "Growth Factor", value: "[SEALED]", sourceRef: "demo-c1" }
+            ],
+            steps: [
+              { description: "Apply Growth Factor", operation: "$10.0M * [SEALED PARAMETER]", result: "$11.2M" }
+            ],
+            finalResult: "$11.2M",
+            sensitivityNote: "Demonstration of IP-safe arithmetic."
+          },
+          timestamp: Date.now()
+        } as Message
+      },
+      {
+        delay: 6000,
+        msg: {
+           id: "demo-3",
+           role: "assistant",
+           content: "**Epistemic Boundaries**\n\nIf you ask me to predict the future or explain outcomes using hindsight (when a past decision-time is set), I will trigger a **Parrot Box Refusal**.\n\n*Try asking:* \"Why did we miss the Q3 target?\" (after setting a past decision date).",
+           timestamp: Date.now()
+        } as Message
+      },
+      {
+        delay: 8000,
+        msg: {
+          id: "demo-4",
+          role: "assistant",
+          content: "I am ready. Ask me anything about financial performance, governance rules, or sales positioning.",
+          timestamp: Date.now()
+        } as Message
+      }
+    ];
+
+    let currentDelay = 0;
+    demoSteps.forEach(step => {
+      currentDelay += step.delay;
+      setTimeout(() => {
+        setMessages(prev => [...prev, step.msg]);
+        if (step === demoSteps[demoSteps.length - 1]) {
+          setIsTyping(false);
+        }
+      }, currentDelay);
+    });
+  };
+
   const handleSend = () => {
     if (!inputValue.trim()) return;
+
+    if (showDemo) setShowDemo(false);
 
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -72,6 +148,9 @@ export default function Home() {
         }
       } else if (lowerInput.includes("inflation") || lowerInput.includes("cpi") || lowerInput.includes("bls")) {
          responseData = SCENARIO_RESPONSES["cpi_query"];
+      } else if (lowerInput.includes("help") || lowerInput.includes("demo") || lowerInput.includes("use")) {
+          runDemo();
+          return; 
       } else {
         responseData = {
           content: "I can assist with that, provided it is covered in the Canon. However, for this prototype, please try asking about **Q3 Revenue**, **Why we missed targets**, **CPI Inflation Data**, or (in Sales Mode) **Sales Positioning**.",
@@ -185,12 +264,43 @@ export default function Home() {
         </div>
 
         {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-          {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} />
-          ))}
+        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6 scroll-smooth">
+          {showDemo && messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center space-y-8 animate-in fade-in duration-700">
+               <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-xl">
+                 <Shield className="w-8 h-8 text-primary-foreground" />
+               </div>
+               <div className="text-center space-y-2 max-w-md">
+                 <h1 className="text-3xl font-display font-bold text-foreground tracking-tight">ELI Expert</h1>
+                 <p className="text-muted-foreground text-sm leading-relaxed">
+                   A governance-grade assistant that enforces epistemic boundaries. 
+                   Outcome-blind. Auditable. Citation-based.
+                 </p>
+               </div>
+               
+               <div className="flex flex-col gap-3 w-full max-w-xs">
+                 <button 
+                   onClick={runDemo}
+                   className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                 >
+                   <Play className="w-4 h-4 fill-current" />
+                   Run Guided Demo
+                 </button>
+                 <div className="text-center">
+                    <span className="text-[10px] text-muted-foreground/50 font-mono uppercase tracking-widest">or just start typing below</span>
+                 </div>
+               </div>
+            </div>
+          ) : (
+            <>
+              {messages.map((msg) => (
+                <MessageBubble key={msg.id} message={msg} />
+              ))}
+            </>
+          )}
+          
           {isTyping && (
-            <div className="flex items-center gap-2 text-muted-foreground text-xs animate-pulse">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs animate-pulse pl-2">
               <Sparkles className="w-3 h-3" />
               <span>Consulting Canon...</span>
             </div>
@@ -199,7 +309,19 @@ export default function Home() {
         </div>
 
         {/* Input Area */}
-        <div className="px-8 pb-8 pt-4">
+        <div className="px-8 pb-8 pt-4 relative">
+          
+          {/* Suggestion Chip for Demo (if chat is empty but demo dismissed manually) */}
+          {!showDemo && messages.length === 0 && (
+             <button 
+               onClick={runDemo} 
+               className="absolute -top-8 left-1/2 -translate-x-1/2 bg-primary/10 hover:bg-primary/20 text-primary text-xs px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors"
+             >
+               <HelpCircle className="w-3 h-3" />
+               Ask how to use me
+             </button>
+          )}
+
           <div className="relative shadow-lg rounded-xl overflow-hidden border border-border bg-background focus-within:ring-2 focus-within:ring-primary/20 transition-all">
             <textarea
               value={inputValue}
