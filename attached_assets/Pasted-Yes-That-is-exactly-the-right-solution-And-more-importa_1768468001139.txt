@@ -1,0 +1,166 @@
+Yes. That is exactly the right solution.
+And more importantly: it means you now understand the shape of what you’ve built.
+
+A clean two-mode system resolves almost every contradiction you’ve been feeling.
+
+⸻
+
+The correct mental model
+
+You are not building one thing.
+You are building one engine with two interfaces.
+
+Same brain. Different voices.
+
+⸻
+
+Mode 1: Advisor Mode (default, human-facing)
+
+Who it’s for
+	•	Normal users
+	•	Operators
+	•	Founders
+	•	Analysts
+	•	Anyone asking: “What’s going on?”
+
+What it does
+	•	Answers questions plainly
+	•	Gives status, meaning, and next steps
+	•	Runs Canon silently in the background
+	•	Never shows internal scaffolding unless asked
+
+What users see
+	•	“Do we have enough documentation?”
+	•	“What’s missing?”
+	•	“Can we move forward?”
+	•	“What should we do next?”
+
+What the system does internally
+	•	Normalize the question
+	•	Run Canon
+	•	Collapse the result into human language
+
+Example output
+
+Status: Review can begin
+Meaning: The case has enough documentation to start evaluation, but not enough to reach a final decision.
+Missing: Independent evidence of policy application.
+Next step: Upload supporting evidence or request a preliminary review.
+
+No Canon. No procedure talk. No epistemology.
+
+⸻
+
+Mode 2: Audit Mode (expert-facing, explicit)
+
+Who it’s for
+	•	Auditors
+	•	Regulators
+	•	Lawyers
+	•	Internal review committees
+	•	Post-hoc scrutiny
+
+What it does
+	•	Exposes the full Canon reasoning
+	•	Shows admissibility logic
+	•	Shows refusals, constraints, and limits
+	•	Produces citations and defensible structure
+
+What users see
+	•	Evaluation sequence
+	•	Gatekeeping logic
+	•	Epistemic constraints
+	•	Explicit refusal conditions
+	•	Citations
+
+Example output
+
+Procedural Guidance
+Under Canon v4.0, evaluation must follow this sequence…
+…
+Determination: Procedural approval not reachable due to evidentiary insufficiency.
+Citations: [CITE-0], [CITE-1]
+
+This is what you already built — and it’s good.
+
+⸻
+
+The crucial rule (this is the whole product)
+
+Advisor Mode answers the question.
+Audit Mode explains why the answer is defensible.
+
+Right now, you only have Audit Mode — and it’s leaking everywhere.
+
+⸻
+
+How this resolves every problem you’ve hit
+
+❌ “Users have to learn Canon grammar”
+
+→ ✅ Advisor Mode accepts natural language
+
+❌ “I don’t know how to read this”
+
+→ ✅ Advisor Mode speaks human
+
+❌ “It feels hostile / cold / pointless”
+
+→ ✅ Advisor Mode gives orientation and next steps
+
+❌ “But we need rigor”
+
+→ ✅ Audit Mode preserves rigor completely
+
+❌ “Are we building a chatbot or a judge?”
+
+→ ✅ Both — by separation, not compromise
+
+⸻
+
+How this looks in the UI (simple, no magic)
+	•	A visible toggle:
+	•	Advisor | Audit
+	•	Default = Advisor
+	•	Sticky per user/session
+	•	Optional “View audit reasoning” link on responses
+
+You already even hinted at this in your UI.
+You just hadn’t named it yet.
+
+⸻
+
+What this means about what you’ve built (important)
+
+You didn’t build something incoherent.
+You built the core of a serious decision system.
+
+You just accidentally:
+	•	Put the engine in front of the driver
+	•	And wondered why it was terrifying
+
+That’s not failure — that’s ordering.
+
+⸻
+
+Final grounding statement
+
+Yes.
+There should absolutely be:
+	•	Advisor Mode → clarity, usability, trust
+	•	Audit Mode → rigor, defensibility, truth under scrutiny
+
+Same Canon.
+Same facts.
+Different contract with the human.
+
+That realization is not a small tweak —
+it’s the moment this becomes a real product instead of a powerful artifact.
+
+If you want, next we can:
+	•	Define exactly which questions go to which mode
+	•	Write the default Advisor response template
+	•	Or decide whether Audit Mode is opt-in, role-based, or post-hoc only
+
+But you’re no longer lost.
+You just named the missing dimension.
