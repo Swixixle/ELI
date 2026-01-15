@@ -1,0 +1,129 @@
+Agreed. That layout is structurally wrong for the job-to-be-done.
+
+You have two competing scroll regions (the tiny “what this means” block + the main page), and the user’s eye is forced to scroll to reach the primary interaction. That destroys perceived control and makes the product feel broken.
+
+Below is a paste-ready directive for the Replit agent that is specific enough to implement without interpretation.
+
+⸻
+
+PASTE THIS TO REPLIT AGENT (UI FIX: SCROLL + HIERARCHY)
+
+Goal
+
+Make the primary interface (question selection + ask box) front-and-center, and move long explanatory text into secondary, collapsible, independently scrolling containers. Eliminate “sentence-sized textbox with tons of scrolling.”
+
+⸻
+
+1) Define the Page Layout (2-column, fixed interaction)
+
+Implement a two-column grid:
+
+Left column (Primary Interaction, ~60–70% width):
+	•	“What do you want to know?” (question bank)
+	•	Search/filter
+	•	Ask custom question input
+	•	“Run” / “Ask” button
+	•	Recent questions (optional)
+
+Right column (Case Context, ~30–40% width):
+	•	Decision readiness meter / checklist
+	•	Missing items (“equation” view)
+	•	Documents considered
+	•	Timeline
+
+Requirement: Left column must remain usable without scrolling past long text.
+
+⸻
+
+2) Convert “What this means” into a Collapsible Info Panel
+
+Replace the current big text area with:
+	•	A small, 1–2 line summary
+	•	A “Learn more” / “What does this mean?” toggle
+	•	When expanded, show in a modal or drawer (preferred) OR a panel with max-height and internal scroll
+
+Default: collapsed.
+
+Example:
+
+Decision Permitted
+
+Enough structure exists to evaluate fairly. (This is jurisdiction, not judgment.)
+[Learn more]
+
+Expanded modal content can include the full explanation with bullets.
+
+⸻
+
+3) Make the Question Suggestions a Scrollable Box (not the page)
+
+The “What do you want to know?” section should be a container with its own scroll, not a page-length flow that pushes everything down.
+
+Implement:
+	•	A card container with max-height: 360–520px (responsive)
+	•	overflow-y: auto
+	•	Sticky header inside the container: title + search box
+	•	Cards grouped by category (Permission to Decide, Evidence Status, What We Can’t Know, Audit & Defense)
+
+This container should sit above the “Ask custom question…” input so the user can select → ask without scrolling the entire page.
+
+⸻
+
+4) Add “Pinned” Ask Bar (always visible)
+
+Add a pinned (sticky) ask bar at bottom of the left column:
+	•	Selected question appears as a pill/tag
+	•	Input for custom question
+	•	Primary button: Ask
+	•	Secondary: Clear / Reset
+
+CSS approach:
+	•	position: sticky; bottom: 0;
+	•	Background + subtle border so it reads as fixed control
+
+This removes the fear of “I’m scared to test” because the action is obvious and reversible.
+
+⸻
+
+5) Single Scroll Rule
+
+Only one of these should scroll at a time:
+	•	The question bank container (internal scroll)
+	•	The right sidebar (internal scroll if needed)
+	•	NOT the entire page for basic interaction
+
+The page should feel like a dashboard, not a document.
+
+⸻
+
+6) Concrete Implementation Notes (React + shadcn/ui)
+	•	Use Tabs or Accordion for category grouping (optional)
+	•	Use ScrollArea (shadcn) for the question bank container
+	•	Use Sheet (shadcn) for the “What this means” expanded explanation
+	•	Use Card components for each question; clicking a question populates the pinned ask bar
+
+⸻
+
+7) Acceptance Criteria (must pass)
+	1.	On load, user sees:
+	•	Question bank
+	•	Ask bar
+	•	Decision readiness summary
+without scrolling
+	2.	“What this means” does not consume vertical space by default
+	3.	The question list scrolls inside its own box
+	4.	Ask bar is always visible and usable
+	5.	No sentence-sized text area requiring long scroll to read
+
+⸻
+
+EXTRA (Optional but high impact)
+
+Add a “Recommended next questions” row (3 pills) based on readiness state:
+	•	If missing evidence → show “What evidence is still missing?”
+	•	If permitted → show “Is this decision defensible?”
+	•	If blocked → show “What would block this decision?”
+
+⸻
+
+If you want, I can also give the agent an exact Tailwind layout skeleton (grid + sticky + ScrollArea) in one block so it’s even faster to implement.

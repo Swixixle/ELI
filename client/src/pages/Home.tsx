@@ -2,7 +2,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { INITIAL_MESSAGES, Message, SCENARIO_RESPONSES, CANONICAL_INTENTS, QUESTION_BANK } from "@/lib/types";
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel, FolderOpen, CheckCircle, AlertCircle, AlertTriangle, ArrowRight, CheckSquare, Lock, FileSearch, CircleSlash, Wrench, Search } from "lucide-react";
+import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel, FolderOpen, CheckCircle, AlertCircle, AlertTriangle, ArrowRight, CheckSquare, Lock, FileSearch, CircleSlash, Wrench, Search, X, ChevronDown, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -12,6 +12,8 @@ import { queryClient } from "@/lib/queryClient";
 import { CaseSelector } from "@/components/cases/CaseSelector";
 import { CaseTimeline, DocumentsConsidered } from "@/components/cases/CaseTimeline";
 import { DecisionReadinessPanel } from "@/components/cases/DecisionReadiness";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { Case } from "@shared/schema";
 import type { DecisionReadiness, CasePhase } from "@/lib/types";
 import { normalizeQuestion, isMetaQuery, getMetaHelpResponse } from "@/lib/questionNormalizer";
@@ -206,6 +208,8 @@ export default function Home() {
   const [decisionTargetInput, setDecisionTargetInput] = useState("");
   const [viewMode, setViewMode] = useState<"builder" | "audit">("builder");
   const [showFreeText, setShowFreeText] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
+  const [questionSearch, setQuestionSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -707,26 +711,253 @@ export default function Home() {
           </div>
         )}
 
-        {/* Decision Readiness & Documentation Panel - Shows when case is active */}
+        {/* Two-Column Dashboard Layout */}
         {activeCase && (
-          <div className="px-8 py-4 border-b bg-muted/20">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2">
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-0 min-h-0 overflow-hidden">
+            {/* LEFT COLUMN - Question Bank + Ask Bar */}
+            <div className="flex flex-col min-h-0 border-r">
+              {/* Compact Status Summary */}
+              <div className="px-6 py-3 border-b bg-muted/30 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-3 h-3 rounded-full",
+                    decisionReadiness.permitted ? "bg-green-500" : "bg-amber-500"
+                  )} />
+                  <div>
+                    <span className="text-sm font-medium">
+                      {decisionReadiness.permitted ? "Decision Permitted" : "Review Blocked"}
+                    </span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      ({decisionReadiness.totalSatisfied}/{decisionReadiness.totalRequired} prerequisites)
+                    </span>
+                  </div>
+                </div>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <button className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                      <Info className="w-3 h-3" />
+                      Learn more
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+                    <SheetHeader>
+                      <SheetTitle>What this means</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-4 space-y-4">
+                      {decisionReadiness.permitted ? (
+                        <div className="space-y-3">
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium text-green-600">Means:</span> There is enough structural information that a fair procedural evaluation can now occur.
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium text-slate-500">Does not mean:</span> The decision is valid, correct, or should proceed.
+                          </p>
+                          <p className="text-sm text-muted-foreground italic border-l-2 border-primary pl-3">
+                            This is jurisdiction, not judgment. Like a court saying "we can hear this case" — not "we've ruled."
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <p className="text-sm text-muted-foreground">
+                            The record does not yet contain enough structural information to support a procedurally fair evaluation.
+                          </p>
+                          <p className="text-sm text-muted-foreground italic border-l-2 border-amber-500 pl-3">
+                            This does not decide the case — it decides whether the case can be decided.
+                          </p>
+                        </div>
+                      )}
+                      <div className="pt-4 border-t">
+                        <h4 className="font-medium text-sm mb-2">Threshold Policy</h4>
+                        <ul className="text-xs text-muted-foreground space-y-1">
+                          <li>0-2 prerequisites: Review unsafe — advisory only</li>
+                          <li>3 prerequisites: Review permitted, high procedural risk</li>
+                          <li>4 prerequisites: Review strong, defensible</li>
+                          <li>5 prerequisites: Review robust, regulator-ready</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
+
+              {/* Question Bank Container with Internal Scroll - Builder Mode */}
+              {viewMode === "builder" && (
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="px-6 py-4 border-b bg-background">
+                    <h3 className="text-sm font-semibold text-foreground mb-2">What do you want to know?</h3>
+                    <input
+                      type="text"
+                      value={questionSearch}
+                      onChange={(e) => setQuestionSearch(e.target.value)}
+                      placeholder="Search questions..."
+                      className="w-full px-3 py-2 text-sm border rounded-lg bg-muted/30 focus:bg-background focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      data-testid="input-question-search"
+                    />
+                  </div>
+                  
+                  <ScrollArea className="flex-1">
+                    <div className="px-6 py-4 space-y-4 pb-4">
+                      {QUESTION_BANK.filter(category => 
+                        questionSearch === "" || 
+                        category.label.toLowerCase().includes(questionSearch.toLowerCase()) ||
+                        category.questions.some(q => q.label.toLowerCase().includes(questionSearch.toLowerCase()))
+                      ).map((category) => (
+                        <div key={category.id} className="bg-card border rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
+                              {QUESTION_BANK_ICONS[category.icon]}
+                            </div>
+                            <h4 className="font-medium text-sm">{category.label}</h4>
+                          </div>
+                          <div className="space-y-1.5">
+                            {category.questions.filter(q => 
+                              questionSearch === "" || q.label.toLowerCase().includes(questionSearch.toLowerCase())
+                            ).map((q) => (
+                              <button
+                                key={q.id}
+                                onClick={() => setSelectedQuestion(selectedQuestion === q.query ? null : q.query)}
+                                disabled={isTyping}
+                                className={cn(
+                                  "w-full text-left px-3 py-2 text-sm rounded-lg transition-all disabled:opacity-50",
+                                  selectedQuestion === q.query
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted/30 hover:bg-muted border border-transparent hover:border-border"
+                                )}
+                                data-testid={`question-${q.id}`}
+                              >
+                                {q.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
+
+              {/* Audit Mode - Quick intents + free-form input */}
+              {viewMode === "audit" && (
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="px-6 py-4 border-b bg-background">
+                    <h3 className="text-sm font-semibold text-foreground mb-3">Quick Review</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {CANONICAL_INTENTS.slice(0, 6).map((intent) => (
+                        <button
+                          key={intent.id}
+                          onClick={() => handleIntentClick(intent.question)}
+                          disabled={isTyping}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted/50 hover:bg-muted border border-border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          data-testid={`intent-${intent.id}`}
+                        >
+                          {INTENT_ICONS[intent.id]}
+                          {intent.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <ScrollArea className="flex-1">
+                    <div className="px-6 py-4">
+                      <p className="text-xs text-muted-foreground mb-4">
+                        In Audit mode, you can ask any governance or procedural question. Use the quick intents above or type your own query below.
+                      </p>
+                      <div className="p-4 bg-muted/30 rounded-lg border border-dashed text-center">
+                        <div className="flex items-center justify-center gap-2 text-muted-foreground mb-2">
+                          <Shield className="w-4 h-4" />
+                          <span className="text-xs font-mono">CANON v4.0 • AUDIT MODE</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          All queries are evaluated against outcome-blind procedural boundaries
+                        </p>
+                      </div>
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
+
+              {/* Pinned Ask Bar - Always Visible */}
+              <div className="px-6 py-4 border-t bg-background shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)]">
+                {selectedQuestion && viewMode === "builder" && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex-1 flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs">
+                      <span className="truncate">{selectedQuestion}</span>
+                      <button 
+                        onClick={() => setSelectedQuestion(null)}
+                        className="shrink-0 hover:bg-primary/20 rounded-full p-0.5"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={viewMode === "builder" && selectedQuestion ? "Add context or just click Ask..." : "Ask a governance question..."}
+                    className="flex-1 px-4 py-2.5 text-sm border rounded-lg bg-background focus:ring-2 focus:ring-primary/20 outline-none"
+                    data-testid="input-ask-question"
+                  />
+                  <button
+                    onClick={() => {
+                      if (viewMode === "builder" && selectedQuestion) {
+                        const fullQuery = inputValue.trim() ? `${selectedQuestion} ${inputValue}` : selectedQuestion;
+                        handleIntentClick(fullQuery);
+                        setSelectedQuestion(null);
+                      } else if (inputValue.trim()) {
+                        handleSend();
+                      }
+                    }}
+                    disabled={viewMode === "builder" ? (!selectedQuestion && !inputValue.trim()) : !inputValue.trim()}
+                    className="px-6 py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    data-testid="button-ask"
+                  >
+                    Ask
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN - Decision Readiness, Timeline, Documents */}
+            <ScrollArea className="bg-muted/20">
+              <div className="p-4 space-y-4">
                 <DecisionReadinessPanel 
                   readiness={decisionReadiness}
                   onSetDecisionTarget={() => setShowDecisionTargetDialog(true)}
                 />
-              </div>
-              <div className="space-y-4">
                 <CaseTimeline caseData={activeCase} />
                 <DocumentsConsidered caseData={activeCase} />
               </div>
-            </div>
+            </ScrollArea>
           </div>
         )}
 
-        {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6 scroll-smooth">
+        {/* Chat Area - Shows responses */}
+        {activeCase && messages.length > 0 && (
+          <div className="border-t bg-muted/10">
+            <div className="px-8 py-4 border-b">
+              <h3 className="text-sm font-medium text-muted-foreground">Recent Responses</h3>
+            </div>
+            <ScrollArea className="max-h-[300px]">
+              <div className="px-8 py-4 space-y-4">
+                {messages.map((msg) => (
+                  <MessageBubble 
+                    key={msg.id} 
+                    message={msg}
+                    isAuditExpanded={expandedAuditMessages.has(msg.id)}
+                    onToggleAudit={() => toggleAuditExpanded(msg.id)}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+
+        {/* No Case Loaded State */}
+        <div className={cn("flex-1 overflow-y-auto px-8 py-6 space-y-6 scroll-smooth", activeCase && "hidden")}>
           {!activeCase && messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center space-y-8 animate-in fade-in duration-700">
                {/* No Case Loaded Banner */}
@@ -875,135 +1106,6 @@ export default function Home() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
-        <div className="px-8 pb-8 pt-4 relative">
-          
-          {/* Suggestion Chip for Demo (if chat is empty but demo dismissed manually) */}
-          {!showDemo && messages.length === 0 && !activeCase && (
-             <button 
-               onClick={runDemo} 
-               className="absolute -top-8 left-1/2 -translate-x-1/2 bg-primary/10 hover:bg-primary/20 text-primary text-xs px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors"
-             >
-               <HelpCircle className="w-3 h-3" />
-               Ask how to use me
-             </button>
-          )}
-
-          {/* Question Bank - Builder Mode (default) */}
-          {activeCase && viewMode === "builder" && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <h3 className="text-sm font-semibold text-foreground mb-1">What do you want to know?</h3>
-                <p className="text-xs text-muted-foreground">Select a question to evaluate your case</p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {QUESTION_BANK.map((category) => (
-                  <div key={category.id} className="bg-card border rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
-                        {QUESTION_BANK_ICONS[category.icon]}
-                      </div>
-                      <h4 className="font-medium text-sm">{category.label}</h4>
-                    </div>
-                    <div className="space-y-2">
-                      {category.questions.map((q) => (
-                        <button
-                          key={q.id}
-                          onClick={() => handleIntentClick(q.query)}
-                          disabled={isTyping}
-                          className="w-full text-left px-3 py-2 text-sm bg-muted/30 hover:bg-muted border border-transparent hover:border-border rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                          data-testid={`question-${q.id}`}
-                        >
-                          {q.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Collapsed Free Text Option */}
-              <div className="text-center pt-2">
-                <button
-                  onClick={() => setShowFreeText(!showFreeText)}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  data-testid="toggle-free-text"
-                >
-                  {showFreeText ? "Hide custom question" : "Ask a custom question..."}
-                </button>
-              </div>
-
-              {showFreeText && (
-                <div className="relative shadow-lg rounded-xl overflow-hidden border border-border bg-background focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                  <textarea
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Ask a governance question..."
-                    className="w-full min-h-[60px] max-h-[120px] p-4 pr-12 resize-none outline-none text-sm bg-transparent placeholder:text-muted-foreground/50 font-medium"
-                  />
-                  <button 
-                    onClick={handleSend}
-                    disabled={!inputValue.trim()}
-                    className="absolute right-3 bottom-3 p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Audit Mode - Full free-form input with quick intents */}
-          {activeCase && viewMode === "audit" && (
-            <>
-              <div className="mb-3">
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">Quick Review</div>
-                <div className="flex flex-wrap gap-2">
-                  {CANONICAL_INTENTS.slice(0, 6).map((intent) => (
-                    <button
-                      key={intent.id}
-                      onClick={() => handleIntentClick(intent.question)}
-                      disabled={isTyping}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted/50 hover:bg-muted border border-border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      data-testid={`intent-${intent.id}`}
-                    >
-                      {INTENT_ICONS[intent.id]}
-                      {intent.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="relative shadow-lg rounded-xl overflow-hidden border border-border bg-background focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                <textarea
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask a governance or audit question..."
-                  className="w-full min-h-[60px] max-h-[200px] p-4 pr-12 resize-none outline-none text-sm bg-transparent placeholder:text-muted-foreground/50 font-medium"
-                />
-                <button 
-                  onClick={handleSend}
-                  disabled={!inputValue.trim()}
-                  className="absolute right-3 bottom-3 p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-                
-                <div className="absolute left-4 bottom-3 flex gap-4 text-[10px] font-mono text-muted-foreground/60 pointer-events-none">
-                  <span className="flex items-center gap-1"><Settings2 className="w-3 h-3" /> CANON: v4.0</span>
-                  <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> AUDIT MODE</span>
-                </div>
-              </div>
-            </>
-          )}
-
-          <p className="text-center text-[10px] text-muted-foreground mt-3">
-             ELI shows exactly what evidence is required before a decision is allowed.
-          </p>
-        </div>
 
       </div>
     </AppLayout>
