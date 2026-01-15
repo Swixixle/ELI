@@ -45,6 +45,38 @@ export type Counterfactual = {
   wouldChange: string;
 };
 
+// Decision Readiness System
+export type CasePhase = "intake" | "review" | "decision" | "closure";
+
+export type RequirementStatus = "satisfied" | "missing" | "partial";
+
+export type Requirement = {
+  id: string;
+  category: string;
+  label: string;
+  status: RequirementStatus;
+  detail?: string;
+};
+
+export type RequirementCategory = {
+  name: string;
+  requirements: Requirement[];
+  satisfied: number;
+  total: number;
+  hint?: string;
+};
+
+export type DecisionReadiness = {
+  decisionTarget: string | null;
+  phase: CasePhase;
+  permitted: boolean;
+  categories: RequirementCategory[];
+  totalSatisfied: number;
+  totalRequired: number;
+  blockedReason?: string;
+  nextPhaseUnlocks?: string;
+};
+
 export type UserLayerSummary = {
   status: "can_proceed" | "needs_more" | "cannot_determine" | "refused";
   statusLabel: string;

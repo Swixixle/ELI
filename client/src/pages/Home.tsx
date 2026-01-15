@@ -11,8 +11,123 @@ import { format } from "date-fns";
 import { queryClient } from "@/lib/queryClient";
 import { CaseSelector } from "@/components/cases/CaseSelector";
 import { CaseTimeline, DocumentsConsidered } from "@/components/cases/CaseTimeline";
+import { DecisionReadinessPanel } from "@/components/cases/DecisionReadiness";
 import type { Case } from "@shared/schema";
+import type { DecisionReadiness, CasePhase } from "@/lib/types";
 import { normalizeQuestion, isMetaQuery, getMetaHelpResponse } from "@/lib/questionNormalizer";
+
+function computeDecisionReadiness(caseData: Case | null, documentCount: number): DecisionReadiness {
+  if (!caseData) {
+    return {
+      decisionTarget: null,
+      phase: "intake",
+      permitted: false,
+      categories: [],
+      totalSatisfied: 0,
+      totalRequired: 0
+    };
+  }
+
+  const hasDecisionTarget = !!caseData.decisionTarget;
+  const hasDocuments = documentCount > 0;
+  const hasMultipleDocuments = documentCount >= 2;
+
+  const temporalCategory = {
+    name: "Temporal Verification",
+    requirements: [
+      { 
+        id: "temporal-1", 
+        category: "temporal", 
+        label: "Decision-time timestamp on evidence", 
+        status: hasDocuments ? "satisfied" as const : "missing" as const,
+        detail: "Upload documents with dated evidence"
+      },
+      { 
+        id: "temporal-2", 
+        category: "temporal", 
+        label: "Sequence of events established", 
+        status: hasMultipleDocuments ? "satisfied" as const : "missing" as const,
+        detail: "Need at least 2 documents to establish sequence"
+      }
+    ],
+    satisfied: (hasDocuments ? 1 : 0) + (hasMultipleDocuments ? 1 : 0),
+    total: 2,
+    hint: "Need: 2 time verifiers"
+  };
+
+  const independentCategory = {
+    name: "Independent Verification",
+    requirements: [
+      { 
+        id: "independent-1", 
+        category: "independent", 
+        label: "Third-party confirmation of claims", 
+        status: "missing" as const,
+        detail: "Upload corroborating document or interview"
+      }
+    ],
+    satisfied: 0,
+    total: 1,
+    hint: "Need: 1 usable interview OR 1 independent document"
+  };
+
+  const policyCategory = {
+    name: "Policy Application",
+    requirements: [
+      { 
+        id: "policy-1", 
+        category: "policy", 
+        label: "Record showing how policy was applied at the time", 
+        status: "missing" as const,
+        detail: "Upload policy application record"
+      }
+    ],
+    satisfied: 0,
+    total: 1,
+    hint: "Need: 1 policy application record"
+  };
+
+  const contextualCategory = {
+    name: "Contextual Constraints",
+    requirements: [
+      { 
+        id: "context-1", 
+        category: "context", 
+        label: "Resource / time constraints documented", 
+        status: hasDecisionTarget ? "satisfied" as const : "missing" as const,
+        detail: "Define decision target to establish context"
+      }
+    ],
+    satisfied: hasDecisionTarget ? 1 : 0,
+    total: 1
+  };
+
+  const categories = [temporalCategory, independentCategory, policyCategory, contextualCategory];
+  const totalSatisfied = categories.reduce((sum, cat) => sum + cat.satisfied, 0);
+  const totalRequired = categories.reduce((sum, cat) => sum + cat.total, 0);
+
+  const currentPhase = (caseData.phase as CasePhase) || "intake";
+  const permitted = totalSatisfied >= 3 && hasDecisionTarget;
+
+  return {
+    decisionTarget: caseData.decisionTarget || null,
+    phase: currentPhase,
+    permitted,
+    categories,
+    totalSatisfied,
+    totalRequired,
+    blockedReason: !hasDecisionTarget 
+      ? "No decision target defined" 
+      : totalSatisfied < 3 
+        ? `Only ${totalSatisfied} of ${totalRequired} requirements met` 
+        : undefined,
+    nextPhaseUnlocks: !hasDecisionTarget
+      ? "Set a decision target to proceed"
+      : totalSatisfied < 3
+        ? "Satisfy at least 3 requirements to unlock Review phase"
+        : undefined
+  };
+}
 
 const INTENT_ICONS: Record<string, React.ReactNode> = {
   "readiness": <CheckCircle className="w-3.5 h-3.5" />,
@@ -36,7 +151,44 @@ export default function Home() {
   const [activeCase, setActiveCase] = useState<Case | null>(null);
   const [showCaseSelector, setShowCaseSelector] = useState(false);
   const [expandedAuditMessages, setExpandedAuditMessages] = useState<Set<string>>(new Set());
+  const [documentCount, setDocumentCount] = useState(0);
+  const [showDecisionTargetDialog, setShowDecisionTargetDialog] = useState(false);
+  const [decisionTargetInput, setDecisionTargetInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (activeCase) {
+      fetch(`/api/cases/${activeCase.id}/documents`)
+        .then(res => res.json())
+        .then(docs => setDocumentCount(docs.length))
+        .catch(() => setDocumentCount(0));
+    } else {
+      setDocumentCount(0);
+    }
+  }, [activeCase]);
+
+  const decisionReadiness = computeDecisionReadiness(activeCase, documentCount);
+
+  const handleSetDecisionTarget = async () => {
+    if (!activeCase || !decisionTargetInput.trim()) return;
+    
+    try {
+      const response = await fetch(`/api/cases/${activeCase.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decisionTarget: decisionTargetInput.trim() })
+      });
+      
+      if (response.ok) {
+        const updated = await response.json();
+        setActiveCase(updated);
+        setShowDecisionTargetDialog(false);
+        setDecisionTargetInput("");
+      }
+    } catch (error) {
+      console.error("Failed to set decision target:", error);
+    }
+  };
 
   const toggleAuditExpanded = (messageId: string) => {
     setExpandedAuditMessages(prev => {
@@ -463,12 +615,58 @@ export default function Home() {
           />
         )}
 
-        {/* Documentation & Timeline Panel - Shows when case is active */}
+        {/* Decision Target Dialog */}
+        {showDecisionTargetDialog && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-background border rounded-xl shadow-xl max-w-lg w-full mx-4 p-6">
+              <h3 className="text-lg font-semibold mb-2">Define Decision Target</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                What decision is this case trying to support? This should be a specific, answerable question.
+              </p>
+              <textarea
+                value={decisionTargetInput}
+                onChange={(e) => setDecisionTargetInput(e.target.value)}
+                placeholder="Example: Was disciplinary action against Unit A procedurally permissible?"
+                className="w-full p-3 border rounded-lg text-sm resize-none h-24 mb-4"
+                data-testid="input-decision-target"
+              />
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowDecisionTargetDialog(false);
+                    setDecisionTargetInput("");
+                  }}
+                  className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSetDecisionTarget}
+                  disabled={!decisionTargetInput.trim()}
+                  className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg disabled:opacity-50"
+                  data-testid="button-save-decision-target"
+                >
+                  Set Decision Target
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Decision Readiness & Documentation Panel - Shows when case is active */}
         {activeCase && (
           <div className="px-8 py-4 border-b bg-muted/20">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <CaseTimeline caseData={activeCase} />
-              <DocumentsConsidered caseData={activeCase} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2">
+                <DecisionReadinessPanel 
+                  readiness={decisionReadiness}
+                  onSetDecisionTarget={() => setShowDecisionTargetDialog(true)}
+                />
+              </div>
+              <div className="space-y-4">
+                <CaseTimeline caseData={activeCase} />
+                <DocumentsConsidered caseData={activeCase} />
+              </div>
             </div>
           </div>
         )}
