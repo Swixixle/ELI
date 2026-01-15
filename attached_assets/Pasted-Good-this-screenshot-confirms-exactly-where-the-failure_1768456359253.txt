@@ -1,0 +1,45 @@
+Good — this screenshot confirms exactly where the failure was and what still needs to be locked down.
+You should respond to the agent with clear verification + remaining constraints, not praise.
+
+Paste the following verbatim (or near-verbatim):
+
+⸻
+
+Response to the agent
+
+Progress confirmed:
+	•	A case can now be created and selected (SYN-DEMO-001).
+	•	Uploading a document within an active case now results in a single document entry instead of silent duplication.
+
+However, this is only a partial pass. To close this loop, the following must still be explicitly enforced and verified:
+	1.	Document Open/View Requirement
+Clicking a document row must open a document viewer (PDF render, text preview, or placeholder). A document that cannot be opened is not functionally present.
+	2.	Canonical Identity Enforcement
+Re-uploading the same file to the same case should:
+	•	Detect duplication (by content hash or filename+size), and
+	•	Either block the upload or prompt to replace/version the existing document — not create a second row.
+	3.	Explicit Case Binding Signal
+The UI must clearly indicate the active case at upload time (e.g., “Uploading to case: SYN-DEMO-001”) so users can verify scope before committing files.
+	4.	Post-Upload State Confirmation
+After upload, the system should:
+	•	Auto-open the document, or
+	•	Visibly transition it into an “openable / ready” state.
+
+Please do not proceed to version comparison, tooltips, or advanced features yet.
+The system is only complete when a single document can be uploaded, opened, re-uploaded safely, and traced to its case end-to-end.
+
+⸻
+
+Why this wording matters
+	•	It acknowledges progress without declaring success.
+	•	It locks the agent onto behavioral guarantees, not architectural claims.
+	•	It prevents regression back into duplication or metadata-only documents.
+	•	It keeps the scope tight: one document, done right.
+
+Once they respond, your next test is simple:
+	•	Click the document name.
+If nothing opens, the system is still incomplete — regardless of how clean the table looks.
+
+If you want, after their reply I can help you:
+	•	Draft the document viewer acceptance test, or
+	•	Write the exact failure message the UI should show if open/view is not implemented yet.

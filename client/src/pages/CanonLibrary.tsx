@@ -1,17 +1,20 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/shared/Badge";
-import { FileText, Upload, Trash2, Calendar, Shield, FolderOpen, ArrowLeft } from "lucide-react";
+import { FileText, Upload, Trash2, Calendar, Shield, FolderOpen, ArrowLeft, ExternalLink, AlertCircle, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import type { Case } from "@shared/schema";
+import type { Case, CanonDocument } from "@shared/schema";
 import { useCases, useCaseDocuments, useCreateCaseDocument, useDeleteCaseDocument } from "@/lib/casesApi";
 import { CaseSelector } from "@/components/cases/CaseSelector";
-import { useSearch, Link } from "wouter";
+import { useSearch, Link, useLocation } from "wouter";
 
 export default function CanonLibrary() {
   const [isUploading, setIsUploading] = useState(false);
   const [showCaseSelector, setShowCaseSelector] = useState(false);
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<CanonDocument | null>(null);
+  const [, navigate] = useLocation();
   
   const search = useSearch();
   const urlParams = new URLSearchParams(search);
@@ -23,6 +26,8 @@ export default function CanonLibrary() {
   const { data: docs = [], isLoading } = useCaseDocuments(activeCaseId);
   const createDocMutation = useCreateCaseDocument(activeCaseId);
   const deleteDocMutation = useDeleteCaseDocument(activeCaseId);
+  
+  const activeCase = selectedCase || cases?.find(c => c.id === caseIdFromUrl);
 
   const handleUpload = () => {
     if (!activeCaseId) {
@@ -30,23 +35,44 @@ export default function CanonLibrary() {
       return;
     }
     setIsUploading(true);
+    setUploadError(null);
+    setUploadSuccess(null);
+    
+    const timestamp = Date.now();
     createDocMutation.mutate({
-      name: "New Policy Document.pdf",
+      name: `Policy Document ${timestamp}.pdf`,
       size: "1.2 MB",
       type: "pdf",
       version: "v1.0",
       status: "active",
+      contentHash: `hash_${timestamp}`,
     }, {
+      onSuccess: (newDoc) => {
+        setUploadSuccess(newDoc);
+        setTimeout(() => {
+          navigate(`/canon/document/${newDoc.id}?caseId=${activeCaseId}`);
+        }, 1500);
+      },
+      onError: (error: any) => {
+        if (error?.message?.includes("409") || error?.message?.includes("Duplicate")) {
+          setUploadError("A document with the same name already exists in this case.");
+        } else {
+          setUploadError(error?.message || "Failed to upload document. Please try again.");
+        }
+      },
       onSettled: () => setIsUploading(false)
     });
   };
 
-  const handleDelete = (id: string) => {
+  const handleOpenDocument = (doc: CanonDocument) => {
+    navigate(`/canon/document/${doc.id}?caseId=${activeCaseId}`);
+  };
+
+  const handleDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!activeCaseId) return;
     deleteDocMutation.mutate(id);
   };
-  
-  const activeCase = selectedCase || cases?.find(c => c.id === caseIdFromUrl);
 
   if (isLoading) {
     return (
@@ -135,6 +161,39 @@ export default function CanonLibrary() {
               </button>
             </div>
 
+        {/* Upload Status Feedback */}
+        {(uploadError || uploadSuccess || isUploading) && (
+          <div className="mb-6">
+            {isUploading && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-center gap-3">
+                <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+                <div>
+                  <p className="font-medium text-blue-800 dark:text-blue-300">Uploading to case: {activeCase?.name}</p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">Processing document...</p>
+                </div>
+              </div>
+            )}
+            {uploadSuccess && !isUploading && (
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4 flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-600" />
+                <div>
+                  <p className="font-medium text-emerald-800 dark:text-emerald-300">Document uploaded successfully</p>
+                  <p className="text-sm text-emerald-600 dark:text-emerald-400">Opening "{uploadSuccess.name}"...</p>
+                </div>
+              </div>
+            )}
+            {uploadError && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <div>
+                  <p className="font-medium text-red-800 dark:text-red-300">Upload failed</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{uploadError}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-card border border-border rounded-lg p-5 shadow-sm">
@@ -169,13 +228,21 @@ export default function CanonLibrary() {
            
            <div className="divide-y divide-border">
              {docs.map(doc => (
-               <div key={doc.id} className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-6 py-4 items-center hover:bg-muted/10 transition-colors group" data-testid={`row-document-${doc.id}`}>
+               <div 
+                 key={doc.id} 
+                 onClick={() => handleOpenDocument(doc)}
+                 className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group cursor-pointer" 
+                 data-testid={`row-document-${doc.id}`}
+               >
                  <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded bg-blue-50 text-blue-700 flex items-center justify-center">
                       <FileText className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-medium text-sm text-foreground" data-testid={`text-doc-name-${doc.id}`}>{doc.name}</div>
+                      <div className="font-medium text-sm text-foreground flex items-center gap-2" data-testid={`text-doc-name-${doc.id}`}>
+                        {doc.name}
+                        <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
                       <div className="text-xs text-muted-foreground">{doc.size} • {doc.type.toUpperCase()}</div>
                     </div>
                  </div>
@@ -195,7 +262,7 @@ export default function CanonLibrary() {
                  
                  <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                    <button 
-                     onClick={() => handleDelete(doc.id)}
+                     onClick={(e) => handleDelete(doc.id, e)}
                      className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
                      data-testid={`button-delete-${doc.id}`}
                    >

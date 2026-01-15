@@ -25,6 +25,7 @@ export const canonDocuments = pgTable("canon_documents", {
   size: text("size").notNull(),
   type: varchar("type", { length: 10 }).notNull(),
   version: text("version").notNull(),
+  content: text("content"),
   contentHash: varchar("content_hash", { length: 64 }),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),

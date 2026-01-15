@@ -88,20 +88,36 @@ export function useDeleteCase() {
   });
 }
 
-async function createCaseDocument(caseId: string, doc: { name: string; size: string; type: string; version: string; status?: string }): Promise<CanonDocument> {
+type CreateDocumentData = { 
+  name: string; 
+  size: string; 
+  type: string; 
+  version: string; 
+  status?: string;
+  content?: string;
+  contentHash?: string;
+};
+
+async function createCaseDocument(caseId: string, doc: CreateDocumentData): Promise<CanonDocument> {
   const res = await fetch(`/api/cases/${caseId}/documents`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(doc)
   });
-  if (!res.ok) throw new Error("Failed to create document");
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    if (res.status === 409) {
+      throw new Error(`409: ${errorData.message || "Duplicate document detected"}`);
+    }
+    throw new Error(errorData.error || "Failed to create document");
+  }
   return res.json();
 }
 
 export function useCreateCaseDocument(caseId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (doc: { name: string; size: string; type: string; version: string; status?: string }) => 
+    mutationFn: (doc: CreateDocumentData) => 
       createCaseDocument(caseId!, doc),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cases", caseId, "documents"] });

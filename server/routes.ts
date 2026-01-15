@@ -95,7 +95,7 @@ export async function registerRoutes(
     }
   });
 
-  // Create document for a case
+  // Create document for a case (with duplicate detection)
   app.post("/api/cases/:id/documents", async (req, res) => {
     try {
       const caseData = await storage.getCase(req.params.id);
@@ -110,6 +110,34 @@ export async function registerRoutes(
       };
       
       const validatedData = insertCanonDocumentSchema.parse(docData);
+      
+      // Check for duplicate by content hash if provided
+      if (validatedData.contentHash) {
+        const existingDoc = await storage.getDocumentByHash(req.params.id, validatedData.contentHash);
+        if (existingDoc) {
+          res.status(409).json({ 
+            error: "Duplicate document detected",
+            message: `A document with identical content already exists: "${existingDoc.name}"`,
+            existingDocument: existingDoc
+          });
+          return;
+        }
+      }
+      
+      // Check for duplicate by name+size in same case
+      const caseDocuments = await storage.getDocumentsByCase(req.params.id);
+      const duplicateByName = caseDocuments.find(
+        d => d.name === validatedData.name && d.size === validatedData.size
+      );
+      if (duplicateByName) {
+        res.status(409).json({ 
+          error: "Duplicate document detected",
+          message: `A document with the same name and size already exists: "${duplicateByName.name}"`,
+          existingDocument: duplicateByName
+        });
+        return;
+      }
+      
       const newDoc = await storage.createCanonDocument(validatedData);
       res.status(201).json(newDoc);
     } catch (error) {
@@ -119,6 +147,27 @@ export async function registerRoutes(
         console.error("Error creating case document:", error);
         res.status(500).json({ error: "Failed to create document" });
       }
+    }
+  });
+
+  // Get single document for a case
+  app.get("/api/cases/:caseId/documents/:docId", async (req, res) => {
+    try {
+      const doc = await storage.getCanonDocument(req.params.docId);
+      if (!doc) {
+        res.status(404).json({ error: "Document not found" });
+        return;
+      }
+      
+      if (doc.caseId !== req.params.caseId) {
+        res.status(404).json({ error: "Document not found in this case" });
+        return;
+      }
+      
+      res.json(doc);
+    } catch (error) {
+      console.error("Error fetching document:", error);
+      res.status(500).json({ error: "Failed to fetch document" });
     }
   });
 

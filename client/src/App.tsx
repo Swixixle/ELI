@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import CanonLibrary from "@/pages/CanonLibrary";
+import DocumentViewer from "@/pages/DocumentViewer";
 import About from "@/pages/About";
 
 function Router() {
@@ -13,6 +14,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/canon" component={CanonLibrary} />
+      <Route path="/canon/document/:documentId" component={DocumentViewer} />
       <Route path="/about" component={About} />
       <Route component={NotFound} />
     </Switch>
