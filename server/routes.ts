@@ -450,7 +450,12 @@ The case is ready for preliminary review. A final determination requires tempora
           status: "can_proceed",
           statusLabel: "Ready for preliminary review",
           meaning: "The case has enough structure to begin review, but not enough for a final decision.",
-          nextStep: "Start the review or add more documentation for a complete determination."
+          nextStep: "Start the review or add more documentation for a complete determination.",
+          counterfactuals: [
+            { condition: "Decision date markers were added to all evidence", wouldChange: "Status would upgrade to 'Ready for final review'" },
+            { condition: "Independent verification was provided", wouldChange: "Defensibility score would increase significantly" },
+            { condition: "Key documents were removed", wouldChange: "Status would downgrade to 'Not ready'" }
+          ]
         }
       };
     
@@ -475,7 +480,12 @@ Sufficient for preliminary review; not sufficient for final determination.`,
           statusLabel: "Partial sufficiency",
           meaning: "You have enough to start a review, but not enough to reach a final decision.",
           missing: ["Decision date markers", "Independent verification", "Policy application evidence"],
-          nextStep: "Upload additional evidence or proceed with a preliminary review."
+          nextStep: "Upload additional evidence or proceed with a preliminary review.",
+          counterfactuals: [
+            { condition: "One document with decision-time verification was added", wouldChange: "Sufficiency would reach threshold for final determination" },
+            { condition: "All three missing elements were addressed", wouldChange: "Case would qualify for closure review" },
+            { condition: "Source documents were undated", wouldChange: "Sufficiency would drop to 'insufficient'" }
+          ]
         }
       };
     
@@ -498,7 +508,12 @@ Address temporal markers first, as they unlock outcome-blind evaluation.`,
           statusLabel: "Gaps identified",
           meaning: "Several key elements are missing that would be needed for a complete evaluation.",
           missing: ["Temporal markers on evidence", "Independent verification", "Policy application records", "Resource context"],
-          nextStep: "Upload documents that address these gaps, starting with temporal markers."
+          nextStep: "Upload documents that address these gaps, starting with temporal markers.",
+          counterfactuals: [
+            { condition: "Temporal markers were added", wouldChange: "Gap list would reduce by 1, priority would shift to verification" },
+            { condition: "All four gaps were addressed", wouldChange: "Status would change to 'No gaps identified'" },
+            { condition: "A new undocumented claim was introduced", wouldChange: "A fifth gap would be added to the list" }
+          ]
         }
       };
     
@@ -522,7 +537,12 @@ Address temporal markers first, as they unlock outcome-blind evaluation.`,
           status: "can_proceed",
           statusLabel: "Limits defined",
           meaning: "The system cannot assign blame, predict outcomes, or use hindsight. It CAN evaluate procedural compliance.",
-          nextStep: "Ask about procedural compliance or decision-time information availability."
+          nextStep: "Ask about procedural compliance or decision-time information availability.",
+          counterfactuals: [
+            { condition: "Question was rephrased to focus on procedures", wouldChange: "System could provide a procedural determination" },
+            { condition: "Legal counsel provided a normative framework", wouldChange: "System could apply that framework (but not generate one)" },
+            { condition: "Hindsight data was removed from the query", wouldChange: "Outcome-blindness constraint would lift" }
+          ]
         }
       };
     
@@ -547,7 +567,12 @@ Based on the case materials, no critical red flags have been identified. However
           statusLabel: "Low-moderate risk",
           meaning: "No critical issues found, but some areas need attention before final review.",
           missing: ["Complete temporal context", "Independent verification of claims"],
-          nextStep: "Address the temporal context and verify key claims before final review."
+          nextStep: "Address the temporal context and verify key claims before final review.",
+          counterfactuals: [
+            { condition: "Temporal context was completed", wouldChange: "Risk level would drop to 'Low'" },
+            { condition: "Independent verification was provided", wouldChange: "Unverified claims concern would be resolved" },
+            { condition: "Contradictory evidence was discovered", wouldChange: "Risk level would increase to 'High'" }
+          ]
         }
       };
     
@@ -569,7 +594,12 @@ Based on the case materials, no critical red flags have been identified. However
           status: "can_proceed",
           statusLabel: "Clear path forward",
           meaning: "The next step is to confirm the decision date and add any missing documentation.",
-          nextStep: "Set the decision date in the interface, then upload any additional evidence."
+          nextStep: "Set the decision date in the interface, then upload any additional evidence.",
+          counterfactuals: [
+            { condition: "Decision date was already confirmed", wouldChange: "Step 1 would be skipped, move directly to evidence upload" },
+            { condition: "All evidence was already uploaded", wouldChange: "Next step would be to request preliminary review" },
+            { condition: "Case was already reviewed", wouldChange: "Next step would be final determination or closure" }
+          ]
         }
       };
     
@@ -595,7 +625,12 @@ All Canon evaluation steps must complete with either a positive determination, n
           statusLabel: "Not ready to close",
           meaning: "The case cannot be closed yet. Several steps remain before closure is appropriate.",
           missing: ["Temporal boundary confirmation", "Final determination", "Audit trail completion"],
-          nextStep: "Complete the remaining evaluation steps before requesting closure."
+          nextStep: "Complete the remaining evaluation steps before requesting closure.",
+          counterfactuals: [
+            { condition: "All three missing requirements were addressed", wouldChange: "Status would change to 'Ready for closure'" },
+            { condition: "Final determination was issued", wouldChange: "Only audit trail completion would remain" },
+            { condition: "An unresolved refusal existed", wouldChange: "Closure would require explicit documentation of the refusal reason" }
+          ]
         }
       };
     
@@ -624,7 +659,12 @@ A determination made now would have PARTIAL defensibility:
           statusLabel: "Partially defensible",
           meaning: "A decision made now could be defended, but has weak points that may be challenged.",
           missing: ["Complete temporal documentation", "Independent verification"],
-          nextStep: "Address the weak points before making a determination that needs to withstand audit."
+          nextStep: "Address the weak points before making a determination that needs to withstand audit.",
+          counterfactuals: [
+            { condition: "Temporal documentation was completed", wouldChange: "Defensibility would improve from 'partial' to 'strong'" },
+            { condition: "Independent verification was added", wouldChange: "The 'unverified claims' weak point would be resolved" },
+            { condition: "All weak points were addressed", wouldChange: "Determination would be fully defensible under audit" }
+          ]
         }
       };
   }
