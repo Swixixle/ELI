@@ -143,7 +143,7 @@ export default function Home() {
     }, 1200);
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputValue.trim()) return;
 
     if (showDemo) setShowDemo(false);
@@ -162,82 +162,82 @@ export default function Home() {
     setInputValue("");
     setIsTyping(true);
 
-    // Mock Response Logic
-    setTimeout(() => {
-      const lowerInput = userMsg.content.toLowerCase();
-      let responseData: Partial<Message> | undefined;
-
-      // Epistemic Guardrail: Check for Temporal Contradiction
-      // If user sets a past decision time but asks for outcomes (hindsight)
-      if (decisionTime && (lowerInput.includes("why did we miss") || lowerInput.includes("outcome") || lowerInput.includes("result"))) {
-         responseData = {
-           content: "### Refusal: Temporal Admissibility Violation\n\nYou have set the Decision Time to **" + format(decisionTime, "yyyy-MM-dd") + "**.\n\nAsking about outcomes that occurred *after* this date relies on future knowledge (hindsight), which is inadmissible in this context. I can only assess data available as of the decision date.",
-           ipFlags: [
-             { code: "PARROT_BOX", message: "Outcome knowledge inadmissible at set decision time.", type: "parrot_box" }
-           ]
-         };
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: inputValue, mode })
+      });
+      
+      const data = await response.json();
+      
+      let responseData: Partial<Message> = {
+        content: data.content || ""
+      };
+      
+      if (data.citations && data.citations.length > 0) {
+        responseData.citations = data.citations.map((c: any, idx: number) => ({
+          id: `cite-${idx}`,
+          sourceType: c.type === "canon" ? "private_canon" : "public_dataset",
+          title: c.source,
+          version: c.version,
+          section: c.section,
+          canonTier: c.canonTier
+        }));
       }
-      else if (lowerInput.includes("fault") || lowerInput.includes("blame") || lowerInput.includes("punish") || lowerInput.includes("guilty") || lowerInput.includes("responsible")) {
-        responseData = SCENARIO_RESPONSES["category_error"];
-      } else if (lowerInput.includes("diagnos") || lowerInput.includes("treatment") || lowerInput.includes("patient") || lowerInput.includes("symptom") || lowerInput.includes("medical advice")) {
-        responseData = SCENARIO_RESPONSES["medical_safety"];
-      } else if (lowerInput.includes("revenue") || lowerInput.includes("ebitda")) {
-        responseData = SCENARIO_RESPONSES["revenue"];
-      } else if (lowerInput.includes("miss") || lowerInput.includes("target")) {
-        responseData = SCENARIO_RESPONSES["refusal"];
-      } else if (lowerInput.includes("sales") || lowerInput.includes("pitch") || lowerInput.includes("positioning")) {
-        if (mode === "sales") {
-           if (lowerInput.includes("metric") || lowerInput.includes("30%") || lowerInput.includes("quantif")) {
-             responseData = SCENARIO_RESPONSES["sales_with_metrics"];
-           } else {
-             responseData = SCENARIO_RESPONSES["sales"];
-           }
-        } else {
-           responseData = {
-             content: "Please switch to **Sales Mode** to generate positioning statements. Advisor Mode is restricted to neutral governance analysis.",
-             ipFlags: []
-           };
-        }
-      } else if (lowerInput.includes("inflation") || lowerInput.includes("cpi") || lowerInput.includes("bls")) {
-         // Temporal public data check: CPI data is as-of 2025-09-01
-         // Use string comparison to avoid timezone issues
-         const cpiAsOfDateStr = "2025-09-01";
-         const decisionDateStr = decisionTime ? format(decisionTime, "yyyy-MM-dd") : null;
-         if (decisionDateStr && decisionDateStr < cpiAsOfDateStr) {
-           responseData = {
-             content: "### Refusal: Temporal Data Constraint\n\nThe CPI-U dataset you requested has an **as-of date** of **2025-09-01**, which is **after** your set Decision Time (" + decisionDateStr + ").\n\nTo maintain outcome-blindness, I can only use public data with an effective date ≤ your Decision Time. This data would not have been available at the point of decision.",
-             ipFlags: [
-               { code: "TEMPORAL_PUBLIC_DATA", message: "Public data as-of date (2025-09-01) exceeds decision time boundary.", type: "temporal_public_data" }
-             ]
-           };
-         } else {
-           responseData = SCENARIO_RESPONSES["cpi_query"];
-         }
-      } else if (lowerInput.includes("help") || lowerInput.includes("demo") || lowerInput.includes("use")) {
-          runDemo();
-          return; 
-      } else {
-        responseData = {
-          content: "I can assist with that, provided it is covered in the Canon. However, for this prototype, please try asking about:\n\n• **Q3 Revenue** (to see calc proof)\n• **Who is at fault?** (to see category error)\n• **CPI Inflation Data** (to see public data provenance)\n• **Sales Positioning** (in Sales Mode)",
-          citations: []
+      
+      if (data.refusalType) {
+        responseData.ipFlags = [{
+          code: data.refusalType.toUpperCase(),
+          message: data.refusalReason,
+          type: data.refusalType
+        }];
+        responseData.content = `### Refusal: ${data.refusalType.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}\n\n${data.refusalReason}`;
+      }
+      
+      if (data.calcProof) {
+        responseData.calcProof = {
+          inputs: data.calcProof.steps?.map((s: string, i: number) => ({
+            label: `Step ${i + 1}`,
+            value: s,
+            sourceRef: ""
+          })) || [],
+          steps: data.calcProof.steps?.map((s: string) => ({
+            description: s,
+            operation: s,
+            result: ""
+          })) || [],
+          finalResult: "",
+          sensitivityNote: data.calcProof.sealedParams?.length > 0 
+            ? `Contains ${data.calcProof.sealedParams.length} sealed parameter(s)` 
+            : undefined
         };
       }
 
       const assistantMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: responseData?.content || "Processing...",
-        citations: responseData?.citations,
-        calcProof: responseData?.calcProof,
-        ipFlags: responseData?.ipFlags,
-        visualSpec: responseData?.visualSpec,
+        content: responseData.content || "Processing...",
+        citations: responseData.citations,
+        calcProof: responseData.calcProof,
+        ipFlags: responseData.ipFlags,
         timestamp: Date.now(),
         temporalContext: userMsg.temporalContext
       };
 
       setMessages(prev => [...prev, assistantMsg]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "I encountered an error processing your request. Please try again.",
+        timestamp: Date.now()
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
