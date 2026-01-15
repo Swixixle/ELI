@@ -1,0 +1,151 @@
+Paste the following to the Replit agent/architect as the build instructions. It is comprehensive, enforces “honest machine” behavior, enables verifiable computation and grounding in real public datasets, and deliberately withholds ELI’s proprietary internal thresholds/decision mechanics.
+
+⸻
+
+Replit Agent / Architect Instructions — Build “ELI Expert” (Canon-grounded, auditable, IP-safe)
+
+0) Context and goal
+
+You are implementing a private “ELI Expert” web application at:
+	•	https://epistemic-load–albearpig.replit.app
+
+The ELI Expert is not a generic chatbot. It is a governance-grade assistant that must be:
+	•	Outcome-blind / hindsight-resistant, enforcing admissible evidence boundaries (ELI Gatekeeper concept).  ￼
+	•	A “truth refusal” system when epistemic entitlement is absent (Parrot Box constraint).  ￼
+	•	Auditable: able to prove numbers and computations step-by-step without disclosing proprietary logic.
+
+1) Non-negotiable behaviors (“Honest machine” constraints)
+
+Implement these as hard system invariants, not “best effort”:
+	1.	Citations required
+	•	Every material factual claim must cite either:
+	•	Private canon (doc + version + section + chunk id), OR
+	•	Public source (dataset, guideline, paper, government page).
+	•	If no citation exists, output: “Not in canon / Not supported by sources.” (and stop).
+	2.	Outcome-blindness
+	•	The assistant must not allow downstream/outcome knowledge to justify what “should have been known” at decision-time; it must enforce temporal admissibility boundaries consistent with ELI’s core rationale.  ￼
+	3.	Silence is a valid final output
+	•	The system must be allowed to return “No evaluative statement permitted” / “Context insufficient for inference” as final responses (Parrot Box).  ￼
+	4.	No invention of numbers, pilots, efficacy, or claims
+	•	If the user asks for metrics not grounded in canon or a public dataset, the assistant must refuse and request source input.
+
+2) IP protection requirements (do not leak the product)
+
+You must architect the system so it can be demonstrably correct without revealing proprietary ELI mechanics.
+
+Prohibited disclosures (hard block):
+	•	Any internal scoring weights, thresholds, bands, matrices, or “decision engine” mechanics that are not explicitly approved for disclosure.
+	•	Any “how it works internally” beyond high-level principles already in canon.
+
+Allowed disclosure:
+	•	The epistemic principles: admissibility, outcome-blindness, refusal/silence, governance posture shift.  ￼  ￼
+	•	Computation arithmetic, as long as the proprietary parameterization is abstracted (see §4).
+
+3) Canon ingestion + retrieval (the backbone)
+
+Implement a real RAG system with strict provenance:
+
+3.1 Canon library
+	•	Ingest the provided packets (PDF/DOCX/XLSX) into:
+	•	Chunked text (e.g., 400–900 tokens)
+	•	Metadata: doc_title, doc_version, section_heading, canon_tier, audience_tag (CEO/CFO/GC/clinical), created_at
+	•	Maintain version pinning: answers must cite canon version; never blend versions silently.
+
+3.2 Retrieval policy
+	•	Default retrieval order:
+	1.	Tier-0 “Hard Canon” (definitions, invariants, governance/legal constraints)
+	2.	Tier-1 “Sales Canon” (approved positioning language)
+	3.	Tier-2 “Draft/Exploratory” (only if user explicitly requests “draft mode”)
+	•	If retrieval returns insufficient support, the model must refuse or ask for an upload.
+
+4) “Prove the numbers” without exposing IP (audit layer)
+
+You must implement a computation audit subsystem that produces reproducible math while keeping proprietary logic hidden.
+
+4.1 Response contract: mandatory structured output
+All answers must return:
+	•	answer_markdown
+	•	citations[] (private canon chunk refs and/or public sources)
+	•	calc_proof[] (optional; required when numbers appear)
+	•	visual_spec (optional; deterministic schema)
+	•	ip_safety_flags[] (e.g., “internal parameter withheld”)
+
+4.2 Calculation proof rules
+When the assistant outputs any number derived from computation:
+	•	Show inputs with sources (or clearly labeled assumptions).
+	•	Show arithmetic steps explicitly (line-by-line).
+	•	Show final result and a sensitivity note.
+
+4.3 IP-safe abstraction
+When an internal ELI rule influences a number:
+	•	Do not reveal the rule.
+	•	Instead, present it as a sealed parameter, e.g.:
+	•	“Applied an internal governance adjustment factor (withheld as IP) within permitted bounds.”
+	•	You may show:
+	•	The post-adjustment effect on outputs
+	•	The public-data inputs and arithmetic
+	•	But not the internal adjustment derivation.
+
+5) Public “real data” access (medical + finance), with citations
+
+You must integrate public, reputable sources for “real data,” but enforce medical safety.
+
+5.1 Medical evidence mode (public, non-PHI)
+	•	The assistant can cite: clinical guidelines, peer-reviewed literature, government health sources.
+	•	It must remain general educational; no patient-specific directives.
+	•	It must not ingest or store PHI.
+	•	If a user tries to provide PHI, warn and request removal.
+
+5.2 Finance / economics mode (public datasets)
+Implement connectors (or curated fetch) to authoritative datasets (examples: FRED, BLS, BEA, SEC filings, CMS fee schedules where relevant).
+Outputs must include:
+	•	dataset name / series id / filing reference
+	•	as-of date
+	•	computation proof steps
+
+6) Visuals (deterministic, non-hallucinatory)
+
+No “artistic” diagram generation. Use deterministic UI rendering from visual_spec:
+
+Supported visual types:
+	•	CFO tables/cards
+	•	sensitivity sliders
+	•	timeline/Gantt-lite
+	•	governance decision trees (schema-driven)
+	•	objection-handling battlecards (approved language only)
+
+7) Governance-grade logging and auditability
+
+Implement a full audit trail:
+	•	Every response stores: retrieved chunks, citations used, calc_proof, and flags triggered.
+	•	Ensure you can produce an “explainability bundle” that shows:
+	•	What was retrieved
+	•	Why it was admissible to say
+	•	What was refused and why (Parrot Box)  ￼
+
+8) Product positioning mode (“salesman you can live with”)
+
+Implement a toggle with strict constraints:
+	•	Advisor Mode (default): neutral, governance-first, citations-heavy
+	•	Sales Mode: concise, benefit-led, objection handling, but cannot add claims beyond canon or public sources
+	•	“Sales Mode” must still cite.
+
+9) High-level functional acceptance tests (must pass)
+	1.	No-citation claims are blocked.
+	2.	Outcome knowledge cannot be used to judge decision-time knowledge (temporal admissibility enforced).  ￼
+	3.	Silence/refusal is possible and used correctly (Parrot Box).  ￼
+	4.	Any numeric output has calc_proof with reproducible arithmetic.
+	5.	No proprietary thresholds/rules appear in responses.
+	6.	Public data answers cite dataset identifiers and dates.
+	7.	No PHI storage; PHI prompts trigger warning + redaction request.
+
+10) Build order (do this sequence)
+	1.	Canon ingestion + retrieval + citation enforcement
+	2.	Response contract + calc_proof audit layer + IP-safe abstraction
+	3.	Public dataset connectors (finance first; medical evidence second)
+	4.	Deterministic visuals via visual_spec
+	5.	Voice only after the above is stable (voice amplifies hallucination risk)
+
+⸻
+
+If you want, I can also provide a ready-to-implement JSON schema for visual_spec and calc_proof that the agent can follow verbatim, but the above is sufficient as architectural direction while keeping proprietary ELI internals protected.
