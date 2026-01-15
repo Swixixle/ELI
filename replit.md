@@ -42,9 +42,12 @@ The frontend follows a page-based structure with three main routes:
 
 Current tables:
 - `users` - Basic user authentication
-- `cases` - Case containers for document management (name, description, status, timestamps)
-- `canon_documents` - Stores metadata about uploaded Canon documents (name, size, type, version, status, caseId FK)
+- `cases` - Case containers for document management (name, description, status, timestamps, decisionTime, policyThresholdMin)
+- `canon_documents` - Stores metadata about uploaded Canon documents (name, size, type, version, status, caseId FK, contentHash)
 - `canon_chunks` - Stores chunked Canon content for retrieval (72 chunks from 10 documents)
+- `decision_targets` - Stores decision target history per case (text, setAt, setBy, isActive)
+- `case_events` - Stores timeline events for cases (type, description, timestamp, documentRef)
+- `determinations` - Stores signed determination receipts (status, conditionsMet, receiptJson, caseStateHash)
 
 ### Case-Centric Document Management
 All documents are bound to cases. The system enforces case ownership at multiple layers:
@@ -60,6 +63,37 @@ Case-scoped API endpoints:
 - `GET /api/cases/:id/documents` - List documents in case
 - `POST /api/cases/:id/documents` - Create document in case
 - `DELETE /api/cases/:caseId/documents/:docId` - Delete document (validates ownership)
+
+### Canon v4.0 Evaluation System
+
+**Decision Readiness endpoints:**
+- `POST /api/cases/:id/decision-target` - Set/update decision target
+- `GET /api/cases/:id/decision-target` - Get active decision target
+- `POST /api/cases/:id/decision-time` - Set decision time
+- `GET /api/cases/:id/events` - Get case timeline events
+- `POST /api/cases/:id/events` - Create timeline event
+- `POST /api/cases/:id/evaluate` - Evaluate case against 5 procedural prerequisites
+- `POST /api/cases/:id/determine` - Create signed determination receipt
+- `GET /api/cases/:id/receipt/latest` - Get latest determination receipt
+
+**5 Procedural Prerequisites (Canon v4.0):**
+1. **Decision Target** - What decision is this case trying to support?
+2. **Temporal Verification** - When was the decision made? Can we verify the timeline?
+3. **Independent Verification** - Is there third-party confirmation of claims?
+4. **Policy Application** - What rule, policy, or standard governed this decision?
+5. **Contextual Constraints** - What constraints shaped the decision-maker's options?
+
+**Threshold Policy:**
+- 0-2 prerequisites: Review unsafe — advisory only
+- 3 prerequisites: Review permitted, high procedural risk
+- 4 prerequisites: Review strong, defensible
+- 5 prerequisites: Review robust, regulator-ready
+
+**Cryptographic Receipts:**
+- SHA-256 hashing for case state verification
+- Ed25519 signing for receipt authenticity
+- Keys loaded from ED25519_PRIVATE_KEY/ED25519_PUBLIC_KEY environment variables
+- Deterministic serialization ensures reproducible hashes
 
 ### Canon Ingestion System
 - **Ingestion Script**: `server/ingestCanon.ts` - Extracts, chunks, and indexes Canon PDFs
