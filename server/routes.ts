@@ -339,6 +339,186 @@ export async function registerRoutes(
     }
   });
 
+  // === PRINTOUT ROUTES (Immutable Judgment Records) ===
+
+  // Create immutable printout from determination
+  app.post("/api/cases/:id/printouts", async (req, res) => {
+    try {
+      const caseId = req.params.id;
+      const { determinationId, title } = req.body;
+
+      const caseData = await storage.getCase(caseId);
+      if (!caseData) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+
+      let determination;
+      if (determinationId) {
+        determination = await storage.getDetermination(determinationId);
+        if (!determination || determination.caseId !== caseId) {
+          res.status(400).json({ error: "Invalid determination for this case" });
+          return;
+        }
+      } else {
+        determination = await storage.getLatestDetermination(caseId);
+        if (!determination) {
+          res.status(400).json({ error: "No determination exists for this case. Create a determination first." });
+          return;
+        }
+      }
+
+      const receiptData = determination.receiptJson as Record<string, unknown>;
+      const documents = await storage.getDocumentsByCase(caseId);
+      const events = await storage.getCaseEvents(caseId);
+      const activeTarget = await storage.getActiveDecisionTarget(caseId);
+
+      const printoutNumber = await storage.getNextPrintoutNumber(caseId);
+      const issuedAt = new Date();
+      const issuedAtISO = issuedAt.toISOString();
+
+      const rawChecklist = receiptData.checklist as Record<string, { met?: boolean; evidence?: string[] }> || {};
+      const normalizedChecklist: Record<string, { met: boolean; evidence: string[] }> = {};
+      for (const [key, value] of Object.entries(rawChecklist)) {
+        normalizedChecklist[key] = {
+          met: value?.met === true,
+          evidence: Array.isArray(value?.evidence) ? value.evidence : [],
+        };
+      }
+
+      const rawSummary = receiptData.summary as Record<string, unknown> || {};
+      const normalizedSummary = {
+        status: String(rawSummary.status || determination.status || "UNKNOWN"),
+        conditionsMet: Number(rawSummary.conditionsMet) || 0,
+        conditionsTotal: Number(rawSummary.conditionsTotal) || 5,
+        reviewPermitted: rawSummary.reviewPermitted === true,
+        proceduralNote: String(rawSummary.proceduralNote || ""),
+      };
+
+      const renderedContent = {
+        printoutVersion: "1.0",
+        printoutNumber,
+        issuedAt: issuedAtISO,
+        caseInfo: {
+          id: caseData.id,
+          name: caseData.name,
+          description: caseData.description,
+          phase: caseData.phase,
+          decisionTarget: activeTarget?.text || caseData.decisionTarget,
+          decisionTime: caseData.decisionTime?.toISOString() || null,
+        },
+        determination: {
+          id: determination.id,
+          status: determination.status,
+          canonVersion: determination.canonVersion,
+          createdAt: determination.createdAt?.toISOString() || null,
+        },
+        receipt: receiptData,
+        evidence: {
+          documents: documents.map((d) => ({
+            id: d.id,
+            name: d.name,
+            type: d.type,
+            version: d.version,
+            contentHash: d.contentHash,
+            uploadedAt: d.uploadedAt?.toISOString() || null,
+          })),
+          events: events.map((e) => ({
+            id: e.id,
+            type: e.eventType,
+            description: e.description,
+            eventTime: e.eventTime?.toISOString() || null,
+          })),
+          documentCount: documents.length,
+          eventCount: events.length,
+        },
+        checklist: normalizedChecklist,
+        summary: normalizedSummary,
+      };
+
+      const contentJson = JSON.stringify(renderedContent, null, 0);
+      const contentHash = hashSHA256(contentJson);
+
+      const signature = signReceipt(contentJson);
+
+      const summaryText = `${normalizedSummary.status} - ${normalizedSummary.conditionsMet}/${normalizedSummary.conditionsTotal} prerequisites met`;
+
+      const printout = await storage.createCasePrintout({
+        caseId,
+        determinationId: determination.id,
+        printoutNumber,
+        title: title || `Case Judgment #${printoutNumber}`,
+        renderedContent,
+        summary: summaryText,
+        prerequisitesMet: normalizedSummary.conditionsMet,
+        prerequisitesTotal: normalizedSummary.conditionsTotal,
+        admissibilityStatus: determination.status,
+        caseStateHash: determination.caseStateHash,
+        contentHash,
+        signatureB64: signature.signatureB64,
+        publicKeyId: signature.publicKeyId,
+      });
+
+      res.status(201).json(printout);
+    } catch (error) {
+      console.error("Error creating printout:", error);
+      res.status(500).json({ error: "Failed to create printout" });
+    }
+  });
+
+  // Get all printouts for a case
+  app.get("/api/cases/:id/printouts", async (req, res) => {
+    try {
+      const printouts = await storage.getCasePrintouts(req.params.id);
+      res.json(printouts);
+    } catch (error) {
+      console.error("Error fetching printouts:", error);
+      res.status(500).json({ error: "Failed to fetch printouts" });
+    }
+  });
+
+  // Get single printout (read-only)
+  app.get("/api/cases/:caseId/printouts/:printoutId", async (req, res) => {
+    try {
+      const printout = await storage.getCasePrintout(req.params.printoutId);
+      if (!printout) {
+        res.status(404).json({ error: "Printout not found" });
+        return;
+      }
+      if (printout.caseId !== req.params.caseId) {
+        res.status(404).json({ error: "Printout not found in this case" });
+        return;
+      }
+      res.json(printout);
+    } catch (error) {
+      console.error("Error fetching printout:", error);
+      res.status(500).json({ error: "Failed to fetch printout" });
+    }
+  });
+
+  // Explicitly reject DELETE on printouts (immutability enforcement)
+  app.delete("/api/cases/:caseId/printouts/:printoutId", (req, res) => {
+    res.status(403).json({
+      error: "Printouts are immutable",
+      message: "Once issued, a printout cannot be deleted or modified. This ensures the integrity of the judgment record.",
+    });
+  });
+
+  // Explicitly reject PATCH/PUT on printouts (immutability enforcement)
+  app.patch("/api/cases/:caseId/printouts/:printoutId", (req, res) => {
+    res.status(403).json({
+      error: "Printouts are immutable",
+      message: "Once issued, a printout cannot be deleted or modified. This ensures the integrity of the judgment record.",
+    });
+  });
+
+  app.put("/api/cases/:caseId/printouts/:printoutId", (req, res) => {
+    res.status(403).json({
+      error: "Printouts are immutable",
+      message: "Once issued, a printout cannot be deleted or modified. This ensures the integrity of the judgment record.",
+    });
+  });
+
   // Get documents for a case
   app.get("/api/cases/:id/documents", async (req, res) => {
     try {
