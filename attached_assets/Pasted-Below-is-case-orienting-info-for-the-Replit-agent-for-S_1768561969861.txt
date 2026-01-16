@@ -1,0 +1,70 @@
+Below is **case-orienting info for the Replit agent** for **SYN-DEMO-004** (note: the Case Summary file labels it **SYN-MED-004**; I’m treating that as the canonical ID unless you want the agent to alias both). 
+
+---
+
+## ELI Case Orientation (SYN-DEMO-004 / SYN-MED-004)
+
+### Case Identity
+
+* **Case ID (as provided in summary):** SYN-MED-004 
+* **Domain:** Medical Peer Review Intake 
+* **Date Opened:** 2026-01-22 
+* **Prepared By:** ELI Expert System 
+
+### Decision Target (What ELI is allowed to decide)
+
+* **Assess admissibility of a medication administration concern (procedural gate only).** 
+
+### Scope Constraints (Hard boundaries for the agent)
+
+* **Procedural gate only** (intake/admissibility), not substantive clinical review. 
+
+---
+
+## Evidence Artifacts (Evidence Log)
+
+1. **MAR showing medication administered**
+
+* Timestamp: 2026-01-19T14:05
+* Verification: Verified 
+
+2. **Nurse recollection**
+
+* Timestamp: Unknown
+* Verification: Unverified 
+
+---
+
+## Policy Anchor (Normative Reference)
+
+* **Policy:** Medication Administration Policy
+* **Version:** v3.0
+* **Effective Date:** 2026-02-01
+* **Relevant excerpt:** High-risk medications require dual verification. 
+
+**Critical intake issue:** the policy effective date is **after** the event timestamp (policy effective 2026-02-01 vs MAR 2026-01-19).
+
+---
+
+## Intake Finding (Current Conclusion)
+
+* **Finding:** Policy applicability uncertain due to effective date. 
+* **Recommendation:** Advisory only. 
+
+---
+
+## Missing / Blocking Items (Why admissibility is constrained)
+
+* A policy version in effect **on 2026-01-19** (or an explicit applicability rule stating v3.0 applies retroactively).
+* Any **verified dual-verification record** (if dual verification is the alleged breach mechanism). Current log only confirms administration, not dual check documentation. 
+* Corroboration beyond an **unverified recollection** (timestamp unknown). 
+
+---
+
+## One-paragraph “agent brief”
+
+This is a procedural admissibility intake for a medication administration concern (SYN-MED-004; opened 2026-01-22). Verified evidence shows a MAR entry indicating medication administered at 2026-01-19T14:05, plus an unverified nurse recollection with unknown time. The cited Medication Administration Policy v3.0 requires dual verification for high-risk medications, but its effective date is 2026-02-01—after the event—making policy applicability uncertain. QA intake therefore recommends **advisory-only**, pending retrieval of the policy version in force on the event date or an applicability rule, plus any verified documentation relevant to dual verification.
+
+---
+
+If you want, I can output this as **JSON** with stable keys for your Replit agent (e.g., `case_id`, `event_timestamp`, `policy_effective_date`, `blocking_conditions`, `decision_target`, `scope_constraints`).
