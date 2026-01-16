@@ -2,7 +2,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { INITIAL_MESSAGES, Message, SCENARIO_RESPONSES, CANONICAL_INTENTS, QUESTION_BANK } from "@/lib/types";
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel, FolderOpen, CheckCircle, AlertCircle, AlertTriangle, ArrowRight, CheckSquare, Lock, FileSearch, CircleSlash, Wrench, Search, X, ChevronDown, Info, MessageCircle } from "lucide-react";
+import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel, FolderOpen, CheckCircle, AlertCircle, AlertTriangle, ArrowRight, CheckSquare, Lock, FileSearch, CircleSlash, Wrench, Search, X, ChevronDown, Info, MessageCircle, LayoutDashboard, Upload, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -12,11 +12,14 @@ import { queryClient } from "@/lib/queryClient";
 import { CaseSelector } from "@/components/cases/CaseSelector";
 import { CaseTimeline, DocumentsConsidered } from "@/components/cases/CaseTimeline";
 import { DecisionReadinessPanel } from "@/components/cases/DecisionReadiness";
+import { CaseOverview } from "@/components/cases/CaseOverview";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { Case } from "@shared/schema";
 import type { DecisionReadiness, CasePhase } from "@/lib/types";
 import { normalizeQuestion, isMetaQuery, getMetaHelpResponse } from "@/lib/questionNormalizer";
+
+type CaseTab = "overview" | "build" | "evaluate" | "audit";
 
 function computeDecisionReadiness(caseData: Case | null, documentCount: number): DecisionReadiness {
   if (!caseData) {
@@ -210,6 +213,7 @@ export default function Home() {
   const [showFreeText, setShowFreeText] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [questionSearch, setQuestionSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<CaseTab>("overview");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -658,6 +662,66 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Tab Navigation - Only show when case is active */}
+        {activeCase && (
+          <div className="border-b bg-background px-6">
+            <div className="flex gap-1">
+              <button
+                onClick={() => setActiveTab("overview")}
+                className={cn(
+                  "px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
+                  activeTab === "overview" 
+                    ? "border-primary text-primary" 
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+                data-testid="tab-overview"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab("build")}
+                className={cn(
+                  "px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
+                  activeTab === "build" 
+                    ? "border-primary text-primary" 
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+                data-testid="tab-build"
+              >
+                <Upload className="w-4 h-4" />
+                Build
+              </button>
+              <button
+                onClick={() => setActiveTab("evaluate")}
+                className={cn(
+                  "px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
+                  activeTab === "evaluate" 
+                    ? "border-primary text-primary" 
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+                data-testid="tab-evaluate"
+              >
+                <ClipboardCheck className="w-4 h-4" />
+                Evaluate
+              </button>
+              <button
+                onClick={() => setActiveTab("audit")}
+                className={cn(
+                  "px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
+                  activeTab === "audit" 
+                    ? "border-primary text-primary" 
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+                data-testid="tab-audit"
+              >
+                <Gavel className="w-4 h-4" />
+                Audit
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Case Selector Modal */}
         {showCaseSelector && (
           <CaseSelector
@@ -711,74 +775,119 @@ export default function Home() {
           </div>
         )}
 
-        {/* Two-Column Dashboard Layout */}
+        {/* Tab Content Area */}
         {activeCase && (
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-0 min-h-0">
-            {/* LEFT COLUMN - Question Bank + Ask Bar + Responses */}
-            <div className="flex flex-col min-h-0 border-r overflow-hidden">
-              {/* Compact Status Summary */}
-              <div className="px-6 py-3 border-b bg-muted/30 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-3 h-3 rounded-full",
-                    decisionReadiness.permitted ? "bg-green-500" : "bg-amber-500"
-                  )} />
-                  <div>
-                    <span className="text-sm font-medium">
-                      {decisionReadiness.permitted ? "Decision Permitted" : "Review Blocked"}
-                    </span>
-                    <span className="text-xs text-muted-foreground ml-2">
-                      ({decisionReadiness.totalSatisfied}/{decisionReadiness.totalRequired} prerequisites)
-                    </span>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {/* Overview Tab */}
+            {activeTab === "overview" && (
+              <ScrollArea className="h-full">
+                <CaseOverview
+                  caseData={activeCase}
+                  readiness={decisionReadiness}
+                  documentCount={documentCount}
+                  viewMode={viewMode}
+                  onSetDecisionTarget={() => setShowDecisionTargetDialog(true)}
+                  onNavigateToTab={(tab) => setActiveTab(tab as CaseTab)}
+                />
+              </ScrollArea>
+            )}
+
+            {/* Build Tab */}
+            {activeTab === "build" && (
+              <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-0">
+                <ScrollArea className="h-full border-r">
+                  <div className="p-6 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-lg font-semibold">Documents & Evidence</h2>
+                      <a
+                        href="/canon"
+                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
+                        data-testid="button-upload-docs"
+                      >
+                        <Upload className="w-4 h-4" />
+                        Upload Documents
+                      </a>
+                    </div>
+                    <DocumentsConsidered caseData={activeCase} />
                   </div>
-                </div>
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <button className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                      <Info className="w-3 h-3" />
-                      Learn more
-                    </button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-                    <SheetHeader>
-                      <SheetTitle>What this means</SheetTitle>
-                    </SheetHeader>
-                    <div className="mt-4 space-y-4">
-                      {decisionReadiness.permitted ? (
-                        <div className="space-y-3">
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-green-600">Means:</span> There is enough structural information that a fair procedural evaluation can now occur.
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-slate-500">Does not mean:</span> The decision is valid, correct, or should proceed.
-                          </p>
-                          <p className="text-sm text-muted-foreground italic border-l-2 border-primary pl-3">
-                            This is jurisdiction, not judgment. Like a court saying "we can hear this case" — not "we've ruled."
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <p className="text-sm text-muted-foreground">
-                            The record does not yet contain enough structural information to support a procedurally fair evaluation.
-                          </p>
-                          <p className="text-sm text-muted-foreground italic border-l-2 border-amber-500 pl-3">
-                            This does not decide the case — it decides whether the case can be decided.
-                          </p>
-                        </div>
-                      )}
-                      <div className="pt-4 border-t">
-                        <h4 className="font-medium text-sm mb-2">Threshold Policy</h4>
-                        <ul className="text-xs text-muted-foreground space-y-1">
-                          <li>0-2 prerequisites: Review unsafe — advisory only</li>
-                          <li>3 prerequisites: Review permitted, high procedural risk</li>
-                          <li>4 prerequisites: Review strong, defensible</li>
-                          <li>5 prerequisites: Review robust, regulator-ready</li>
-                        </ul>
+                </ScrollArea>
+                <ScrollArea className="h-full bg-muted/20">
+                  <div className="p-6 space-y-6">
+                    <h2 className="text-lg font-semibold">Case Timeline</h2>
+                    <CaseTimeline caseData={activeCase} />
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+
+            {/* Evaluate Tab */}
+            {activeTab === "evaluate" && (
+              <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-0">
+                {/* LEFT - Question Bank + Responses */}
+                <div className="flex flex-col min-h-0 border-r overflow-hidden">
+                  {/* Compact Status Summary */}
+                  <div className="px-6 py-3 border-b bg-muted/30 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-3 h-3 rounded-full",
+                        decisionReadiness.permitted ? "bg-green-500" : "bg-amber-500"
+                      )} />
+                      <div>
+                        <span className="text-sm font-medium">
+                          {decisionReadiness.permitted ? "Decision Permitted" : "Review Blocked"}
+                        </span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          ({decisionReadiness.totalSatisfied}/{decisionReadiness.totalRequired} prerequisites)
+                        </span>
                       </div>
                     </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <button className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                          <Info className="w-3 h-3" />
+                          Learn more
+                        </button>
+                      </SheetTrigger>
+                      <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+                        <SheetHeader>
+                          <SheetTitle>What this means</SheetTitle>
+                        </SheetHeader>
+                        <div className="mt-4 space-y-4">
+                          {decisionReadiness.permitted ? (
+                            <div className="space-y-3">
+                              <p className="text-sm text-muted-foreground">
+                                <span className="font-medium text-green-600">Means:</span> There is enough structural information that a fair procedural evaluation can now occur.
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                <span className="font-medium text-slate-500">Does not mean:</span> The decision is valid, correct, or should proceed.
+                              </p>
+                              <p className="text-sm text-muted-foreground italic border-l-2 border-primary pl-3">
+                                This is jurisdiction, not judgment. Like a court saying "we can hear this case" — not "we've ruled."
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              <p className="text-sm text-muted-foreground">
+                                The record does not yet contain enough structural information to support a procedurally fair evaluation.
+                              </p>
+                              <p className="text-sm text-muted-foreground italic border-l-2 border-amber-500 pl-3">
+                                This does not decide the case — it decides whether the case can be decided.
+                              </p>
+                            </div>
+                          )}
+                          <div className="pt-4 border-t">
+                            <h4 className="font-medium text-sm mb-2">Threshold Policy</h4>
+                            <ul className="text-xs text-muted-foreground space-y-1">
+                              <li>0-2 prerequisites: Review unsafe — advisory only</li>
+                              <li>3 prerequisites: Review permitted, high procedural risk</li>
+                              <li>4 prerequisites: Review strong, defensible</li>
+                              <li>5 prerequisites: Review robust, regulator-ready</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </SheetContent>
+                    </Sheet>
+                  </div>
 
               {/* Question Bank Container with Internal Scroll - Builder Mode */}
               {viewMode === "builder" && (
@@ -947,38 +1056,92 @@ export default function Home() {
               )}
             </div>
 
-            {/* RIGHT COLUMN - Decision Readiness, Timeline, Documents */}
-            <div className="flex flex-col min-h-0 bg-muted/20">
-              <ScrollArea className="flex-1 min-h-0">
-                <div className="p-4 space-y-4">
-                  <DecisionReadinessPanel 
-                    readiness={decisionReadiness}
-                    onSetDecisionTarget={() => setShowDecisionTargetDialog(true)}
-                  />
+                {/* RIGHT - Decision Readiness Panel */}
+                <div className="flex flex-col min-h-0 bg-muted/20">
+                  <ScrollArea className="flex-1 min-h-0">
+                    <div className="p-4 space-y-4">
+                      <DecisionReadinessPanel 
+                        readiness={decisionReadiness}
+                        onSetDecisionTarget={() => setShowDecisionTargetDialog(true)}
+                      />
+                    </div>
+                  </ScrollArea>
+                </div>
+              </div>
+            )}
+
+            {/* Audit Tab */}
+            {activeTab === "audit" && (
+              <ScrollArea className="h-full">
+                <div className="p-6 max-w-4xl mx-auto space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-semibold">Judgment Records</h2>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Immutable, cryptographically signed determination records
+                      </p>
+                    </div>
+                    <a
+                      href={`/cases/${activeCase.id}/printouts`}
+                      className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
+                      data-testid="button-view-printouts"
+                    >
+                      <Gavel className="w-4 h-4" />
+                      View All Printouts
+                    </a>
+                  </div>
                   
-                  {/* Judgment Records Link */}
-                  <a
-                    href={`/cases/${activeCase.id}/printouts`}
-                    className="flex items-center justify-between p-4 bg-card border border-border rounded-xl hover:border-primary/50 hover:shadow-sm transition-all group"
-                    data-testid="link-judgment-records"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                        <Gavel className="w-4 h-4 text-primary" />
+                  <div className="bg-card border-2 border-border rounded-xl p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center shrink-0">
+                        <Gavel className="w-6 h-6 text-amber-600" />
                       </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-foreground">Judgment Records</h4>
-                        <p className="text-xs text-muted-foreground">View or issue immutable printouts</p>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-2">What are Judgment Records?</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                          Once you issue a determination, you can create a permanent judgment record (printout). 
+                          These records are cryptographically signed and cannot be modified or deleted — 
+                          they answer: "What did we know, and when did we know it?"
+                        </p>
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div className="bg-muted/50 rounded-lg p-3">
+                            <div className="text-xs text-muted-foreground">SHA-256</div>
+                            <div className="text-sm font-medium">Content Hash</div>
+                          </div>
+                          <div className="bg-muted/50 rounded-lg p-3">
+                            <div className="text-xs text-muted-foreground">Ed25519</div>
+                            <div className="text-sm font-medium">Signature</div>
+                          </div>
+                          <div className="bg-muted/50 rounded-lg p-3">
+                            <div className="text-xs text-muted-foreground">403</div>
+                            <div className="text-sm font-medium">Immutable</div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </a>
+                  </div>
                   
-                  <CaseTimeline caseData={activeCase} />
-                  <DocumentsConsidered caseData={activeCase} />
+                  <a
+                    href={`/cases/${activeCase.id}/printouts`}
+                    className="block bg-primary/5 border-2 border-primary/20 rounded-xl p-5 hover:bg-primary/10 transition-colors"
+                    data-testid="link-issue-printout"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                          <ArrowRight className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-foreground">Issue a Judgment Record</h4>
+                          <p className="text-sm text-muted-foreground">Create an immutable printout from the latest determination</p>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-5 h-5 text-primary" />
+                    </div>
+                  </a>
                 </div>
               </ScrollArea>
-            </div>
+            )}
           </div>
         )}
 

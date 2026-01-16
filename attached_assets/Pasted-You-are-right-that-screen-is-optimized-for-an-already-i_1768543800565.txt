@@ -1,0 +1,152 @@
+You are right: that screen is optimized for an already-in-progress procedural audit, not for the moment a user selects a case. As a “first page,” it violates basic information architecture:
+	•	It does not answer “What is this case?” within 3 seconds.
+	•	It forces the user into question-led navigation before they’ve built a mental model.
+	•	It buries the global state (what exists, what’s missing, what’s next) behind UI fragments.
+
+The result is exactly what you described: it feels like you need a PhD to orient yourself.
+
+What the first page should do instead
+
+When a user clicks a case, the landing view should be a Case Overview that answers—immediately:
+	1.	What is the decision target? (or “not set”)
+	2.	Where are we in the workflow? (Intake → Review → Determine → Closure)
+	3.	What prerequisites are satisfied vs missing? (the 5 prerequisites, as a single readable strip)
+	4.	What evidence exists? (docs, timeline anchors, independent verification artifacts, policies)
+	5.	What is the single next best action? (one big primary CTA)
+
+Everything else (question lists, deep audit panels) should be secondary, behind “Drill in.”
+
+The specific UI problem in your screenshot
+
+That “What do you want to know?” + grouped question cards (“Permission to Decide,” “Evidence Status,” etc.) is a help layer. It’s useful once you know the case. But as a landing page it’s backwards: it asks for a question before the user understands the terrain.
+
+It also competes with the right-side “Decision Readiness” panel, creating two centers of gravity.
+
+A clean fix: make “Case Overview” the default landing tab
+
+New default on case open
+
+Tab 1: Overview (default)
+Tab 2: Build (documents / timeline / target)
+Tab 3: Evaluate (procedural readiness details)
+Tab 4: Audit Log / Determinations
+
+Overview layout (simple, user-friendly)
+
+Top header:
+	•	Case name + status badge (Blocked / Permitted / Strong / Robust)
+	•	Mode toggle (Builder / Audit) stays, but Overview is mode-aware.
+
+Main body (in order):
+	1.	Decision Target card (big, unavoidable)
+	•	If missing: one-line explanation + “Set Decision Target” CTA
+	2.	Readiness strip for the 5 prerequisites
+	•	five pills: Target / Time / Independent / Policy / Constraints
+	•	each pill shows: Present / Missing / Partial
+	3.	Case Snapshot
+	•	Docs count, timeline anchors count, policy refs count, third-party verifications count
+	4.	Next Action (one primary CTA)
+	•	Deterministic: chooses the highest-priority missing prerequisite
+	•	Example: “Add decision timestamp” or “Upload governing policy”
+	5.	Recent activity
+	•	last 5 events: uploads, edits, evaluations, determinations
+
+Only after that:
+	•	“Ask a procedural question” (the current question cards) becomes a secondary section or a separate tab.
+
+“Procedural Focus” is still correct—but it belongs after Overview
+
+Your earlier issue (“we should have direction over what part we’re looking at”) is real. The fix is sequencing:
+	•	Overview first: build the mental model.
+	•	Focus second: choose where to drill.
+
+On Overview, you can expose Focus as a small control (“Focus: Temporal Verification”), but it should not dominate the landing page.
+
+⸻
+
+Paste this to the Replit agent (UI/IA refactor)
+
+Replit Agent Task: Replace Case Landing Page with “Overview” (User-Friendly)
+
+Objective
+
+When a user selects a case, the default screen must be a Case Overview that summarizes the case as a whole and provides a single guided next step. The current “What do you want to know?” question cards must no longer be the default landing content.
+
+Requirements
+
+1) Add a top-level Case Tab Bar (or equivalent navigation)
+Tabs:
+	•	Overview (default)
+	•	Build (documents/timeline/target)
+	•	Evaluate (detailed prerequisite evaluation output)
+	•	Audit (determinations + immutable printouts + audit log)
+
+Default on case open: Overview
+
+2) Implement Overview Screen (new component)
+Layout:
+
+A. Header
+	•	Case title + status badge
+	•	Mode toggle (Builder/Audit) remains
+
+B. Decision Target (prominent card)
+	•	If missing: show “Decision Target not set” + primary CTA: Set Decision Target
+	•	If present: show target text + “Edit” (Builder only)
+
+C. Procedural Readiness Strip (5 prerequisites)
+Display the 5 prerequisites as pills/cards:
+	•	Decision Target
+	•	Temporal Verification
+	•	Independent Verification
+	•	Policy Application
+	•	Contextual Constraints
+
+Each shows: Present / Missing / Partial + small “View” link that jumps to Evaluate tab with that prerequisite highlighted.
+
+D. Case Snapshot
+Counts:
+	•	Documents
+	•	Timeline anchors
+	•	Policies linked
+	•	Independent verification artifacts
+	•	Determinations issued
+
+E. Next Best Action (single primary CTA)
+Deterministic rule:
+	•	pick the highest-priority missing prerequisite in this order:
+	1.	Decision Target
+	2.	Temporal Verification
+	3.	Policy Application
+	4.	Independent Verification
+	5.	Contextual Constraints
+CTA text examples:
+	•	“Set decision target”
+	•	“Add decision timestamp”
+	•	“Attach governing policy (effective at decision time)”
+	•	“Add third-party verification”
+	•	“Record constraints shaping options”
+
+F. Recent Activity
+Show last 5 case events (uploads, edits, evaluations, focus changes, determinations)
+
+3) Move “What do you want to know?” question cards
+Do NOT show these by default.
+Place them either:
+	•	at the bottom of Overview as a collapsed “Ask a procedural question” section, or
+	•	as a panel on the Evaluate tab
+
+4) Mode behavior
+	•	Builder mode: enable edit CTAs
+	•	Audit mode: Overview is read-only (no edits), but still shows the same summary
+
+Acceptance Criteria
+	•	Opening a case shows Overview, not question cards
+	•	A user can understand case status and what to do next in <10 seconds
+	•	The 5 prerequisites are visible at once without scrolling (typical laptop viewport)
+	•	Next Best Action CTA always points to a concrete input step
+	•	Audit mode cannot modify anything
+
+⸻
+
+If you want, I can also give you copy that’s friendlier (less “compliance-y”) while keeping your canon positioning intact—so it reads like a normal product, not a standards document.

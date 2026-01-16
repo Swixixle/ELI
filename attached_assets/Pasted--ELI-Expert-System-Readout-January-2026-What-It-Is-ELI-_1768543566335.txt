@@ -1,0 +1,74 @@
+
+ELI Expert — System Readout (January 2026)
+What It Is
+ELI Expert is a procedural admissibility gate — a governance system that determines whether case reviews are procedurally permitted before substantive evaluation begins.
+
+"ELI doesn't make decisions. It makes sure we're allowed to make them."
+Core Positioning
+What ELI does: Evaluates whether case reviews are procedurally permitted.
+
+What ELI does NOT do: Evaluate outcomes, clinical correctness, or fault. Those require human expertise. ELI determines jurisdiction, not judgment.
+
+The 5 Procedural Prerequisites (Canon v4.0)
+Before any case can be evaluated, it must satisfy:
+
+Decision Target — What decision is this case trying to support?
+Temporal Verification — When was the decision made? Can we verify the timeline?
+Independent Verification — Is there third-party confirmation of claims?
+Policy Application — What rule, policy, or standard governed this decision?
+Contextual Constraints — What constraints shaped the decision-maker's options?
+Threshold Policy
+Prerequisites Met	Status
+0-2	Advisory only — review unsafe
+3	Review permitted — high procedural risk
+4	Review strong — defensible
+5	Review robust — regulator-ready
+Two-Stage Workflow
+Evaluation (/evaluate) — Checks procedural readiness. Reversible. You can add more evidence and re-evaluate.
+
+Determination (/determine) — Creates a cryptographically signed receipt. Irreversible. The signed posture becomes part of the permanent record.
+
+Immutable Judgment Printouts
+Once a determination is made, users can issue a judgment printout — an immutable, cryptographically signed record that:
+
+Cannot be modified (403 rejection on mutation attempts)
+Cannot be deleted
+Includes SHA-256 content hash and Ed25519 signature
+Answers: "What did we know, and when did we know it?"
+Operating Modes
+Builder Mode — Active case construction. Upload documents, set decision targets, build timeline evidence. Focuses on gathering the procedural prerequisites.
+
+Audit Mode — Review and verification. Evaluate procedural readiness, issue determinations, and generate immutable judgment records. Read-only posture.
+
+What Makes This Provable
+ELI's value is provable through invariant satisfaction, not accuracy claims:
+
+Presence/absence of required inputs (binary, testable)
+Ordering of events (deterministic)
+Consistency between artifacts (hashable)
+Immutability after issuance (cryptographically enforced)
+A regulator, auditor, or engineer can verify:
+
+"Was the decision time set?" → Yes/No
+"Was the policy effective at that time?" → Yes/No
+"Has the record been altered?" → Cryptographic proof
+Technical Foundation
+Capability	Implementation
+Case state integrity	SHA-256 hashing
+Non-repudiation	Ed25519 signing
+Immutability	403 rejection on mutation
+Replayability	Deterministic serialization
+Key Behavioral Constraints
+Outcome-blindness enforced: Cannot use knowledge of outcomes to evaluate decisions made before those outcomes occurred
+Hindsight is inadmissible: System refuses temporal boundary violations
+Category errors redirected: Questions requiring legal/moral judgment are redirected to appropriate human expertise
+Refusal is a valid answer: When epistemic entitlement is absent, the system refuses rather than guesses
+Current State
+Full procedural evaluation system operational
+Immutable printout feature complete with cryptographic signing
+Case-centric document management implemented
+Judgment Records accessible from case panel
+Executive brief and demo script documentation created
+Ready for regulatory sandbox demonstrations
+One-Sentence Summary
+ELI Expert is a pre-process auditor that enforces jurisdiction before judgment — infrastructure for decisions that must withstand scrutiny.
