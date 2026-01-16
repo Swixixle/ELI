@@ -1,0 +1,140 @@
+Yes — you should re-examine the numbers, but not rewrite them blindly.
+And you are correct: the original model was intentionally over-conservative for a system that was still being framed as “AI governance.”
+
+Now that ELI is correctly defined as procedural imaging, the numbers are allowed to move — but only in specific, defensible ways.
+
+Below is the exact, copy-paste instruction set for the Replit agent.
+This tells them what to review, what to keep frozen, and what may be recalibrated without breaking credibility.
+
+⸻
+
+COPY / PASTE THIS TO THE REPLIT AGENT (IN FULL)
+
+⸻
+
+TASK: RE-EVALUATE CFO VALUE MODEL UNDER “ELI IMAGING” ONTOLOGY
+
+We are not rebuilding the CFO model from scratch.
+We are re-auditing it for alignment with ELI Imaging (procedural imaging) rather than “AI governance.”
+
+NON-NEGOTIABLE CONSTRAINTS (DO NOT VIOLATE)
+	1.	Do NOT change the core structure of the model
+	•	Keep the same step sequence:
+	•	Gross Risk Surface
+	•	Likely Realized Value
+	•	Credibility Caps
+	•	CFO-Recognized Benefit
+	•	Net / Decision Logic
+	•	Keep break-even logic intact
+	2.	Do NOT introduce outcome causality
+	•	No claims of “prevented errors,” “improved decisions,” or “better outcomes”
+	•	All value must remain attributable to procedural visibility / uncertainty reduction
+	3.	Do NOT remove credibility caps
+	•	Caps are mandatory governance protection
+	•	They may be re-calibrated, not eliminated
+
+⸻
+
+WHAT MUST BE REVIEWED (THIS IS THE CORE WORK)
+
+1. Re-interpret Existing Variables as Imaging Variables
+Re-label internally (math stays the same):
+	•	Escalation rates = probability of procedural opacity reaching authority
+	•	Duration = ambiguity window length
+	•	Avoidance = opacity resolved earlier through imaging
+
+Confirm that all variable descriptions reflect resolution, not intervention.
+
+⸻
+
+2. Re-evaluate Credibility Caps (THIS IS WHERE ADJUSTMENT IS ALLOWED)
+The original caps were tuned for:
+	•	early AI skepticism
+	•	fear of causality claims
+	•	unproven governance category
+
+Under ELI Imaging, adjust as follows ONLY if justified:
+	•	Cap A (Escalation Avoidance Cap):
+	•	Review whether imaging + audit-verified + outcome-blind justifies:
+	•	15–20% (instead of 12–15%)
+	•	Cap B (Duration Savings Cap):
+	•	Review whether audit-verified imaging justifies:
+	•	10–15% (instead of 7.5–10%)
+
+Any increase MUST be justified as:
+
+“Higher confidence in informational value booking due to imaging discipline.”
+
+No optimism without explanation.
+
+⸻
+
+3. Introduce ONE New Optional Term (Allowed)
+Add Procedural Resolution Yield (PRY) as a derived metric:
+
+PRY = (Adjusted Avoided + Adjusted Duration) / Gross Risk Surface
+
+This is not ROI.
+It is an imaging yield ratio (how much uncertainty becomes visible).
+
+This metric is for executive interpretation only.
+
+⸻
+
+4. Confirm Pricing Still Anchors Below Break-Even
+Re-test pilot pricing against:
+	•	slightly higher caps
+	•	unchanged escalation assumptions
+
+If pilot pricing becomes clearly positive:
+	•	Flag this as “pricing optionality,” not guaranteed value
+
+We do NOT auto-raise prices without human decision.
+
+⸻
+
+WHAT TO OUTPUT BACK TO ME
+
+Return:
+	1.	A short memo answering:
+	•	“Which assumptions were overly conservative under imaging?”
+	•	“Which assumptions must remain conservative?”
+	2.	A table showing:
+	•	Old caps vs Imaging-adjusted caps
+	•	Impact on CFO-Recognized Benefit
+	3.	Confirmation that:
+	•	No causality claims were introduced
+	•	The model remains governance-safe
+
+DO NOT implement UI changes yet.
+This is a model audit and recommendation, not a deployment.
+
+⸻
+
+END TASK
+
+⸻
+
+Important grounding (for you, not the agent)
+
+You were conservative originally because you didn’t yet know what you had.
+
+Now that:
+	•	ELI is imaging
+	•	refusals are safety features
+	•	outcome-blindness is a strength
+	•	and audit verifiability is central
+
+…CFOs are allowed to book more informational value without demanding causal proof.
+
+That doesn’t mean “jack the numbers.”
+It means remove fear-driven discounts that no longer apply.
+
+This is a maturity adjustment, not a hype adjustment.
+
+If you want next, I can:
+	•	tell you exactly which caps are safe to move and by how much
+	•	help you design tiered pricing tied to imaging surface
+	•	or help you decide whether the CFO model should remain optional or become standard in enterprise sales
+
+Just say the word.
