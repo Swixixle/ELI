@@ -1,0 +1,90 @@
+Below is **case-orienting info** you can paste into your Replit agent as the “Case Context / Intake Packet” for a synthetic ELI run. It is written to keep the agent inside **procedural admissibility** scope (not clinical judgment).
+
+---
+
+## ELI Case Orientation (for Replit Agent)
+
+### Case Identity
+
+* **Case ID:** SYN-DEMO-005 
+* **Domain:** Medical (ED-to-ICU Handoff Review) 
+* **Case Type:** Medical Risk / Peer Review Intake (Synthetic Demo Case) 
+* **Date Opened:** 2026-01-24 
+* **Prepared By:** ELI Expert System 
+
+### Decision Target (What ELI is allowed to decide)
+
+* **Determine whether the handoff-related escalation concern is procedurally admissible for substantive peer review.** 
+
+### Scope Constraints (Hard boundaries for the agent)
+
+* Procedural readiness evaluation only.
+* **No clinical determination.**
+* **No outcome judgment.**
+* **No attribution of fault.** 
+
+---
+
+## Available Evidence Artifacts (Evidence Log)
+
+1. **ED Provider Note** — symptom progression documented
+
+* Source: EHR
+* Verification: Verified
+* Timestamp: 2026-01-21T18:42 
+
+2. **ICU Admission Order**
+
+* Source: EHR Orders
+* Verification: Verified
+* Timestamp: 2026-01-21T20:05 
+
+3. **Handoff Tool Entry** — receiving acknowledgment field **blank**
+
+* Source: Handoff System
+* Verification: Verified
+* Timestamp: 2026-01-21T20:10 
+
+4. **Coverage Schedule for receiving service** — **missing**
+
+* Source: Operations
+* Verification: Missing
+* Timestamp: Not provided 
+
+---
+
+## Policy Anchor (Normative Reference)
+
+* **Policy:** Clinical Handoff & Escalation Policy
+* **Version:** v2.2
+* **Effective Date:** 2025-09-15 
+
+Relevant excerpt (interpretation constraints apply):
+
+* Escalations during handoff require **documented receiving-clinician acknowledgment when feasible**.
+* Time-critical changes require **immediate escalation documentation within the shift**. 
+
+---
+
+## Current Intake Findings (What the preliminary review already concluded)
+
+* Documentation indicates a handoff occurred; **receiving acknowledgment is not recorded** in available artifacts. 
+* **Coverage/receiving responsibility at the relevant time is not established** in the case file. 
+* **Recommendation:** Procedural prerequisites incomplete; request additional coverage documentation and any contemporaneous escalation communications. 
+
+---
+
+## Missing Items (Requests to make the case evaluable)
+
+* Coverage schedule / receiving responsibility at the relevant time (explicitly missing). 
+* Any contemporaneous escalation communications (pages, secure chat, call logs) referenced in intake recommendation. 
+
+---
+
+## Operational Summary for the Agent (1-paragraph “brief”)
+
+This is a synthetic ED-to-ICU handoff procedural admissibility review (SYN-DEMO-005). Verified artifacts show an ED note (18:42), ICU admission order (20:05), and a handoff tool entry (20:10) where the receiving acknowledgment field is blank. The coverage schedule for the receiving service is missing, leaving receiving responsibility unestablished. The applicable policy (Clinical Handoff & Escalation v2.2, effective 2025-09-15) expects documented receiving acknowledgment when feasible and prompt escalation documentation within-shift for time-critical changes. Preliminary intake concludes prerequisites are incomplete and recommends requesting coverage documentation and any contemporaneous escalation communications.
+
+---
+
+If you want this to be immediately “agent-ready,” tell me what format your Replit agent expects (JSON schema vs. plain prompt header). I can output it as a single structured object with fields like `case_id`, `decision_target`, `artifacts[]`, `policy`, `missing_items[]`, `agent_constraints[]` without changing any content.
