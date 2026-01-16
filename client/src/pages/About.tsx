@@ -46,10 +46,125 @@ export default function About() {
               This is not a general-purpose chatbot. It is an <strong>epistemic governance engine</strong> — 
               a system that knows what it is permitted to say and, more importantly, what it is <em>not</em> permitted to say.
             </p>
-            <p className="text-muted-foreground leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed mb-4">
               Every answer produced by this system is constrained by admissibility rules. 
               It does not guess, speculate, or invent. If the evidence is insufficient, it refuses to answer.
             </p>
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <p className="text-sm font-medium text-foreground">
+                <strong>What ELI does:</strong> Evaluates whether case reviews are procedurally permitted.
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                <strong>What ELI does NOT do:</strong> Evaluate outcomes, clinical correctness, or fault. 
+                Those require human expertise. ELI determines jurisdiction, not judgment.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Evaluation vs Determination */}
+        <section className="mb-16">
+          <h2 className="text-2xl font-display font-bold text-foreground mb-6 flex items-center gap-3">
+            <Gavel className="w-6 h-6 text-primary" />
+            Evaluation vs. Determination
+          </h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center">
+                  <Eye className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-display font-semibold text-foreground">Evaluation</h3>
+                  <span className="text-xs text-blue-600 font-mono">/api/cases/:id/evaluate</span>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                Checks procedural readiness against the 5 prerequisites. This is <strong>reversible</strong> — 
+                you can add more evidence and re-evaluate.
+              </p>
+              <div className="text-xs bg-blue-50 text-blue-800 px-3 py-2 rounded-md">
+                "Is this case ready for review?"
+              </div>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg flex items-center justify-center">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-display font-semibold text-foreground">Determination</h3>
+                  <span className="text-xs text-amber-600 font-mono">/api/cases/:id/determine</span>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                Creates a cryptographically signed receipt. This is <strong>irreversible</strong> — 
+                the signed posture becomes part of the permanent record.
+              </p>
+              <div className="text-xs bg-amber-50 text-amber-800 px-3 py-2 rounded-md">
+                "Lock in this procedural posture."
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Walkthrough Example */}
+        <section className="mb-16">
+          <h2 className="text-2xl font-display font-bold text-foreground mb-6 flex items-center gap-3">
+            <ArrowRight className="w-6 h-6 text-primary" />
+            How It Works in Practice
+          </h2>
+          <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold text-sm shrink-0">
+                1
+              </div>
+              <div className="flex-1">
+                <p className="text-foreground font-medium mb-1">Case submitted for procedural review</p>
+                <p className="text-sm text-muted-foreground">Decision target set, documents uploaded, timeline established.</p>
+              </div>
+            </div>
+            <div className="border-l-2 border-dashed border-muted ml-4 h-6" />
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold text-sm shrink-0">
+                2
+              </div>
+              <div className="flex-1">
+                <p className="text-foreground font-medium mb-1">Evaluation run</p>
+                <p className="text-sm text-muted-foreground">System checks 5 procedural prerequisites automatically.</p>
+              </div>
+            </div>
+            <div className="border-l-2 border-dashed border-muted ml-4 h-6" />
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
+                3
+              </div>
+              <div className="flex-1">
+                <p className="text-foreground font-medium mb-1">Result: 3/5 prerequisites met</p>
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-mono text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">REVIEW_PERMITTED</span> — 
+                  Procedural review allowed, but high procedural risk flagged.
+                </p>
+              </div>
+            </div>
+            <div className="border-l-2 border-dashed border-muted ml-4 h-6" />
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
+                4
+              </div>
+              <div className="flex-1">
+                <p className="text-foreground font-medium mb-1">Judgment printout issued</p>
+                <p className="text-sm text-muted-foreground">
+                  Immutable, signed record created. Cannot be modified or deleted.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 p-4 bg-muted/30 rounded-lg">
+              <p className="text-sm text-muted-foreground italic">
+                "In Case X, 3/5 prerequisites were met, so review was permitted but flagged as high procedural risk. 
+                Two weeks later, independent verification was added, raising it to 4/5 — 'review strong, defensible.'"
+              </p>
+            </div>
           </div>
         </section>
 
