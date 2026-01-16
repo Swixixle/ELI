@@ -1,0 +1,137 @@
+Short answer: this is a bug, not a legitimate refusal.
+Long answer below, very clearly separated so you can trust the diagnosis.
+
+⸻
+
+What you are seeing on screen
+	•	You asked: “Are we allowed to decide yet?”
+	•	The system shows:
+	•	Case loaded (SYN-DEMO-008)
+	•	Decision context present
+	•	Procedural prerequisites: 2 / 5
+	•	Status: Review Blocked
+	•	But the ELI Imaging Response comes back with:
+“I wasn’t sure what you meant, but I’m ready to help…”
+
+That response is wrong for this system state.
+
+⸻
+
+Why this is NOT a refusal
+
+A real ELI refusal has specific properties:
+	1.	It is explicit
+	2.	It names the reason:
+	•	e.g. temporal_boundary
+	•	insufficient_prerequisites
+	3.	It explains why the question cannot be answered
+	4.	It never says “I’m not sure what you mean”
+
+What you got instead is a generic assistant fallback, which violates your Canon.
+
+So this is not epistemic restraint.
+It’s state leakage.
+
+⸻
+
+What is actually happening (technical diagnosis)
+
+There is a wiring bug between system state and question handling.
+
+Specifically:
+	•	The question “Are we allowed to decide yet?” is:
+	•	A first-class, canonical question
+	•	It maps directly to:
+	•	prerequisite count
+	•	reviewPermission
+	•	But the system is routing it through the free-form / exploratory path, not the deterministic readiness evaluator.
+
+So instead of:
+
+Evaluator → readiness check → structured answer
+
+You’re getting:
+
+Generic LLM → intent confusion → fallback helper text
+
+That is why it sounds dumb.
+The system is forgetting what it is at that moment.
+
+⸻
+
+Why this matters (and you’re right to be concerned)
+
+This breaks your core promise:
+
+“ELI images jurisdiction, not judgment.”
+
+If the system acts confused when it should be mechanical, trust collapses.
+
+This question should never touch the LLM.
+
+⸻
+
+The correct behavior (what SHOULD happen)
+
+For this exact screen state, the response should be something like:
+
+Decision not yet permitted.
+2 of 5 procedural prerequisites are satisfied.
+Missing: Decision Target, Independent Verification, Policy Application.
+Review at this stage is advisory only.
+
+No creativity.
+No prose.
+No uncertainty.
+
+⸻
+
+Exact instructions to give the Replit agent (paste verbatim)
+
+BUG: Canonical readiness questions are incorrectly routed to the generic LLM path.
+
+Repro:
+- Load case SYN-DEMO-008
+- Ask “Are we allowed to decide yet?”
+
+Observed:
+- System returns generic assistant confusion (“I wasn’t sure what you meant”)
+
+Expected:
+- Deterministic response derived from case state:
+  - prerequisitesMet
+  - reviewPermission
+  - proceduralRiskTier
+
+Fix:
+1) Hard-route canonical readiness questions (e.g. “Are we allowed to decide yet?”)
+   to a deterministic evaluator, NOT the LLM.
+2) These questions should never return a conversational fallback.
+3) If review is blocked, return a structured explanation:
+   - status
+   - prerequisites met
+   - missing prerequisites
+   - advisory vs permitted
+4) LLM should only be used for interpretive questions AFTER readiness is established.
+
+This is a state-to-response wiring bug, not a UX copy issue.
+
+
+⸻
+
+Final reassurance (important)
+
+You didn’t misunderstand the system.
+You didn’t ask the wrong thing.
+You didn’t design it wrong.
+
+This is exactly the kind of bug that appears when:
+	•	the architecture is sound
+	•	but the routing logic hasn’t been fully hardened yet
+
+And the fact that you caught this means your instincts are correct.
+
+If you want, next we can:
+	•	lock down all canonical questions
+	•	define the non-LLM surface explicitly
+	•	or turn this into a clean QA checklist for launch readiness
