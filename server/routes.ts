@@ -87,6 +87,147 @@ export async function registerRoutes(
     }
   });
 
+  // === CASE OVERVIEW (Derived, Read-Only) ===
+  
+  // Get case overview - aggregated snapshot for immediate comprehension
+  app.get("/api/cases/:id/overview", async (req, res) => {
+    try {
+      const caseData = await storage.getCase(req.params.id);
+      if (!caseData) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+
+      // Gather all data needed
+      const documents = await storage.getDocumentsByCase(req.params.id);
+      const events = await storage.getCaseEvents(req.params.id);
+      const activeDecisionTarget = await storage.getActiveDecisionTarget(req.params.id);
+      const latestDetermination = await storage.getLatestDetermination(req.params.id);
+      const printouts = await storage.getCasePrintouts(req.params.id);
+
+      // Build evaluation context
+      const evalContext: EvaluationContext = {
+        caseData,
+        documents,
+        events,
+        activeDecisionTarget,
+      };
+      const evaluation = evaluateCanonConditions(evalContext);
+      const { checklist, summary } = evaluation;
+      
+      // Extract prerequisite statuses from checklist
+      const prerequisiteStatus = {
+        decisionTarget: checklist.A_decision_target_defined.met ? "met" as const : "unmet" as const,
+        temporalVerification: checklist.B_temporal_verification.met ? "met" as const : 
+          (events.length > 0 ? "partial" as const : "unmet" as const),
+        independentVerification: checklist.C_independent_verification.met ? "met" as const : "unmet" as const,
+        policyApplication: checklist.D_policy_application_record.met ? "met" as const : "unmet" as const,
+        contextualConstraints: checklist.E_contextual_constraints.met ? "met" as const : "unmet" as const,
+      };
+
+      // Count prerequisites met
+      const hasTarget = prerequisiteStatus.decisionTarget === "met";
+      const prereqValues = Object.values(prerequisiteStatus);
+      const prerequisitesMet = prereqValues.filter(s => s === "met").length;
+      const partialCount = prereqValues.filter(s => s === "partial").length;
+
+      // Determine risk tier
+      type RiskTier = "unsafe" | "high_risk" | "defensible" | "regulator_ready" | "unknown";
+      let currentRiskTier: RiskTier = "unknown";
+      let reviewPermission: "advisory_only" | "permitted" = "advisory_only";
+      
+      if (prerequisitesMet >= 5) {
+        currentRiskTier = "regulator_ready";
+        reviewPermission = "permitted";
+      } else if (prerequisitesMet >= 4) {
+        currentRiskTier = "defensible";
+        reviewPermission = "permitted";
+      } else if (prerequisitesMet >= 3) {
+        currentRiskTier = "high_risk";
+        reviewPermission = "permitted";
+      } else {
+        currentRiskTier = "unsafe";
+        reviewPermission = "advisory_only";
+      }
+
+      // Build "what we know" list
+      const whatWeKnow: string[] = [];
+      if (hasTarget) whatWeKnow.push("Decision target is defined");
+      if (caseData.decisionTime) whatWeKnow.push("Decision time is anchored");
+      if (documents.length > 0) whatWeKnow.push(`${documents.length} Canon document(s) attached`);
+      if (events.length > 0) whatWeKnow.push(`${events.length} timeline event(s) recorded`);
+      if (prerequisiteStatus.policyApplication === "met") whatWeKnow.push("Governing policy identified");
+      if (prerequisiteStatus.independentVerification === "met") whatWeKnow.push("Independent verification present");
+
+      // Build "what's missing" list
+      const whatsMissing: string[] = [];
+      if (!hasTarget) whatsMissing.push("Decision target not set");
+      if (!caseData.decisionTime) whatsMissing.push("Decision time not anchored");
+      if (prerequisiteStatus.temporalVerification === "unmet") whatsMissing.push("Temporal verification incomplete");
+      if (prerequisiteStatus.independentVerification === "unmet") whatsMissing.push("No independent verification");
+      if (prerequisiteStatus.policyApplication === "unmet") whatsMissing.push("No governing policy attached");
+      if (prerequisiteStatus.contextualConstraints === "unmet") whatsMissing.push("Contextual constraints not documented");
+
+      // Compute next action hint
+      let nextActionHint = "Case is ready for evaluation";
+      if (!hasTarget) {
+        nextActionHint = "Set the decision target to begin";
+      } else if (!caseData.decisionTime) {
+        nextActionHint = "Set the decision time to anchor temporal boundaries";
+      } else if (documents.length === 0) {
+        nextActionHint = "Upload governing policies or evidence documents";
+      } else if (prerequisiteStatus.temporalVerification === "unmet") {
+        nextActionHint = "Add timestamped evidence to establish timeline";
+      } else if (prerequisiteStatus.policyApplication === "unmet") {
+        nextActionHint = "Attach the governing policy or standard";
+      } else if (prerequisiteStatus.independentVerification === "unmet") {
+        nextActionHint = "Add third-party or independent verification";
+      } else if (prerequisiteStatus.contextualConstraints === "unmet") {
+        nextActionHint = "Document contextual constraints";
+      } else if (reviewPermission === "permitted" && printouts.length === 0) {
+        nextActionHint = "Issue a determination to create a judgment record";
+      }
+
+      // Extract domain from case name or description
+      const domain = caseData.description?.split(" - ")[0] || "General Governance";
+      const caseType = caseData.phase || "intake";
+
+      const overview = {
+        caseId: caseData.id,
+        caseTitle: caseData.name,
+        caseType,
+        domain,
+        phase: caseData.phase as "intake" | "review" | "decision" | "closure",
+        
+        decisionTarget: activeDecisionTarget?.text || caseData.decisionTarget || null,
+        decisionTime: caseData.decisionTime,
+        
+        canonDocumentCount: documents.length,
+        evidenceItemCount: events.length,
+        verifiedEvidenceCount: events.filter(e => e.sourceDocId).length,
+        
+        prerequisiteStatus,
+        prerequisitesMet,
+        prerequisitesTotal: 5,
+        
+        currentRiskTier,
+        reviewPermission,
+        lastEvaluationAt: latestDetermination?.createdAt || null,
+        lastPrintoutAt: printouts.length > 0 ? printouts[0].issuedAt : null,
+        printoutCount: printouts.length,
+        
+        nextActionHint,
+        whatWeKnow,
+        whatsMissing,
+      };
+
+      res.json(overview);
+    } catch (error) {
+      console.error("Error computing case overview:", error);
+      res.status(500).json({ error: "Failed to compute case overview" });
+    }
+  });
+
   // === CANON v4.0 EVALUATION ROUTES ===
 
   // Set/update decision target for a case

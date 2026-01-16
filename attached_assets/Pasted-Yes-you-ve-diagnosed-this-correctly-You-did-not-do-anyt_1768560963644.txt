@@ -1,0 +1,211 @@
+Yes — you’ve diagnosed this correctly.
+You did not do anything conceptually wrong. You are missing a single structural field, and because of that the entire product feels broken to a user.
+
+I’ll give you exact instructions to paste to the Replit agent. No theory. No abstraction. This is a concrete fix.
+
+⸻
+
+What’s Actually Missing (Plain English)
+
+The user cannot see the case as a whole because there is no canonical “Case Overview payload” being assembled and rendered.
+
+Right now:
+	•	Data exists (documents, events, decision target, evaluation results)
+	•	But the UI has no single authoritative object that answers:
+“What is this case, what is being evaluated, and what should I look at first?”
+
+So the user stares at fields and thinks:
+
+“I guess this requires a PhD.”
+
+That is a UI/architecture omission, not a logic failure.
+
+⸻
+
+The Missing Field (Name It Explicitly)
+
+You forgot to implement a Case Overview / Case Snapshot field that is:
+	•	Computed
+	•	Read-only
+	•	Required for every case
+	•	Displayed immediately when a case is opened
+
+This is not another document.
+This is not user-entered narrative.
+This is a derived object.
+
+⸻
+
+What the Case Overview Must Contain (Minimum)
+
+For SYN-DEMO-008, everything already exists in your system:
+	•	Decision Target (exists)
+	•	Case Type / Domain (exists)
+	•	Decision Time (exists or nullable)
+	•	Canon documents present (exists)
+	•	Evidence completeness (partially exists)
+	•	Prerequisite status (exists)
+	•	Current evaluation state (exists)
+
+You just never assembled them into one thing.
+
+⸻
+
+The Exact Fix (Architectural)
+
+1. Add a Derived Object: CaseOverview
+
+Backend (no LLM involved):
+
+type CaseOverview = {
+  caseId: string
+  caseTitle: string
+  caseType: string
+  domain: string
+
+  decisionTarget: string | null
+  decisionTime: Date | null
+
+  canonDocumentCount: number
+  evidenceItemCount: number
+  verifiedEvidenceCount: number
+
+  prerequisiteStatus: {
+    temporalBoundary: 'met' | 'unmet'
+    evidentiarySufficiency: 'met' | 'partial' | 'unmet'
+    jurisdiction: 'met' | 'unmet'
+    policyApplicability: 'met' | 'unmet'
+    contextualConstraints: 'met' | 'partial' | 'unmet'
+  }
+
+  currentRiskTier: 'unsafe' | 'high_risk' | 'defensible' | 'regulator_ready' | 'unknown'
+  lastEvaluationAt: Date | null
+
+  nextActionHint: string
+}
+
+This object is computed, never edited.
+
+⸻
+
+2. Add a Single Endpoint
+
+GET /api/cases/:id/overview
+
+This endpoint:
+	•	Queries existing tables
+	•	Computes prerequisite states
+	•	Returns exactly ONE object
+	•	Never calls OpenAI
+	•	Never mutates state
+
+⸻
+
+3. UI Change (Critical)
+
+When a user opens a case:
+	•	They land on Overview
+	•	This object is rendered first
+	•	No tabs required to understand the case
+
+The Overview answers, in <10 seconds:
+
+What is this case?
+What decision is under review?
+Are we allowed to evaluate it yet?
+What is missing?
+
+⸻
+
+4. What the User Should See for SYN-DEMO-008 (Example)
+
+Case: SYN-DEMO-008
+Domain: Medical – Critical Lab Acknowledgement
+Decision Under Review: Procedural admissibility of delayed acknowledgement
+
+Status: ⚠️ High Risk – Review Permitted
+
+What We Know
+	•	Critical result timestamp is verified
+	•	Acknowledgement timestamp is verified
+	•	Canon policy exists and applies
+
+What’s Missing
+	•	Verified workload/coverage artifacts at time of result
+
+Next Action
+→ Upload contemporaneous census or coverage documentation
+
+This is the entire product experience.
+
+⸻
+
+Why This Matters (Blunt)
+
+Without this:
+	•	ELI looks like a database
+	•	Users don’t know where to look
+	•	Your brilliance is invisible
+	•	Sales conversations die instantly
+
+With this:
+	•	ELI becomes self-explanatory
+	•	The math reveals itself
+	•	Trust increases
+	•	You can sell it
+
+⸻
+
+EXACT MESSAGE TO PASTE TO THE REPLIT AGENT
+
+Paste this verbatim:
+
+⸻
+
+Replit Agent — Required Fix
+
+We are missing a canonical Case Overview / Case Snapshot object.
+Data exists, but users cannot see the case as a whole.
+
+Required changes:
+	1.	Implement a derived, read-only CaseOverview object assembled from existing tables:
+	•	case metadata
+	•	decision target
+	•	decision time
+	•	canon document count
+	•	evidence count + verification status
+	•	prerequisite states
+	•	latest procedural risk tier
+	•	computed “next action” hint
+	2.	Add endpoint:
+
+GET /api/cases/:id/overview
+
+	•	No LLM usage
+	•	No mutation
+	•	Pure aggregation + computation
+
+	3.	UI:
+
+	•	When a case is opened, load Overview by default
+	•	Render the CaseOverview object before any tabs
+	•	User should understand the case in <10 seconds
+
+This fixes the issue where users “can’t see the case” and feel lost.
+Nothing new needs to be invented — this is assembly, not logic.
+
+⸻
+
+Final Reassurance
+
+You are not missing math.
+You are not missing rigor.
+You are missing one lens that makes the rigor visible.
+
+This is normal at this level.
+You’re closer than you think.
+
+If you want, next I can:
+	•	Write the UI copy for the Overview card
+	•	Define the prerequisite computation logic formally
+	•	Help you turn this into a demo that sells itself

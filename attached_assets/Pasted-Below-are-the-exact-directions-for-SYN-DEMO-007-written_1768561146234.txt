@@ -1,0 +1,139 @@
+Below are the exact directions for SYN-DEMO-007, written so you can paste them directly to the Replit agent and so they are grounded in the actual case artifacts you uploaded.
+
+I’ll do three things, in order:
+	1.	State the correct Case Overview content for SYN-DEMO-007 (this is what the user should see).
+	2.	Explain why this framing is procedurally correct (so you feel anchored).
+	3.	Give you the verbatim instructions to paste to the Replit agent.
+
+I will not redesign ELI. This is an assembly and surfacing task only.
+
+⸻
+
+1. SYN-DEMO-007 — Canonical Case Overview (What the user should see)
+
+Case ID: SYN-DEMO-007
+Domain: Medical — Consult / Specialist Disagreement Intake  ￼
+Case Type: Medical Risk / Peer Review Intake (Synthetic Demo)
+
+Decision Under Review
+
+Determine whether a consult-decision dispute is procedurally admissible for committee review.
+￼
+
+This is explicitly procedural. No clinical judgment. No outcome evaluation.
+
+⸻
+
+Governing Policy
+
+Consultation & Escalation Standards v3.1
+Effective: 2024-12-01
+Key requirement: When consultant recommendations differ materially, the attending must document the basis for the chosen plan and any escalation rationale.
+￼
+
+⸻
+
+Verified Evidence (Independent Artifacts)
+
+All evidence below is verified and contemporaneous:
+	•	Consult Note A — Recommendation documented (EHR) @ 13:10
+	•	Consult Note B — Alternative recommendation documented (EHR) @ 13:45
+	•	Attending Progress Note — Plan selected; brief rationale (EHR) @ 14:05
+	•	Paging Log — Consult communications @ 12:55–13:50
+
+￼
+
+⸻
+
+Procedural Prerequisite Status (Computed)
+
+Prerequisite	Status	Basis
+Decision Target Defined	✅ Met	Explicit decision target exists
+Temporal Verification	✅ Met	All artifacts precede decision
+Independent Verification	✅ Met	EHR + telecom logs
+Policy Applicability	✅ Met	Policy v3.1 governs consult disagreements
+Contextual Sufficiency	⚠️ Partial	Rationale documentation may be insufficient
+
+
+⸻
+
+Current Procedural Posture
+
+Review Permitted — High Procedural Risk
+
+This matches the independent audit intake recommendation:
+
+“Review permitted but high risk; request expanded contemporaneous rationale documentation.”
+￼
+
+⸻
+
+Next Action (System-Generated)
+
+Upload or identify any contemporaneous documentation explaining the attending’s rationale or escalation decision (e.g., expanded progress notes, messages, call summaries), if available.
+
+⸻
+
+2. Why this framing is correct (so you don’t doubt yourself)
+	•	The policy requirement is clear: documentation of rationale is required when consults materially disagree  ￼
+	•	The facts are verified: two differing consults + attending decision exist  ￼
+	•	The audit posture already agrees with ELI: permitted, but high risk  ￼
+	•	The system is not asked to judge correctness, only admissibility  ￼
+
+So:
+✔️ Canon aligned
+✔️ Math aligned (3–4/5 prerequisites → permitted, high risk)
+✔️ Governance-safe
+
+Nothing is missing except visibility.
+
+⸻
+
+3. EXACT TEXT TO PASTE TO THE REPLIT AGENT (for SYN-DEMO-007)
+
+Paste this verbatim:
+
+⸻
+
+Replit Agent — SYN-DEMO-007 Case Visibility Fix
+
+For case SYN-DEMO-007, users cannot understand the case because we do not surface a computed Case Overview.
+
+All required data already exists (policy, evidence, decision target, audit posture). We need to assemble and display it.
+
+Required implementation:
+	1.	Implement a derived, read-only CaseOverview object for SYN-DEMO-007 that includes:
+	•	Case ID, domain, case type
+	•	Decision target (procedural admissibility of consult dispute)
+	•	Governing policy (Consultation & Escalation Standards v3.1)
+	•	Verified evidence counts (consult notes, attending note, paging logs)
+	•	Computed prerequisite status (temporal, verification, policy, context)
+	•	Current procedural posture: Review Permitted — High Risk
+	•	System-generated “Next Action” guidance
+	2.	Expose via:
+
+GET /api/cases/:id/overview
+
+	•	No LLM calls
+	•	No mutation
+	•	Pure aggregation of existing tables
+
+	3.	UI:
+
+	•	When SYN-DEMO-007 is opened, render the CaseOverview as the default view
+	•	User should understand the case and next step in <10 seconds
+
+This is an assembly + presentation fix.
+Do not change Canon logic, thresholds, or evaluation rules.
+
+⸻
+
+Final grounding sentence (important)
+
+You are not inventing anything for 007.
+You are revealing what the system already knows.
+
+If you want, next I can:
+	•	Do the same overview for SYN-DEMO-008
+	•	Write a one-page “how to read this case” panel for non-technical users
+	•	Help you turn 007 into a live demo your stepfather can confidently sell

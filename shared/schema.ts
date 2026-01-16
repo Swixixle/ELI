@@ -164,3 +164,42 @@ export type Determination = typeof determinations.$inferSelect;
 export type InsertDetermination = z.infer<typeof insertDeterminationSchema>;
 export type CasePrintout = typeof casePrintouts.$inferSelect;
 export type InsertCasePrintout = z.infer<typeof insertCasePrintoutSchema>;
+
+// CaseOverview - derived, read-only object assembled from existing tables
+export type PrerequisiteStatusValue = "met" | "partial" | "unmet";
+export type RiskTier = "unsafe" | "high_risk" | "defensible" | "regulator_ready" | "unknown";
+
+export interface CaseOverview {
+  caseId: string;
+  caseTitle: string;
+  caseType: string;
+  domain: string;
+  phase: CasePhase;
+  
+  decisionTarget: string | null;
+  decisionTime: Date | null;
+  
+  canonDocumentCount: number;
+  evidenceItemCount: number;
+  verifiedEvidenceCount: number;
+  
+  prerequisiteStatus: {
+    decisionTarget: PrerequisiteStatusValue;
+    temporalVerification: PrerequisiteStatusValue;
+    independentVerification: PrerequisiteStatusValue;
+    policyApplication: PrerequisiteStatusValue;
+    contextualConstraints: PrerequisiteStatusValue;
+  };
+  prerequisitesMet: number;
+  prerequisitesTotal: number;
+  
+  currentRiskTier: RiskTier;
+  reviewPermission: "advisory_only" | "permitted";
+  lastEvaluationAt: Date | null;
+  lastPrintoutAt: Date | null;
+  printoutCount: number;
+  
+  nextActionHint: string;
+  whatWeKnow: string[];
+  whatsMissing: string[];
+}
