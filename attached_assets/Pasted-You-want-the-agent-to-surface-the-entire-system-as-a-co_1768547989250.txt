@@ -1,0 +1,106 @@
+You want the agent to surface the entire system as a coherent mental model, not just code or UI fragments.
+
+So the instruction must explicitly ask for conceptual architecture + technical architecture + runtime flow, and it must forbid “piecemeal implementation answers.”
+
+Below is exact wording you can paste to the Replit agent. This is precise, unambiguous, and aligned with how agents respond best.
+
+⸻
+
+Prompt to Replit Agent (Use This Verbatim)
+
+Task:
+Produce a complete, end-to-end system exposition of Literate Lantern that shows what it is, how it is structured, and how it operates, before any further implementation work.
+
+Requirements (Mandatory):
+	1.	Conceptual Model (Human-Readable)
+	•	Explain Literate Lantern as a system in plain language:
+	•	What problem it solves
+	•	Who it is for
+	•	What it explicitly does not do
+	•	Describe the core philosophy (guided reading, procedural literacy, follow-up chaining).
+	•	Identify the system’s invariant principles (e.g., continuity of thought, traceability, refusal over hallucination).
+	2.	System Architecture (High-Level)
+	•	Diagram (ASCII or structured outline) of:
+	•	Frontend components
+	•	Backend services
+	•	Data stores
+	•	External dependencies (OpenAI API, etc.)
+	•	Clearly separate:
+	•	UI layer
+	•	Orchestration layer
+	•	LLM interaction layer
+	•	Persistence layer
+	3.	Data Model
+	•	Define all core entities with fields:
+	•	Thread
+	•	Message
+	•	Reading / Session
+	•	Response linkage (previous_response_id)
+	•	Specify what is immutable vs mutable.
+	•	Show how continuity is preserved across follow-ups.
+	4.	Request / Response Flow
+	•	Step-by-step flow for:
+	•	Initial “Deep Read” request
+	•	Follow-up question
+	•	Multi-turn chained interaction
+	•	Include what is stored, when, and why at each step.
+	•	Explicitly state where loss of context is prevented.
+	5.	Endpoint Map
+	•	List all API endpoints (existing and planned):
+	•	Purpose
+	•	Inputs
+	•	Outputs
+	•	Side effects (DB writes, state updates)
+	6.	Failure & Refusal Modes
+	•	Enumerate cases where the system must:
+	•	Refuse to answer
+	•	Ask for clarification
+	•	Degrade gracefully
+	•	Explain how these are enforced architecturally (not just by prompt).
+	7.	User Experience Flow
+	•	Describe the user journey:
+	•	First interaction
+	•	Reading in progress
+	•	Returning to a prior thread
+	•	Explain how the UI reflects system state without exposing internals.
+	8.	Non-Goals
+	•	Explicitly list what Literate Lantern is not trying to be (e.g., chat clone, summarizer, tutor replacement).
+	9.	Implementation Status
+	•	Mark which parts are:
+	•	Implemented
+	•	Partially implemented
+	•	Planned
+	•	Identify architectural risks or technical debt.
+
+Constraints:
+	•	Do not write code unless necessary to illustrate structure.
+	•	Do not jump directly to feature work.
+	•	Do not assume prior context—this should stand alone as canonical documentation.
+	•	Optimize for clarity, not brevity.
+
+Deliverable:
+A single, cohesive system document that a new engineer or auditor could read and fully understand Literate Lantern without further explanation.
+
+⸻
+
+Why this works (so you can recognize bad answers)
+
+A good agent response will:
+	•	Start with what the system is, not endpoints
+	•	Show relationships between components, not just lists
+	•	Use phrases like “invariant,” “contract,” “state transition”
+	•	Explicitly say “this is out of scope”
+
+A bad response will:
+	•	Jump straight into code
+	•	Describe only the current Replit project
+	•	Skip philosophy and invariants
+	•	Treat follow-ups as “just chat history”
+
+If the agent gives you anything fragmented, you can reply with:
+
+“This is implementation detail. I asked for a system-level exposition. Please retry.”
+
+If you want, next I can:
+	•	Translate that exposition into a one-page canonical architecture doc
+	•	Or help you turn Literate Lantern into a named, defensible product spec the way ELI now is
