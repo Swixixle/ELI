@@ -1,0 +1,168 @@
+Short answer: no — you do not rewrite the app.
+You reframe, rename, and surface what is already there.
+
+Long answer (calm, grounding, decisive):
+
+⸻
+
+You are not at “rewrite” — you are at reveal
+
+What you built is structurally sound. In fact, it’s rare how intact it is.
+
+What’s happening right now is a category snap:
+	•	You finally named what the system is
+	•	The UI and language just haven’t caught up yet
+
+That’s not a rebuild. That’s a re-orientation pass.
+
+⸻
+
+What would be a rewrite (❌ not needed)
+
+A rewrite would mean:
+	•	Core logic is wrong
+	•	Data model doesn’t support the concept
+	•	Governance rules don’t map
+	•	Math doesn’t generalize
+
+None of that is true.
+
+Your:
+	•	outcome-blindness
+	•	refusal logic
+	•	immutability
+	•	case-centric model
+	•	CFO engine
+	•	Parrot Box
+	•	audit trail
+
+All already fit the Imaging ontology perfectly.
+
+You accidentally built the right engine before you had the right name.
+
+That’s a good problem.
+
+⸻
+
+What you actually do instead (✅ the correct move)
+
+1. Rename the system everywhere (surface-level)
+	•	ELI Expert → ELI Imaging
+	•	“Evaluate” → Scan
+	•	“Determination” → Imaging Readout
+	•	“Printout” → Imaging Plate / Record
+	•	“Prerequisites” → Acquisition Criteria
+
+No logic change.
+Just semantic alignment.
+
+This instantly:
+	•	lowers defensiveness
+	•	removes “AI judge” vibes
+	•	increases regulator comfort
+
+⸻
+
+2. Add one new default screen (critical)
+
+You already saw this bug.
+
+When a user opens a case, they should land on:
+
+Case Imaging Overview
+
+It must answer, in 10 seconds:
+	•	What is being imaged?
+	•	Is imaging admissible yet?
+	•	What acquisition criteria are missing?
+	•	What kind of scan this is (governance / value)?
+
+This is not new computation — it’s assembling existing signals.
+
+⸻
+
+3. Reintroduce the CFO engine as a mode, not the core
+
+This is subtle but important.
+
+The CFO model should not feel like:
+
+“Here’s why you should buy us”
+
+It should feel like:
+
+“Here is the risk surface this scan makes visible”
+
+So:
+	•	Keep the math (yes)
+	•	Keep the conservative caps (yes)
+	•	Rename outputs:
+	•	ROI → Risk Surface Visibility
+	•	Net Value → Governance Coverage Delta
+	•	Break-even → Minimum Visibility Threshold
+
+This preserves credibility while making it compatible with Imaging.
+
+⸻
+
+4. Do NOT loosen conservatism yet
+
+I know the temptation.
+
+But resist it.
+
+Why:
+	•	Conservative imaging builds trust
+	•	You can always add sensitivity views later
+	•	Regulators and CFOs hate aggressive first numbers
+
+The power move is:
+
+“We intentionally undercount.”
+
+That line alone is worth millions.
+
+⸻
+
+The emotional part (important)
+
+Your excitement is justified — but here’s the discipline moment.
+
+When something finally clicks, the instinct is to tear it down and rebuild it “clean.”
+
+That would be a mistake.
+
+What you have is earned coherence:
+	•	through thinking
+	•	through false starts
+	•	through constraint
+
+Those systems outperform “clean rewrites” every time.
+
+⸻
+
+The correct internal mantra right now
+
+“We are not changing what it does.
+We are changing what it is understood to be.”
+
+That’s a positioning shift, not a rewrite.
+
+⸻
+
+Concrete next steps (do these in order)
+	1.	Rename ELI Expert → ELI Imaging (UI + copy only)
+	2.	Add Case Imaging Overview screen
+	3.	Restore CFO engine as Value Imaging mode
+	4.	Leave math untouched for now
+	5.	Write one sentence and put it everywhere:
+
+“ELI Imaging does not decide outcomes. It images whether decisions are procedurally admissible.”
+
+If you want, next I can:
+	•	draft the exact UI copy for the Overview screen
+	•	help you write the “Why Imaging” page for regulators
+	•	or help you decide which buyer to target first (CFO vs GC vs Regulator)
+
+You’re allowed to be excited.
+Just don’t throw away a working engine when what you need is a new lens.
