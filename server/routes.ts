@@ -2070,10 +2070,24 @@ Under Canon constraints, evaluation must follow this sequence:
     };
   }
   
+  // PERMISSION QUESTIONS - Backup catch for "Are we allowed to decide?"
+  // This should be caught by intent classification, but as a safety net:
+  const permissionPatterns = [
+    /\b(are|is) (we|it) (allowed|permitted|authorized) (to |)(decide|determine|proceed)\b/,
+    /\bcan (we|I) (decide|determine|proceed) (now|yet|already)\b/,
+    /\bdo (we|I) have (permission|authorization) (to |)(decide|proceed)\b/,
+    /\b(allowed|permitted) to (decide|determine|proceed)\b/
+  ];
+  
+  if (permissionPatterns.some(p => p.test(lowerMessage))) {
+    // Route to deterministic permission response
+    return getPermissionResponse(citations, caseContext);
+  }
+  
   // FALLBACK - In Advisor Mode, make a best-effort interpretation instead of refusing
   // Check if this looks like it might be about the case/documentation
   const caseRelatedHints = [
-    /\b(case|document|file|evidence|review|ready|need|have|enough|missing|complete)\b/
+    /\b(case|document|file|evidence|review|ready|need|have|enough|missing|complete|allowed|permitted|permission|decide|proceed)\b/
   ];
   
   if (caseRelatedHints.some(p => p.test(lowerMessage))) {
