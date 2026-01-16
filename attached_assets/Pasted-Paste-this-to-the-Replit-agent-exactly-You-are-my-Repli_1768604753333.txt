@@ -1,0 +1,32 @@
+Paste this to the Replit agent exactly:
+
+You are my Replit build agent for the “ELI Imaging” app. I need a comprehensive end-to-end SYSTEM REVIEW and an IMPLEMENTATION PLAN, but you must NOT expose or regenerate proprietary “Canon” content, formulas, weights, thresholds, or any sealed parameters. Treat those as IP. Your job is to review structure, wiring, UX, data flow, and safety/guardrails.
+
+DELIVERABLES (all required):
+1) Current-state architecture map (frontend routes/components, backend endpoints, DB schema/tables, LLM pipeline stages, auth/session, file upload/chunking).
+2) “What’s broken / confusing” list with severity + repro steps (especially: case visibility, decision target flow, confusing nav: “Case Canon” placement, inconsistent naming ELI Expert vs ELI Imaging, and any UI states where the assistant responds generically or incorrectly).
+3) Missing-field audit: identify any required fields not captured in the case build flow (e.g., decision target, decision time, evidence type classification, provenance/citations), and where they should live in the UI + DB.
+4) Data model sanity: verify FK constraints (everything belongs to a case), immutability enforcement for printouts, and whether cases are archived vs deleted.
+5) LLM governance wiring: confirm the app always passes REQUIRED case context (caseId, decisionTime, decisionTarget, prerequisite state, relevant canon chunk citations) and that the UI renders refusal flags deterministically. If context is missing, the system must return a structured “CONTEXT REQUIRED” response (not a helpful-sounding generic answer).
+6) CFO / Value Imaging engine: tell me whether it exists in this repo. If missing, propose a safe reintegration approach that keeps the “imaging” ontology (visibility not outcomes), and puts assumptions/parameters in a config file with clear labels (no secret values in code). If present, point to files and verify formulas are still consistent with the current product framing.
+7) Naming sweep: ensure every user-facing label says “ELI Imaging” (not ELI Expert) including sidebar, headers, titles, prompt templates, and response branding.
+8) Prioritized fix plan: top 10 fixes ranked by impact and effort, with exact file paths and code-level notes.
+9) Verification checklist: after fixes, list manual test steps for 3 demo cases (SYN-DEMO-007/008/009) to confirm: decision target set → prerequisites update → evaluate works → ask question returns case-bound response → printout immutable.
+
+CONSTRAINTS:
+- Do NOT rewrite my Canon, decision logic, scoring thresholds, or any protected math parameters.
+- Do NOT paste my proprietary text into outputs. Summarize in neutral terms.
+- If you need a placeholder, use [SEALED] for protected values and [CANON_REF] for citations.
+- Focus on plumbing: ensuring the system requests/collects the missing inputs and routes them correctly.
+
+START HERE:
+A) Locate where case selection context is stored (URL param, global store, session) and confirm all key calls include caseId.
+B) Find why “Are we allowed to decide yet?” sometimes returns generic confusion; fix so it always binds to case state.
+C) Fix the navigation confusion: “Case Canon” should be clearly nested under the active case context (or renamed) so users don’t think it is global.
+
+Output your results as:
+- Findings (bullets)
+- Proposed fixes (bullets + file paths)
+- Patch plan (ordered steps)
+
+If you want, paste the agent’s response back here and I’ll translate it into: “what to ship this week” vs “what to defer,” without touching your IP.
