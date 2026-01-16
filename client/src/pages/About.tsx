@@ -30,8 +30,8 @@ export default function About() {
             What This System Is
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            A governance-grade assistant designed to provide verifiable, outcome-blind answers 
-            grounded strictly in authoritative documentation and public data.
+            A procedural imaging system that produces structured representations of a decision's 
+            procedural and epistemic state — determining whether review is admissible, not whether decisions are correct.
           </p>
         </div>
 
@@ -43,30 +43,30 @@ export default function About() {
           </h2>
           <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
             <p className="text-foreground leading-relaxed mb-4">
-              This is not a general-purpose chatbot. It is an <strong>epistemic governance engine</strong> — 
-              a system that knows what it is permitted to say and, more importantly, what it is <em>not</em> permitted to say.
+              This is not a general-purpose chatbot. It is a <strong>procedural imaging system</strong> — 
+              like an MRI for governance decisions. It images whether evaluation is procedurally possible, not whether decisions were correct.
             </p>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Every answer produced by this system is constrained by admissibility rules. 
-              It does not guess, speculate, or invent. If the evidence is insufficient, it refuses to answer.
+              Every output is constrained by acquisition protocols. 
+              Incomplete scans are reported as limited. The system separates measurement from interpretation.
             </p>
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
               <p className="text-sm font-medium text-foreground">
-                <strong>What ELI does:</strong> Evaluates whether case reviews are procedurally permitted.
+                <strong>What ELI Imaging does:</strong> Images whether case reviews are procedurally admissible.
               </p>
               <p className="text-sm text-muted-foreground mt-2">
-                <strong>What ELI does NOT do:</strong> Evaluate outcomes, clinical correctness, or fault. 
-                Those require human expertise. ELI determines jurisdiction, not judgment.
+                <strong>What ELI Imaging does NOT do:</strong> Render judgments, diagnose correctness, or determine fault. 
+                Those require human expertise. ELI images jurisdiction, not judgment.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Evaluation vs Determination */}
+        {/* Imaging vs Determination */}
         <section className="mb-16">
           <h2 className="text-2xl font-display font-bold text-foreground mb-6 flex items-center gap-3">
             <Gavel className="w-6 h-6 text-primary" />
-            Evaluation vs. Determination
+            Imaging vs. Determination
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
@@ -75,16 +75,16 @@ export default function About() {
                   <Eye className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-display font-semibold text-foreground">Evaluation</h3>
+                  <h3 className="font-display font-semibold text-foreground">Imaging Scan</h3>
                   <span className="text-xs text-blue-600 font-mono">/api/cases/:id/evaluate</span>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                Checks procedural readiness against the 5 prerequisites. This is <strong>reversible</strong> — 
-                you can add more evidence and re-evaluate.
+                Checks procedural acquisition against the 5 prerequisites. This is <strong>reversible</strong> — 
+                you can add more evidence and re-scan.
               </p>
               <div className="text-xs bg-blue-50 text-blue-800 px-3 py-2 rounded-md">
-                "Is this case ready for review?"
+                "Is this case imageable for review?"
               </div>
             </div>
             <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
@@ -99,10 +99,10 @@ export default function About() {
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">
                 Creates a cryptographically signed receipt. This is <strong>irreversible</strong> — 
-                the signed posture becomes part of the permanent record.
+                the signed imaging posture becomes part of the permanent record.
               </p>
               <div className="text-xs bg-amber-50 text-amber-800 px-3 py-2 rounded-md">
-                "Lock in this procedural posture."
+                "Lock in this imaging readiness state."
               </div>
             </div>
           </div>
@@ -130,8 +130,8 @@ export default function About() {
                 2
               </div>
               <div className="flex-1">
-                <p className="text-foreground font-medium mb-1">Evaluation run</p>
-                <p className="text-sm text-muted-foreground">System checks 5 procedural prerequisites automatically.</p>
+                <p className="text-foreground font-medium mb-1">Imaging scan run</p>
+                <p className="text-sm text-muted-foreground">System checks 5 acquisition prerequisites automatically.</p>
               </div>
             </div>
             <div className="border-l-2 border-dashed border-muted ml-4 h-6" />
@@ -140,10 +140,10 @@ export default function About() {
                 3
               </div>
               <div className="flex-1">
-                <p className="text-foreground font-medium mb-1">Result: 3/5 prerequisites met</p>
+                <p className="text-foreground font-medium mb-1">Imaging result: 3/5 acquisition complete</p>
                 <p className="text-sm text-muted-foreground">
-                  <span className="font-mono text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">REVIEW_PERMITTED</span> — 
-                  Procedural review allowed, but high procedural risk flagged.
+                  <span className="font-mono text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">LIMITED — HIGH RISK</span> — 
+                  Review permitted but imaging shows procedural gaps.
                 </p>
               </div>
             </div>

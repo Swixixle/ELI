@@ -6,7 +6,7 @@
 
 ---
 
-ELI Expert is formally defined as a **procedural imaging system**.
+ELI Imaging is formally defined as a **procedural imaging system**.
 
 ELI Imaging produces structured representations of a decision's procedural and epistemic state at a specific point in time. Its function is to determine whether a decision is in a condition that permits fair, outcome-blind evaluation by human authorities.
 

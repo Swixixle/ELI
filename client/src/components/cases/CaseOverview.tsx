@@ -39,12 +39,12 @@ function mapStatus(status: PrerequisiteStatusValue): PrerequisiteStatus {
   return "missing";
 }
 
-function getRiskBadge(riskTier: string): { label: string; variant: "default" | "secondary" | "outline" | "destructive" } {
+function getImagingStatus(riskTier: string): { label: string; variant: "default" | "secondary" | "outline" | "destructive" } {
   switch (riskTier) {
-    case "regulator_ready": return { label: "Robust", variant: "default" };
-    case "defensible": return { label: "Strong", variant: "default" };
-    case "high_risk": return { label: "Permitted — High Risk", variant: "secondary" };
-    case "unsafe": return { label: "Blocked", variant: "destructive" };
+    case "regulator_ready": return { label: "Regulator-Ready", variant: "default" };
+    case "defensible": return { label: "Defensible", variant: "default" };
+    case "high_risk": return { label: "Limited — High Risk", variant: "secondary" };
+    case "unsafe": return { label: "Unsafe — Advisory Only", variant: "destructive" };
     default: return { label: "Unknown", variant: "outline" };
   }
 }
@@ -111,7 +111,7 @@ export function CaseOverview({
     );
   }
 
-  const riskBadge = getRiskBadge(overview.currentRiskTier);
+  const imagingStatus = getImagingStatus(overview.currentRiskTier);
   const prerequisites = getPrerequisites(overview);
   const nextAction = overview.nextActionHint;
 
@@ -133,8 +133,8 @@ export function CaseOverview({
           </div>
           <h2 className="text-xl font-semibold text-foreground">{overview.caseTitle}</h2>
         </div>
-        <Badge variant={riskBadge.variant} className="text-xs">
-          {overview.prerequisitesMet}/{overview.prerequisitesTotal} — {riskBadge.label}
+        <Badge variant={imagingStatus.variant} className="text-xs">
+          {overview.prerequisitesMet}/{overview.prerequisitesTotal} — {imagingStatus.label}
         </Badge>
       </div>
 
@@ -186,10 +186,17 @@ export function CaseOverview({
         </div>
       </div>
 
-      {/* Procedural Readiness Strip */}
+      {/* Imaging Status Disclaimer */}
+      <div className="bg-muted/50 border border-border rounded-lg px-4 py-2 text-center">
+        <p className="text-xs text-muted-foreground">
+          This output describes procedural readiness for review, not the quality or correctness of the decision.
+        </p>
+      </div>
+
+      {/* Procedural Acquisition Strip */}
       <div className="bg-card border border-border rounded-xl p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-sm text-foreground">Procedural Prerequisites</h3>
+          <h3 className="font-semibold text-sm text-foreground">Imaging Acquisition Status</h3>
           <div className="flex items-center gap-2">
             {overview.reviewPermission === "permitted" ? (
               <Badge variant="secondary" className="text-xs">Review Permitted</Badge>

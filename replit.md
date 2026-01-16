@@ -1,14 +1,15 @@
-# ELI Expert
+# ELI Imaging
 
-## BASE CAMP — v1.0 Complete (January 2026)
+## BASE CAMP — v1.1 (January 2026)
 
-This checkpoint represents the complete procedural evaluation system ready for:
+This checkpoint represents the complete **procedural imaging system** ready for:
 - Regulatory sandbox demonstrations
 - Procurement conversations
 - Compliance reviews
 - Strategic partner demos
 
 **Key commits to return to:**
+- `e92cfea` - Rebranded to ELI Imaging with Canon §0.3 and §0.4
 - `06cff98` - Integration positioning docs added
 - `431a28a` - Published app
 - `bb5a03d` - Demo banner added
@@ -18,21 +19,24 @@ This checkpoint represents the complete procedural evaluation system ready for:
 
 ## Overview
 
-ELI Expert is a governance-grade epistemic assistant designed to provide verifiable, outcome-blind answers grounded strictly in authoritative documentation and public data sources. Unlike general-purpose chatbots, this system enforces strict admissibility rules, refuses to speculate or invent claims, and can prove its computations step-by-step without exposing proprietary logic.
+ELI Imaging is a **procedural imaging system** — like an MRI for governance decisions. It produces structured representations of a decision's procedural and epistemic state at a specific point in time, determining whether evaluation is procedurally possible, not whether decisions were correct.
+
+**Core distinction:** Imaging does not diagnose; it determines whether diagnosis is possible.
 
 ### Canon Terminology
 
 | Term | Definition | Location |
 |------|------------|----------|
-| **System Canon** | Binding constitutional ruleset governing ELI Expert behavior | `ELI_CANON/` directory (15 files) |
+| **System Canon** | Binding constitutional ruleset governing ELI Imaging behavior | `ELI_CANON/` directory (16 files) |
 | **Case Canon** | Case-specific governing standards uploaded into a case | `canon_documents` table |
 
 If any system behavior conflicts with System Canon, System Canon prevails.
 
-The core principles are:
+The core imaging principles are:
+- **Imaging separates measurement from interpretation**: ELI measures procedural structure; human authorities interpret and decide
+- **Incomplete scans are reported as limited**: Failure to satisfy acquisition requirements results in a limited or unsafe scan, not synthesized conclusions
 - **Outcome-blindness**: The system cannot use hindsight knowledge to justify what "should have been known" at decision time
-- **Citation requirements**: Every factual claim must cite System Canon, Case Canon, or public data sources
-- **Truth refusal**: When epistemic entitlement is absent, the system refuses to answer rather than guess
+- **Refusal over hallucination**: When epistemic entitlement is absent, the system refuses to answer rather than guess
 - **IP protection**: Computation proofs show arithmetic without revealing proprietary parameters (marked as `[SEALED PARAMETER]`)
 
 ## User Preferences

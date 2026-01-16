@@ -12,7 +12,7 @@ export function DemoBanner() {
         </div>
         <span className="text-slate-400 hidden sm:inline">|</span>
         <span className="text-xs text-slate-400 hidden sm:inline">
-          This is an operational demonstration of a procedural evaluation standard — not a consumer product.
+          This is an operational demonstration of a procedural imaging system — not a consumer product.
         </span>
         <div className="flex items-center gap-1.5 ml-2">
           <Lock className="w-3 h-3 text-slate-500" />

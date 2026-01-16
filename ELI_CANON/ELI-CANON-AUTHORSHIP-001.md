@@ -23,7 +23,7 @@ Founder, Nikodemus Systems
 
 ## 2. Role of Machine Learning Components
 
-Machine learning models used within ELI Expert operate strictly as constrained computational components.
+Machine learning models used within ELI Imaging operate strictly as constrained computational components.
 
 They do not:
 - define procedural rules
@@ -47,7 +47,7 @@ The system's authority derives from Canon and architecture, not model fluency.
 
 ## 3. Accountability Model
 
-Responsibility within ELI Expert is explicitly assigned as follows:
+Responsibility within ELI Imaging is explicitly assigned as follows:
 
 | Component | Accountable Authority |
 |-----------|----------------------|
@@ -68,7 +68,7 @@ No machine learning component is permitted to act as:
 
 ## 4. Intellectual Property Declaration
 
-The ELI Expert governance model, including but not limited to:
+The ELI Imaging procedural model, including but not limited to:
 - the five-prerequisite admissibility framework
 - outcome-blind procedural enforcement
 - refusal-over-hallucination doctrine
@@ -81,17 +81,17 @@ constitutes original intellectual property of Nikodemus Systems.
 Copyright is asserted over:
 - the system architecture
 - the Canon framework
-- the evaluation model
+- the imaging model
 - the determination logic
 - the printout structure
 
-Machine learning services utilized do not confer ownership, authorship, or derivative rights over the ELI Expert system.
+Machine learning services utilized do not confer ownership, authorship, or derivative rights over the ELI Imaging system.
 
 ---
 
 ## 5. Attribution and Misrepresentation Safeguard
 
-It is a category error to represent ELI Expert as:
+It is a category error to represent ELI Imaging as:
 - "AI making decisions"
 - "an autonomous AI judge"
 - "a self-directed model"
@@ -101,7 +101,7 @@ Such representations are materially inaccurate.
 
 **Correct attribution is:**
 
-> ELI Expert is a governance system authored by Nikodemus Systems, in which machine learning models operate as constrained, non-authoritative components.
+> ELI Imaging is a procedural imaging system authored by Nikodemus Systems, in which machine learning models operate as constrained, non-authoritative components.
 
 ---
 
@@ -119,8 +119,8 @@ Any deployment, demonstration, or derivative work that removes or obscures this 
 
 ## 7. Closing Statement
 
-ELI Expert does not replace human judgment.  
-It enforces when judgment is procedurally allowed.
+ELI Imaging does not replace human judgment.  
+It images when judgment is procedurally allowed.
 
 The system's legitimacy rests on architecture, constraint, and accountability, not automation.
 
