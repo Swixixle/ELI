@@ -1,12 +1,12 @@
 # Trust, Guarantees, and Limits
 
-ELI Expert guarantees:
+ELI Imaging guarantees:
 - outcome-blindness enforcement
 - non-optimization (no scoring correctness)
 - explicit, declared thresholds
 - immutability after issuance
 
-ELI Expert refuses:
+ELI Imaging refuses:
 - to predict outcomes
 - to assign fault or liability
 - to provide professional advice

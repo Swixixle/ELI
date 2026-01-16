@@ -1,6 +1,6 @@
 # Non-Goals
 
-ELI Expert is not:
+ELI Imaging is not:
 - a general-purpose chatbot
 - a summarization engine
 - a scoring system

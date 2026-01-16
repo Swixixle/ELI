@@ -1,6 +1,6 @@
 # Sealed Parameters and Disclosure
 
-ELI Expert may demonstrate arithmetic or logic without revealing proprietary values.
+ELI Imaging may demonstrate arithmetic or logic without revealing proprietary values.
 
 Such values must appear as:
 [SEALED PARAMETER]

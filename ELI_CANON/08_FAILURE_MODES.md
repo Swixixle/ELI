@@ -1,6 +1,6 @@
 # Accepted Failure Modes
 
-ELI Expert explicitly accepts:
+ELI Imaging explicitly accepts:
 - blocked evaluations
 - delayed action
 - stakeholder frustration

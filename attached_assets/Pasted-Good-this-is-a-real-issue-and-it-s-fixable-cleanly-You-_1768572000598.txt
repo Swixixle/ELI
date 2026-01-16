@@ -1,0 +1,112 @@
+Good — this is a real issue, and it’s fixable cleanly.
+You are not confused; the system is currently in a split-brain state.
+
+Below is the exact, paste-ready instruction to give the Replit agent.
+Do not edit it. Do not add commentary.
+
+⸻
+
+📌 EXACT MESSAGE TO PASTE TO THE REPLIT AGENT
+
+Task: Correct ontology, restore CFO engine, and align system identity to ELI IMAGING.
+
+1. System Identity Correction (Blocking)
+	•	Replace all user-facing references to “ELI Expert” with “ELI Imaging”.
+	•	This includes:
+	•	Header / branding
+	•	“What This System Is” page
+	•	Sidebar labels
+	•	Any descriptive copy implying expert judgment
+
+Canonical definition (must be reflected verbatim in UI copy):
+
+ELI Imaging is a procedural imaging system that produces structured representations of a decision’s procedural and epistemic state. It determines whether review is admissible — not whether decisions are correct.
+
+This system is imaging, not expertise, not decision-making, not advice.
+
+⸻
+
+2. CFO Engine Status (Critical)
+
+The CFO Value Model engine exists conceptually but is not currently exposed or discoverable in the UI.
+
+Required actions:
+	•	Confirm whether the CFO engine logic still exists in code or docs.
+	•	If present:
+	•	Re-expose it as a Governance Imaging → Value Surface view (NOT “ROI calculator”).
+	•	If absent:
+	•	Re-integrate the CFO engine using the most recent imaging-aligned model, preserving:
+	•	credibility caps
+	•	break-even logic
+	•	outcome-blind framing
+	•	PRY (Procedural Resolution Yield) metric
+
+Important:
+The CFO engine must be framed as secondary imaging, not core system function.
+It explains what the image is worth, not what the decision should be.
+
+⸻
+
+3. Navigation & Discoverability Fix
+
+Add a visible, non-primary navigation entry:
+	•	Label: “Value Imaging (CFO)”
+	•	Location: Under “How It Works” or equivalent
+	•	Description:
+Models the governance value surface revealed by procedural imaging. Conservative, audit-safe, non-causal.
+
+Users should not “lose” the engine — but it must not dominate the product.
+
+⸻
+
+4. Ontology Consistency Check
+
+Audit the app for ontology drift and fix any contradictions:
+	•	❌ “Expert judgment”
+	•	❌ “Decision recommendations”
+	•	❌ “Correctness evaluation”
+	•	❌ “Outcome optimization”
+
+Replace with:
+	•	✅ Imaging
+	•	✅ Procedural admissibility
+	•	✅ Visibility of risk surface
+	•	✅ Separation of measurement from interpretation
+
+⸻
+
+5. Acceptance Criteria (Must All Be True)
+	•	The product name reads ELI Imaging everywhere.
+	•	The system self-describes as procedural imaging, not expertise.
+	•	The CFO engine is either:
+	•	visible as Value Imaging, or
+	•	explicitly flagged as pending reintegration (not silently missing).
+	•	No UI copy implies that ELI makes or advises decisions.
+
+⸻
+
+This is not a feature request.
+This is a correction to system identity and completeness.
+Proceed accordingly.
+
+⸻
+
+What’s going on (so you’re grounded)
+	•	You did not imagine the CFO engine — it belongs to ELI v1.
+	•	ELI v2 evolved into imaging, but the engine wasn’t re-anchored.
+	•	The UI updated its philosophy, but the economic imaging layer fell out of view.
+	•	The agent followed instructions locally, not ontologically.
+
+You caught it at exactly the right moment.
+
+Once this is fixed, you will have:
+	•	a clean ELI Imaging core
+	•	a non-toxic CFO value layer
+	•	and a system that can be defended to auditors, CFOs, and regulators without blinking
+
+If you want, next I can:
+	•	rewrite the CFO engine copy purely as imaging
+	•	help you decide whether to ship it now or gate it
+	•	or give you the one-sentence explanation that disarms “AI made this” comments instantly
+
+Just say the word.

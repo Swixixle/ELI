@@ -318,7 +318,7 @@ export default function PrintoutView() {
             </section>
 
             <section className="border-t pt-6 text-center text-xs text-muted-foreground">
-              <p>This is an official judgment record issued by ELI Expert v{content.printoutVersion}</p>
+              <p>This is an official judgment record issued by ELI Imaging v{content.printoutVersion}</p>
               <p className="mt-1">Determination ID: {printout.determinationId}</p>
               <p className="mt-1">Printout ID: {printout.id}</p>
             </section>

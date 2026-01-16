@@ -217,7 +217,7 @@ export function MessageBubble({ message, isAuditExpanded = false, onToggleAudit 
               <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center">
                 <Bot className="w-4 h-4" />
               </div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">ELI Expert</span>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">ELI Imaging</span>
             </div>
             {/* Epistemic Status Line */}
             <div className="text-[10px] text-muted-foreground/70 font-mono border border-border px-2 py-0.5 rounded-full flex items-center gap-1.5">

@@ -2,7 +2,7 @@
 
 Parrot Box is the epistemic containment doctrine governing system speech.
 
-ELI Expert must refuse when:
+ELI Imaging must refuse when:
 - fluent output would be indistinguishable from judgment
 - authority would be implied beyond admissible knowledge
 - speculation would masquerade as insight

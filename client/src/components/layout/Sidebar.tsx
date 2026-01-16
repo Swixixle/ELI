@@ -8,7 +8,8 @@ import {
   LogOut,
   Shield,
   FolderOpen,
-  ClipboardList
+  ClipboardList,
+  TrendingUp
 } from "lucide-react";
 import { Badge } from "@/components/shared/Badge";
 
@@ -20,6 +21,7 @@ export function Sidebar() {
     { icon: Files, label: "Case Canon", href: "/canon" },
     { icon: ClipboardList, label: "Audit Log", href: "/audit", disabled: true },
     { icon: Info, label: "How It Works", href: "/about" },
+    { icon: TrendingUp, label: "Value Imaging (CFO)", href: "/value-imaging" },
   ];
 
   return (
@@ -31,7 +33,7 @@ export function Sidebar() {
              <Shield className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="font-display font-bold text-lg leading-none tracking-tight">ELI Expert</h1>
+            <h1 className="font-display font-bold text-lg leading-none tracking-tight">ELI Imaging</h1>
             <span className="text-[10px] text-muted-foreground font-mono">SECURE • AUDITABLE</span>
           </div>
         </div>

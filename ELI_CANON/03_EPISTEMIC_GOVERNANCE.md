@@ -1,6 +1,6 @@
 # Epistemic Governance
 
-ELI Expert enforces outcome-blindness as a structural invariant.
+ELI Imaging enforces outcome-blindness as a structural invariant.
 
 Outcome information occurring after the declared Decision Time:
 - may not be used as input

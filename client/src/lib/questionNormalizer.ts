@@ -193,13 +193,13 @@ export function isMetaQuery(normalized: NormalizedQuestion): boolean {
 }
 
 export function getMetaHelpResponse(): string {
-  return `I'm ELI Expert, a governance-grade assistant that provides verifiable, outcome-blind answers.
+  return `I'm ELI Imaging, a procedural imaging system that determines whether review is admissible — not whether decisions are correct.
 
 **What I can help with:**
-- Evaluating whether documentation meets procedural requirements
-- Checking if decisions are admissible under governance constraints
+- Imaging whether documentation meets procedural acquisition requirements
+- Determining if decisions are procedurally admissible for review
 - Explaining Canon definitions and procedural terms
-- Providing step-by-step evaluation of case records
+- Providing step-by-step imaging of case records
 
 **How to ask questions:**
 Just ask naturally! For example:
@@ -207,5 +207,5 @@ Just ask naturally! For example:
 - "Does this case meet the requirements?"
 - "Can we proceed with this decision?"
 
-I'll interpret your question and apply the appropriate Canon evaluation.`;
+I'll interpret your question and apply the appropriate Canon imaging protocols.`;
 }

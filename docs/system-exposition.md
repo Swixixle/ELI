@@ -1,4 +1,4 @@
-# ELI Expert: Complete System Exposition
+# ELI Imaging: Complete System Exposition
 
 **Version:** Canon v4.0  
 **Last Updated:** January 2026  
@@ -12,7 +12,7 @@ This document uses two distinct terms for "Canon":
 
 | Term | Definition | Location |
 |------|------------|----------|
-| **System Canon** | The binding constitutional ruleset governing ELI Expert's behavior, jurisdiction, guarantees, and limits. | `ELI_CANON/` directory |
+| **System Canon** | The binding constitutional ruleset governing ELI Imaging's behavior, jurisdiction, guarantees, and limits. | `ELI_CANON/` directory |
 | **Case Canon** | Case-specific governing standards (policies, rules, procedures) uploaded into an individual case. | `canon_documents` table |
 
 If any system behavior conflicts with the System Canon, the System Canon prevails.
@@ -23,7 +23,7 @@ If any system behavior conflicts with the System Canon, the System Canon prevail
 
 ### What Problem It Solves
 
-ELI Expert addresses a critical gap in governance decisions: **the absence of verifiable, outcome-blind procedural evaluation**.
+ELI Imaging addresses a critical gap in governance decisions: **the absence of verifiable, outcome-blind procedural evaluation**.
 
 Traditional review processes suffer from:
 - **Hindsight bias**: Evaluators know outcomes before assessing whether decisions were procedurally sound
@@ -31,7 +31,7 @@ Traditional review processes suffer from:
 - **Inconsistent standards**: Different reviewers apply different thresholds
 - **No audit trail**: Impossible to prove "what we knew, when we knew it"
 
-ELI Expert provides a governance-grade system that evaluates whether a decision **can be fairly evaluated**, not whether it was correct.
+ELI Imaging provides a governance-grade system that evaluates whether a decision **can be fairly evaluated**, not whether it was correct.
 
 ### Who It Is For
 
@@ -45,7 +45,7 @@ ELI Expert provides a governance-grade system that evaluates whether a decision 
 
 ### What It Explicitly Does Not Do
 
-**ELI Expert is NOT:**
+**ELI Imaging is NOT:**
 - A decision-maker (it evaluates admissibility, not outcomes)
 - A fault-finder (it assesses procedure, not blame)
 - A general chatbot (it refuses questions outside its epistemic scope)
@@ -611,7 +611,7 @@ This enables **<10 second comprehension** of case status.
 
 ## 8. Non-Goals
 
-ELI Expert explicitly does **NOT** attempt to be:
+ELI Imaging explicitly does **NOT** attempt to be:
 
 | Non-Goal | Reason |
 |----------|--------|
@@ -799,7 +799,7 @@ All Determinations must reference the System Canon version in force at issuance.
 
 | Term | Definition |
 |------|------------|
-| **System Canon** | Binding constitutional ruleset governing ELI Expert (in `ELI_CANON/`) |
+| **System Canon** | Binding constitutional ruleset governing ELI Imaging (in `ELI_CANON/`) |
 | **Case Canon** | Case-specific governing standards uploaded to a case |
 | **Prerequisite** | One of 5 procedural requirements for fair evaluation |
 | **Determination** | Signed evaluation result (can be issued multiple times) |
@@ -812,4 +812,4 @@ All Determinations must reference the System Canon version in force at issuance.
 
 ---
 
-*This document should stand alone as canonical reference for any engineer, auditor, or stakeholder seeking to understand ELI Expert without further explanation.*
+*This document should stand alone as canonical reference for any engineer, auditor, or stakeholder seeking to understand ELI Imaging without further explanation.*

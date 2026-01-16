@@ -1,4 +1,4 @@
-# ELI Expert — 5-Minute Demo Script
+# ELI Imaging — 5-Minute Demo Script
 
 **A narrative that doesn't oversell**
 

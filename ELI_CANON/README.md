@@ -1,6 +1,6 @@
-# ELI Expert — System Canon
+# ELI Imaging — System Canon
 
-This directory contains the System Canon for ELI Expert.
+This directory contains the System Canon for ELI Imaging.
 
 The System Canon is the binding constitutional ruleset that governs:
 - jurisdiction

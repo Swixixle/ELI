@@ -10,6 +10,7 @@ import DocumentViewer from "@/pages/DocumentViewer";
 import About from "@/pages/About";
 import PrintoutView from "@/pages/PrintoutView";
 import PrintoutsList from "@/pages/PrintoutsList";
+import ValueImaging from "@/pages/ValueImaging";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/cases/:caseId/printouts" component={PrintoutsList} />
       <Route path="/cases/:caseId/printouts/:printoutId" component={PrintoutView} />
+      <Route path="/value-imaging" component={ValueImaging} />
       <Route component={NotFound} />
     </Switch>
   );

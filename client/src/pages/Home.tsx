@@ -1033,7 +1033,7 @@ export default function Home() {
                   <div className="shrink-0 px-6 py-3 border-b bg-background flex items-center justify-between">
                     <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
                       <MessageCircle className="w-4 h-4" />
-                      ELI Expert Response
+                      ELI Imaging Response
                     </h3>
                     <span className="text-xs text-muted-foreground">{messages.length} message{messages.length !== 1 ? 's' : ''}</span>
                   </div>

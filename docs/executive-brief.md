@@ -1,4 +1,4 @@
-# ELI Expert — Executive Brief
+# ELI Imaging — Executive Brief
 
 **One-page summary for leadership, legal, and strategic partners**
 
@@ -6,7 +6,7 @@
 
 ## What It Is
 
-ELI Expert is a **procedural admissibility gate** — a governance system that determines whether case reviews are procedurally permitted before substantive evaluation begins.
+ELI Imaging is a **procedural admissibility gate** — a governance system that determines whether case reviews are procedurally permitted before substantive evaluation begins.
 
 > "ELI doesn't make decisions. It makes sure we're allowed to make them."
 
@@ -99,7 +99,7 @@ A regulator, auditor, or engineer can verify:
 
 ## One-Sentence Positioning
 
-ELI Expert is a pre-process auditor that enforces jurisdiction before judgment — infrastructure for decisions that must withstand scrutiny.
+ELI Imaging is a pre-process auditor that enforces jurisdiction before judgment — infrastructure for decisions that must withstand scrutiny.
 
 ---
 

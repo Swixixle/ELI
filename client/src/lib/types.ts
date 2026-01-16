@@ -337,7 +337,7 @@ export const INITIAL_MESSAGES: Message[] = [
   {
     id: "welcome",
     role: "assistant",
-    content: "ELI Expert System initialized. \n\nI am a governance-grade assistant grounded in **Canon v4.0**. I can assist with financial analysis, compliance queries, and strategic positioning.\n\n*Note: All outputs are outcome-blind and strictly cited.*",
+    content: "ELI Imaging System initialized. \n\nI am a procedural imaging system grounded in **Canon v4.0**. I produce structured representations of a decision's procedural and epistemic state, determining whether review is admissible — not whether decisions are correct.\n\n*Note: All outputs are outcome-blind. Imaging separates measurement from interpretation.*",
     timestamp: Date.now(),
     temporalContext: "Decision Time: Now (Default)"
   }
