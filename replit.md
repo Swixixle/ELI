@@ -24,7 +24,7 @@ ELI Expert is a governance-grade epistemic assistant designed to provide verifia
 
 | Term | Definition | Location |
 |------|------------|----------|
-| **System Canon** | Binding constitutional ruleset governing ELI Expert behavior | `ELI_CANON/` directory (14 files) |
+| **System Canon** | Binding constitutional ruleset governing ELI Expert behavior | `ELI_CANON/` directory (15 files) |
 | **Case Canon** | Case-specific governing standards uploaded into a case | `canon_documents` table |
 
 If any system behavior conflicts with System Canon, System Canon prevails.
