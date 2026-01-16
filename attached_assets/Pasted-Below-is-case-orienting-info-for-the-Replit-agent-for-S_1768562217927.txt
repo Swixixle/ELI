@@ -1,0 +1,87 @@
+Below is **case-orienting info for the Replit agent** for **SYN-DEMO-001**, written as a clean baseline demo case. This one is intentionally simple and “green,” and it is useful as a control case for agent behavior.
+
+---
+
+## ELI Case Orientation — SYN-DEMO-001
+
+### Case Identity
+
+* **Case ID:** SYN-DEMO-001 
+* **Case Type:** Policy Compliance Review 
+* **Date Opened:** 2026-01-15 
+* **Prepared By:** ELI Expert System 
+* **Purpose:** Simulated compliance review for demonstration, audit testing, and third-party evaluation 
+
+---
+
+### Decision Target (What ELI is allowed to decide)
+
+* **Confirm whether submitted materials comply with the governing policy and are internally consistent.** 
+
+---
+
+### Scope Constraints (Hard boundaries for the agent)
+
+* Compliance verification only
+* No risk attribution
+* No fault analysis
+* No downstream enforcement or remediation logic
+
+---
+
+## Evidence Artifacts (Evidence Log)
+
+1. **Policy Document v1.0**
+
+* Source: System Template
+* Verification Status: Active 
+
+2. **Case Summary**
+
+* Source: System Generated
+* Verification Status: Active 
+
+---
+
+## Policy Anchor (Normative Reference)
+
+* **Policy Title:** Data Handling & Verification Policy
+* **Version:** 1.0
+* **Status:** Active
+* **Scope:** Governs handling, verification, and retention of documents submitted for expert review 
+
+---
+
+## Audit Finding (Resolved)
+
+* **Finding:** No compliance violations identified.
+* **Status:** All documents verified as internally consistent. 
+
+---
+
+## Procedural Outcome
+
+* **Admissibility:** Fully admissible
+* **Disposition:** Closed / compliant
+* **Escalation Required:** None
+
+---
+
+## One-Paragraph Agent Brief
+
+SYN-DEMO-001 is a baseline policy compliance demonstration case. The submission includes an active Policy Document v1.0 and a system-generated Case Summary, both verified and internally consistent. The governing Data Handling & Verification Policy v1.0 is active and applicable. Audit findings identify no compliance violations, and the case is resolved as compliant with no need for escalation or further review. This case serves as a control example for correct agent behavior under clear, complete conditions.
+
+---
+
+### Implementation Note (for you)
+
+This is your **gold-standard “happy path”** demo:
+
+* Use it to test that the agent **does not invent risk**
+* Use it to verify that the agent **closes cases cleanly**
+* Use it as a contrast case against DEMO-003 / 004 / 009, where blockers exist
+
+If you want, next I can:
+
+* Emit this as **minimal JSON** for fast ingestion, or
+* Help you define **expected agent output** (what a “correct” response looks like for DEMO-001).
