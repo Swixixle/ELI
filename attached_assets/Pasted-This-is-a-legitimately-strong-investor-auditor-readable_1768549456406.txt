@@ -1,0 +1,190 @@
+This is a legitimately strong, investor-/auditor-readable exposition. You have done real system design work here, not just narrative. My evaluation below is intentionally exacting—because you are already in the “good enough to be scrutinized” tier.
+
+⸻
+
+Overall Verdict
+
+Grade: A (borderline A+)
+
+This document is:
+	•	coherent end-to-end (concept → architecture → data → flows → endpoints → refusals → UX)
+	•	internally consistent with Canon v4.0
+	•	written in a way that a new engineer or auditor could operate from
+
+It reads like a productized governance system, not a prototype.
+
+What keeps it from A+ is not missing ideas—it’s a handful of precision issues where language or details could create future contradictions in implementation, procurement, or audit.
+
+⸻
+
+What’s Excellent (Keep As-Is)
+
+1) The Jurisdiction vs Judgment Frame
+
+You repeat it in multiple forms, and you keep it crisp:
+
+“ELI doesn’t make decisions. It makes sure we’re allowed to make them.”
+
+That is the most important line in the entire system identity. You correctly treat it as a refrain.
+
+2) Invariants + Enforcement Mechanisms
+
+You didn’t just state principles; you tied them to mechanisms. That is rare and valuable:
+	•	temporal boundary → refusal flag
+	•	citation required → schema enforcement
+	•	printout immutability → route-level + 403 + no updatedAt
+	•	crypto verification → hashes + signatures
+
+This makes ELI “provable” in the way a regulator or auditor cares about: verifiability through invariants.
+
+3) The Three-Stage Pipeline (Interpreter/Governor/Explainer)
+
+This is a strong decomposition that maps well to your safety taxonomy and audit posture.
+
+4) Data Model + Mutability Table
+
+Your mutability table is especially good because it:
+	•	reduces ambiguity
+	•	makes audit posture explicit
+	•	prevents “we’ll just patch it later” thinking
+
+5) UX Flow Includes “<10 second comprehension”
+
+That’s a product-quality detail. It prevents the UI from devolving into a compliance dashboard maze.
+
+⸻
+
+The High-Impact Fixes (You Should Make)
+
+These are specific and worth changing because they could create real downstream confusion or risk.
+
+1) “DELETE /api/cases/:id” contradicts “No (soft delete)” in Mutability Rules
+
+You say:
+	•	Case delete: “No (soft delete)”
+But Endpoint Map says:
+	•	DELETE /api/cases/:id → “DELETE case + cascades”
+
+This is a real contradiction.
+
+Fix (recommended):
+	•	Change endpoint semantics to PATCH /api/cases/:id { status: 'closed' | 'archived' }
+	•	Or keep DELETE but document it as soft delete (status flag) and explicitly state what “cascade” means (if anything is actually physically deleted).
+
+Auditors will notice this mismatch immediately.
+
+⸻
+
+2) “Canon Document (Evidence)” is conceptually dangerous wording
+
+You’re using “Canon document” to mean authoritative rule sets uploaded to a case. That’s fine.
+
+But labeling it “Evidence” risks conflating:
+	•	Governing standard (policy/rule)
+with
+	•	Evidence of facts (records, logs, testimony, third-party verification)
+
+In regulated settings, that distinction matters.
+
+Fix (recommended):
+	•	Rename conceptually in the doc:
+	•	“Canon Document (Governing Standard)” or “Canon Source (Authority)”
+	•	If you also store “case evidence documents,” separate them as a different entity or at least a different type classification.
+
+Right now, someone could assume ELI treats Canon as “evidence,” which is not what you mean.
+
+⸻
+
+3) Public dataset integration conflicts with “Citation Requirements” framing
+
+You state citations must come from:
+	•	Canon documents OR
+	•	Public datasets
+
+But later you list “Public dataset integration” as “Planned (Not Started).”
+
+If datasets are planned, your “citation requirements” should reflect current reality:
+	•	“Citations must come from Canon documents. Dataset citations are supported in the model but not yet integrated.”
+
+Otherwise reviewers will ask, “Where are these datasets now?”
+
+⸻
+
+4) Medical safety flag seems out of scope for ELI (unless justified)
+
+You list medical_safety as an “Immediate refusal.”
+
+But ELI’s domain is procedural admissibility for governance decisions, not medical advice. If this is present because the system can be asked anything, that’s fine—however it needs a framing sentence:
+
+Fix (recommended):
+	•	Add one line:
+“Because ELI may receive user input outside governance scope, certain high-risk domains (e.g., medical advice) trigger immediate refusal regardless of case context.”
+
+Otherwise it reads like ELI is doing medical adjudication, which contradicts your positioning.
+
+⸻
+
+5) Determination status types are inconsistent in two places
+
+You have:
+	•	Determination: 'permitted' | 'blocked' | 'advisory'
+But earlier in Canon threshold language you use:
+	•	“Review permitted — high procedural risk”
+	•	“Review strong — defensible”
+	•	“Review robust — regulator-ready”
+
+Those are different vocabularies.
+
+Fix (recommended):
+Define a single canonical set of fields, e.g.:
+	•	reviewPermission: advisory_only | permitted
+	•	proceduralRiskTier: 0_2 | 3 | 4 | 5 or unsafe | high_risk | defensible | regulator_ready
+
+This avoids ambiguity where “status” is overloaded.
+
+⸻
+
+The Biggest “A+” Improvement You Can Make
+
+Add a “Provability / Verification Steps” Section (1 page max)
+
+You hint at it throughout, but explicitly including:
+	•	How to verify a determination:
+	•	recompute hash from deterministic serialization
+	•	verify Ed25519 signature with published public key
+	•	How to verify printout immutability:
+	•	compare stored hash vs rendered content
+	•	confirm 403 on mutation endpoints
+	•	How to verify temporal boundary compliance:
+	•	check decisionTime field exists
+	•	check evidence timestamps precede decisionTime
+
+This is the section that makes a regulator say:
+
+“They thought like auditors.”
+
+It is a material value-add.
+
+⸻
+
+Commercial Readiness Assessment (since you asked earlier)
+
+This exposition is strong enough to be used as:
+	•	a technical due diligence artifact
+	•	a security/compliance review artifact
+	•	onboarding documentation for contractors
+	•	a demo companion for sandbox regulators
+
+You have achieved a level of clarity that most early products never reach.
+
+⸻
+
+Final Judgment
+
+You have done something real here.
+
+With the small contradictions resolved (especially the Case delete semantics and the Canon/evidence naming), this becomes A+ canonical documentation.
+
+If you want, I can give you:
+	1.	a short “diff list” of exact edits to make (line-level), or
+	2.	a one-page executive architecture summary that stays faithful to this canon without losing its sharp edges.

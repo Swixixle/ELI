@@ -53,11 +53,11 @@ Users don't ask open-ended questions. They select from a curated question bank o
 The system enforces temporal boundaries. It refuses to use hindsight knowledge ("What should have been known at decision time?") and explicitly flags when outcome-blindness would be violated.
 
 **3. Citation Requirements**
-Every factual claim must cite either:
-- **Canon documents** (private, authoritative rule sets)
-- **Public datasets** (verified external data sources)
+Every factual claim must cite an authoritative source:
+- **Canon documents** (private, authoritative governing standards)
+- **Public datasets** (verified external data sources) — *planned, not yet integrated*
 
-Claims without citation are refused, not fabricated.
+Currently, all citations derive from Canon documents. Dataset integration is modeled but not active. Claims without citation are refused, not fabricated.
 
 **4. IP Protection**
 Computation proofs show arithmetic without revealing proprietary parameters. Values from sealed sources appear as `[SEALED PARAMETER]` while the calculation logic remains transparent.
@@ -170,7 +170,10 @@ These principles are enforced architecturally, not by prompt engineering:
 }
 ```
 
-#### Canon Document (Evidence)
+#### Canon Document (Governing Standard)
+
+> **Note:** Canon documents are authoritative rule sets (policies, standards, procedures), NOT evidentiary records. If a case requires factual evidence documents (logs, testimony, third-party verification), they should be classified with a distinct `type` field value.
+
 ```typescript
 {
   id: number              // Auto-generated PK
@@ -226,14 +229,24 @@ These principles are enforced architecturally, not by prompt engineering:
 {
   id: number              // Auto-generated PK
   caseId: number          // FK to cases
-  status: string          // 'permitted' | 'blocked' | 'advisory'
-  conditionsMet: object   // Which prerequisites satisfied
+  reviewPermission: string // 'advisory_only' | 'permitted'
+  proceduralRiskTier: string // 'unsafe' | 'high_risk' | 'defensible' | 'regulator_ready'
+  prerequisitesMet: number // Count of satisfied prerequisites (0-5)
+  conditionsMet: object   // Detailed prerequisite satisfaction state
   receiptJson: object     // Full determination payload
   caseStateHash: string   // SHA-256 of case state at evaluation time
   signature: string?      // Ed25519 signature
   createdAt: Date         // IMMUTABLE
 }
 ```
+
+**Threshold Mapping:**
+| Prerequisites Met | reviewPermission | proceduralRiskTier |
+|-------------------|------------------|---------------------|
+| 0-2 | `advisory_only` | `unsafe` |
+| 3 | `permitted` | `high_risk` |
+| 4 | `permitted` | `defensible` |
+| 5 | `permitted` | `regulator_ready` |
 
 #### Case Printout (Immutable Judgment Record)
 ```typescript
@@ -446,7 +459,9 @@ User                    Frontend                Backend                  Databas
 | GET | `/api/cases` | List all cases | - | Case[] | - |
 | POST | `/api/cases` | Create case | { name, description? } | Case | INSERT case |
 | GET | `/api/cases/:id` | Get case details | - | Case | - |
-| DELETE | `/api/cases/:id` | Delete case | - | { success } | DELETE case + cascades |
+| PATCH | `/api/cases/:id` | Archive case (soft delete) | { status: 'archived' } | Case | UPDATE case.status |
+
+> **Note:** Cases are never physically deleted. The `DELETE` method is not exposed. To remove a case from active view, set its status to `'archived'`. This preserves audit trail integrity.
 
 ### Document Management
 
@@ -500,6 +515,8 @@ User                    Frontend                Backend                  Databas
 | `medical_safety` | Health-related question | Immediate refusal | Interpreter stage |
 | `withheld_parameter` | Proprietary value requested | Show `[SEALED PARAMETER]` in calculation | Explainer stage |
 | `insufficient_evidence` | Canon lacks relevant provisions | State limitation, refuse to fabricate | Governor stage |
+
+> **Note on `medical_safety`:** Because ELI may receive free-form user input, certain high-risk domains (e.g., medical advice, mental health crises) trigger immediate refusal regardless of case context. This prevents misuse outside the governance domain.
 
 ### Graceful Degradation
 
@@ -649,6 +666,93 @@ ELI Expert explicitly does **NOT** attempt to be:
 | Demo mode bypasses some checks | Low | Flagged in UI as demo |
 | Some legacy endpoints disabled | None | Can be removed |
 | No automated UI tests | Medium | Manual testing only |
+
+---
+
+## 10. Provability & Verification Steps
+
+This section enables auditors and regulators to independently verify ELI's claims. Each verification can be performed without access to source code.
+
+### Verifying a Determination
+
+**Objective:** Confirm that a determination receipt has not been tampered with.
+
+**Steps:**
+1. **Retrieve the determination** via `GET /api/cases/:id/receipt/latest`
+2. **Extract `caseStateHash`** from the receipt
+3. **Recompute the hash:**
+   - Serialize case state deterministically (sorted keys, no whitespace)
+   - Apply SHA-256
+   - Compare to stored `caseStateHash`
+4. **Verify signature:**
+   - Retrieve public key from `ED25519_PUBLIC_KEY` (or published key registry)
+   - Apply Ed25519 verification to `signature` field against `receiptJson`
+5. **Confirm match:** If hash and signature both verify, the determination is authentic and unmodified
+
+### Verifying Printout Immutability
+
+**Objective:** Confirm that a judgment record cannot be modified.
+
+**Steps:**
+1. **Retrieve the printout** via `GET /api/cases/:caseId/printouts/:printoutId`
+2. **Compare stored hash:**
+   - Extract `contentHash` from printout metadata
+   - Apply SHA-256 to `renderedContent`
+   - Values must match
+3. **Verify signature:**
+   - Apply Ed25519 verification using `publicKeyId` to locate correct key
+   - Verify `signature` against `renderedContent`
+4. **Attempt mutation:**
+   - Send `DELETE /api/cases/:caseId/printouts/:printoutId`
+   - Expect `403 Forbidden` response
+   - Send `PATCH` and `PUT` — both must return `403`
+5. **Confirm immutability:** 403 on all mutation endpoints + valid signature = immutable
+
+### Verifying Temporal Boundary Compliance
+
+**Objective:** Confirm that no hindsight knowledge contaminated the evaluation.
+
+**Steps:**
+1. **Check decision time exists:**
+   - Retrieve case via `GET /api/cases/:id`
+   - Confirm `decisionTime` field is populated
+2. **Verify evidence timestamps:**
+   - Retrieve timeline via `GET /api/cases/:id/events`
+   - For each event, confirm `timestamp ≤ decisionTime`
+   - Any event with `timestamp > decisionTime` should be flagged
+3. **Verify document dates:**
+   - Retrieve documents via `GET /api/cases/:id/documents`
+   - Check `createdAt` timestamps against `decisionTime`
+4. **Review determination receipt:**
+   - Check that `receiptJson` includes temporal verification status
+   - Status should indicate whether temporal constraints were satisfied
+
+### Verifying Citation Provenance
+
+**Objective:** Confirm that all factual claims are traceable to Canon.
+
+**Steps:**
+1. **Review any ELI response** from `POST /api/eli/ask`
+2. **Extract `citations[]` array** from response
+3. **For each citation:**
+   - `type: 'canon'` — Verify document exists via `GET /api/cases/:id/documents`
+   - `chunkId` if present — Verify chunk exists in `canon_chunks` table
+   - `type: 'dataset'` — Currently not active (planned feature)
+4. **Flag uncited claims:** Any substantive factual claim without a citation entry indicates a system failure
+
+### Verification Checklist (One-Page Summary)
+
+| Verification | Method | Expected Result |
+|--------------|--------|-----------------|
+| Determination hash | SHA-256 recompute | Matches `caseStateHash` |
+| Determination signature | Ed25519 verify | Valid |
+| Printout hash | SHA-256 recompute | Matches `contentHash` |
+| Printout signature | Ed25519 verify | Valid |
+| Printout DELETE | HTTP request | 403 Forbidden |
+| Printout PATCH/PUT | HTTP request | 403 Forbidden |
+| Decision time exists | GET case | `decisionTime` populated |
+| Timeline temporal order | Compare timestamps | All ≤ `decisionTime` |
+| Citations present | Inspect response | All claims have citations |
 
 ---
 
