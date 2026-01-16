@@ -18,11 +18,20 @@ This checkpoint represents the complete procedural evaluation system ready for:
 
 ## Overview
 
-ELI Expert is a governance-grade epistemic assistant designed to provide verifiable, outcome-blind answers grounded strictly in authoritative documentation ("Canon") and public data sources. Unlike general-purpose chatbots, this system enforces strict admissibility rules, refuses to speculate or invent claims, and can prove its computations step-by-step without exposing proprietary logic.
+ELI Expert is a governance-grade epistemic assistant designed to provide verifiable, outcome-blind answers grounded strictly in authoritative documentation and public data sources. Unlike general-purpose chatbots, this system enforces strict admissibility rules, refuses to speculate or invent claims, and can prove its computations step-by-step without exposing proprietary logic.
+
+### Canon Terminology
+
+| Term | Definition | Location |
+|------|------------|----------|
+| **System Canon** | Binding constitutional ruleset governing ELI Expert behavior | `ELI_CANON/` directory (14 files) |
+| **Case Canon** | Case-specific governing standards uploaded into a case | `canon_documents` table |
+
+If any system behavior conflicts with System Canon, System Canon prevails.
 
 The core principles are:
 - **Outcome-blindness**: The system cannot use hindsight knowledge to justify what "should have been known" at decision time
-- **Citation requirements**: Every factual claim must cite either private Canon documents or public data sources
+- **Citation requirements**: Every factual claim must cite System Canon, Case Canon, or public data sources
 - **Truth refusal**: When epistemic entitlement is absent, the system refuses to answer rather than guess
 - **IP protection**: Computation proofs show arithmetic without revealing proprietary parameters (marked as `[SEALED PARAMETER]`)
 
@@ -42,7 +51,7 @@ Preferred communication style: Simple, everyday language.
 
 The frontend follows a page-based structure with these routes:
 - `/` - Home (main advisor chat interface with guided demo)
-- `/canon` - Canon Library (document management)
+- `/canon` - Case Canon Library (case-specific document management)
 - `/about` - How It Works (system explanation)
 - `/cases/:caseId/printouts` - Judgment records list (issue new printouts)
 - `/cases/:caseId/printouts/:printoutId` - View immutable judgment record

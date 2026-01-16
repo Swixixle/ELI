@@ -6,6 +6,19 @@
 
 ---
 
+## Canon Terminology
+
+This document uses two distinct terms for "Canon":
+
+| Term | Definition | Location |
+|------|------------|----------|
+| **System Canon** | The binding constitutional ruleset governing ELI Expert's behavior, jurisdiction, guarantees, and limits. | `ELI_CANON/` directory |
+| **Case Canon** | Case-specific governing standards (policies, rules, procedures) uploaded into an individual case. | `canon_documents` table |
+
+If any system behavior conflicts with the System Canon, the System Canon prevails.
+
+---
+
 ## 1. Conceptual Model (Human-Readable)
 
 ### What Problem It Solves
@@ -729,13 +742,14 @@ This section enables auditors and regulators to independently verify ELI's claim
 
 ### Verifying Citation Provenance
 
-**Objective:** Confirm that all factual claims are traceable to Canon.
+**Objective:** Confirm that all factual claims are traceable to System Canon or Case Canon.
 
 **Steps:**
 1. **Review any ELI response** from `POST /api/eli/ask`
 2. **Extract `citations[]` array** from response
 3. **For each citation:**
-   - `type: 'canon'` — Verify document exists via `GET /api/cases/:id/documents`
+   - `type: 'system_canon'` — Verify reference exists in `ELI_CANON/` directory
+   - `type: 'case_canon'` — Verify document exists via `GET /api/cases/:id/documents`
    - `chunkId` if present — Verify chunk exists in `canon_chunks` table
    - `type: 'dataset'` — Currently not active (planned feature)
 4. **Flag uncited claims:** Any substantive factual claim without a citation entry indicates a system failure
@@ -756,11 +770,37 @@ This section enables auditors and regulators to independently verify ELI's claim
 
 ---
 
-## Appendix: Glossary
+## Appendix A: System Canon Index
+
+The System Canon is located in `ELI_CANON/` and contains:
+
+| File | Purpose |
+|------|---------|
+| `00_CANON_CHARTER.md` | What ELI is allowed, required, and forbidden to do |
+| `01_SYSTEM_JURISDICTION.md` | Procedural admissibility scope |
+| `02_PROCEDURAL_PREREQUISITES.md` | The 5 prerequisites |
+| `03_EPISTEMIC_GOVERNANCE.md` | Outcome-blindness as structural invariant |
+| `04_PARROT_BOX.md` | Epistemic containment doctrine |
+| `05_DETERMINATIONS_AND_PRINTS.md` | Immutability requirements |
+| `06_TRUST_GUARANTEES_AND_LIMITS.md` | What ELI guarantees and refuses |
+| `07_OPERATOR_AUTHORITY.md` | Operator attestation requirements |
+| `08_FAILURE_MODES.md` | Accepted failure modes |
+| `09_NON_GOALS.md` | What ELI is explicitly not |
+| `10_CANON_CHANGE_CONTROL.md` | Versioning and forward-only changes |
+| `11_CITATION_AND_PROVENANCE.md` | Citation requirements |
+| `12_VERIFICATION_PLAYBOOK.md` | Independent verification requirements |
+| `13_SEALED_PARAMETERS_AND_DISCLOSURE.md` | IP protection rules |
+
+All Determinations must reference the System Canon version in force at issuance.
+
+---
+
+## Appendix B: Glossary
 
 | Term | Definition |
 |------|------------|
-| **Canon** | Authoritative rule set documents uploaded to a case |
+| **System Canon** | Binding constitutional ruleset governing ELI Expert (in `ELI_CANON/`) |
+| **Case Canon** | Case-specific governing standards uploaded to a case |
 | **Prerequisite** | One of 5 procedural requirements for fair evaluation |
 | **Determination** | Signed evaluation result (can be issued multiple times) |
 | **Printout** | Immutable judgment record (cannot be modified after creation) |
@@ -768,6 +808,7 @@ This section enables auditors and regulators to independently verify ELI's claim
 | **Decision Time** | When the decision was/will be made (temporal boundary anchor) |
 | **Outcome-blindness** | Refusal to use hindsight knowledge in evaluation |
 | **Sealed Parameter** | Proprietary value hidden from computation proofs |
+| **Parrot Box** | Epistemic containment doctrine governing refusal |
 
 ---
 

@@ -153,7 +153,7 @@ export default function CanonLibrary() {
         <div className="max-w-5xl mx-auto p-8 flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading canon library...</p>
+            <p className="text-muted-foreground">Loading case canon library...</p>
           </div>
         </div>
       </AppLayout>
@@ -211,8 +211,8 @@ export default function CanonLibrary() {
                     {activeCase?.name || "Case"}
                   </button>
                 </div>
-                <h1 className="text-2xl font-display font-bold text-foreground">Canon Library</h1>
-                <p className="text-muted-foreground mt-1">Manage source materials and access document templates.</p>
+                <h1 className="text-2xl font-display font-bold text-foreground">Case Canon Library</h1>
+                <p className="text-muted-foreground mt-1">Manage case-specific governing standards and access document templates.</p>
               </div>
             </div>
 

@@ -17,7 +17,7 @@ export function Sidebar() {
 
   const navItems = [
     { icon: FolderOpen, label: "Cases", href: "/" },
-    { icon: Files, label: "Documents", href: "/canon" },
+    { icon: Files, label: "Case Canon", href: "/canon" },
     { icon: ClipboardList, label: "Audit Log", href: "/audit", disabled: true },
     { icon: Info, label: "How It Works", href: "/about" },
   ];
@@ -76,7 +76,7 @@ export function Sidebar() {
           </div>
           <div className="space-y-2">
              <div className="flex justify-between text-[10px] text-muted-foreground">
-               <span>Canon Version</span>
+               <span>System Canon</span>
                <span className="font-mono text-sidebar-foreground">v4.0.1</span>
              </div>
              <div className="flex justify-between text-[10px] text-muted-foreground">
