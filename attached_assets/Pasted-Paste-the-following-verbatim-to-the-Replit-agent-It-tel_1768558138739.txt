@@ -1,0 +1,50 @@
+Paste the following verbatim to the Replit agent. It tells the agent exactly what to do, including the key naming fix (System Canon vs Case Canon), and the new Canon files that must be added.
+
+Task: Install/normalize the ELI Expert “System Canon” (constitutional rules) and remove ambiguity with case “canon documents”.
+
+Critical naming fix:
+- “System Canon” = the binding constitutional rules of ELI Expert (jurisdiction, guarantees, refusal logic, immutability, verification).
+- “Case Canon” = case-specific governing standards uploaded into a case (currently stored as canon_documents).
+Update UI copy + docs to reflect this distinction:
+- Rename UI/labels that currently say “Canon” (when they mean uploaded case standards) to “Case Canon”.
+- Reserve “System Canon” for the constitutional ruleset.
+
+File creation (required):
+1) Create a folder at repo root:
+   ELI_CANON/
+2) Create the following Markdown files in ELI_CANON/ exactly (names must match):
+   - README.md
+   - 00_CANON_CHARTER.md
+   - 01_SYSTEM_JURISDICTION.md
+   - 02_PROCEDURAL_PREREQUISITES.md
+   - 03_EPISTEMIC_GOVERNANCE.md
+   - 04_PARROT_BOX.md
+   - 05_DETERMINATIONS_AND_PRINTS.md
+   - 06_TRUST_GUARANTEES_AND_LIMITS.md
+   - 07_OPERATOR_AUTHORITY.md
+   - 08_FAILURE_MODES.md
+   - 09_NON_GOALS.md
+   - 10_CANON_CHANGE_CONTROL.md
+   - 11_CITATION_AND_PROVENANCE.md
+   - 12_VERIFICATION_PLAYBOOK.md
+   - 13_SEALED_PARAMETERS_AND_DISCLOSURE.md
+
+Content rules (mandatory):
+- Treat these files as binding “System Canon” (not marketing, not comments).
+- Do not rewrite, summarize, “improve”, or editorialize the text I paste next; insert verbatim.
+- If an index/registry exists, add references to these System Canon files.
+
+Integration points (required):
+- Determination receipts and immutable printouts must reference System Canon by ID, including:
+  - ELI-CANON-TRUST-001 (Trust, Guarantees, Limits)
+- Ensure any existing docs/system-exposition.md references are updated so:
+  - “Canon documents uploaded to a case” are called “Case Canon”
+  - “System Canon” refers to the constitutional rulepack in ELI_CANON/
+
+Begin file contents below. Create each file and paste its content verbatim under the corresponding filename header.
+
+If the agent asks “where are the file contents?”, you reply with:
+
+I will paste the full contents file-by-file. Do not modify them. Create the files exactly as listed and insert verbatim.
+
+When you’re ready, tell me “Paste the full System Canon contents” and I’ll output the complete text for all 14 files in order so you can drop it straight into the agent in one run.
