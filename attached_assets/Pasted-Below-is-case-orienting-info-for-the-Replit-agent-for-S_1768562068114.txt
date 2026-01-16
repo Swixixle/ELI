@@ -1,0 +1,79 @@
+Below is **case-orienting info for the Replit agent** for **SYN-DEMO-003** (canonical ID in the case summary appears as **SYN-MED-003**; you can alias both if needed).
+
+---
+
+## ELI Case Orientation — SYN-DEMO-003 / SYN-MED-003
+
+### Case Identity
+
+* **Case ID:** SYN-MED-003 
+* **Domain:** Medical Risk Review 
+* **Date Opened:** 2026-01-20 
+* **Prepared By:** ELI Expert System 
+
+### Decision Target (What ELI is allowed to decide)
+
+* **Determine procedural admissibility of a delayed imaging escalation concern.** 
+
+### Scope Constraints (Hard boundaries for the agent)
+
+* Procedural review only
+* **No clinical determination**
+* **No outcome judgment**
+* **No attribution of fault** 
+
+---
+
+## Evidence Artifacts (Evidence Log)
+
+1. **ED Physician Note – headache complaint**
+
+* Timestamp: 2026-01-18T22:10
+* Verification: Verified 
+
+2. **CT Order Entry**
+
+* Timestamp: 2026-01-18T23:45
+* Verification: Verified 
+
+3. **Family Statement alleging delay**
+
+* Timestamp: Post-discharge
+* Verification: Unverified 
+
+---
+
+## Policy Anchor (Normative Reference)
+
+* **Policy:** Imaging Escalation Policy
+* **Version:** v1.4
+* **Effective Date:** 2025-06-01
+* **Relevant Excerpt:** Neurologic imaging escalation requires attending approval within **60 minutes of symptom onset**. 
+
+---
+
+## Preliminary Intake Finding
+
+* **Finding:** Imaging occurred; escalation timing is unclear based on available artifacts. 
+* **Recommendation:** Procedural review required (admissibility not yet resolved). 
+
+---
+
+## Key Procedural Uncertainties (Blocking / Risk Factors)
+
+* **Symptom onset time** is not explicitly documented beyond the ED note timestamp, making the 60-minute escalation window indeterminate.
+* **Attending approval timestamp** (if any) is not present in the record set.
+* Allegation source (family statement) is **unverified** and post-discharge, and cannot establish timing without corroboration. 
+
+---
+
+## One-Paragraph Agent Brief
+
+This case (SYN-MED-003) is a procedural admissibility review concerning a possible delayed imaging escalation for a headache presentation. Verified records show an ED physician note at 22:10 and a CT order at 23:45 on 2026-01-18. The applicable Imaging Escalation Policy v1.4 (effective 2025-06-01) requires attending approval within 60 minutes of symptom onset, but the precise onset time and any attending approval timestamp are not established in the available artifacts. An unverified family statement alleges delay but cannot independently substantiate timing. Preliminary audit review concludes that imaging occurred but escalation timing is unclear, warranting procedural review to determine admissibility.
+
+---
+
+If you want, next step I can:
+
+* Emit this as **JSON** with stable keys for your Replit agent, or
+* Add an explicit **`admissibility_decision_logic`** section (what conditions → PROCEED vs HOLD vs ADVISORY).
