@@ -5,6 +5,7 @@ import { insertCanonDocumentSchema, insertCaseSchema, insertCaseEventSchema, typ
 import { z } from "zod";
 import { evaluateCanonConditions, type EvaluationContext } from "./canonEvaluator";
 import { computeCaseStateHash, signReceipt, hashSHA256 } from "./crypto";
+import { registerELIRoutes } from "./eli/routes";
 
 const chatRequestSchema = z.object({
   message: z.string().min(1),
@@ -553,6 +554,8 @@ export async function registerRoutes(
       }
     }
   });
+
+  registerELIRoutes(app);
 
   return httpServer;
 }
