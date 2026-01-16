@@ -229,6 +229,31 @@ export default function Home() {
 
   const decisionReadiness = computeDecisionReadiness(activeCase, documentCount);
 
+  // Build case context for API calls
+  const buildCaseContext = () => {
+    if (!activeCase) return undefined;
+    
+    const prereqsMet = decisionReadiness.totalSatisfied;
+    let reviewPermission: "advisory_only" | "permitted" | "strong" | "regulator_ready" = "advisory_only";
+    
+    if (prereqsMet >= 5) {
+      reviewPermission = "regulator_ready";
+    } else if (prereqsMet >= 4) {
+      reviewPermission = "strong";
+    } else if (prereqsMet >= 3) {
+      reviewPermission = "permitted";
+    }
+    
+    return {
+      caseId: activeCase.id,
+      caseName: activeCase.name,
+      decisionTarget: activeCase.decisionTarget || null,
+      decisionTime: decisionTime ? decisionTime.toISOString() : null,
+      prerequisitesMet: prereqsMet,
+      reviewPermission
+    };
+  };
+
   const handleSetDecisionTarget = async () => {
     if (!activeCase || !decisionTargetInput.trim()) return;
     
@@ -425,7 +450,11 @@ export default function Home() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: normalized.normalized, mode })
+        body: JSON.stringify({ 
+          message: normalized.normalized, 
+          mode,
+          caseContext: buildCaseContext()
+        })
       });
       
       const data = await response.json();
@@ -531,7 +560,11 @@ export default function Home() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: question, mode })
+        body: JSON.stringify({ 
+          message: question, 
+          mode,
+          caseContext: buildCaseContext()
+        })
       });
       
       const data = await response.json();

@@ -9,8 +9,25 @@ import { registerELIRoutes } from "./eli/routes";
 
 const chatRequestSchema = z.object({
   message: z.string().min(1),
-  mode: z.enum(["advisor", "sales"]).default("advisor")
+  mode: z.enum(["advisor", "sales"]).default("advisor"),
+  caseContext: z.object({
+    caseId: z.number(),
+    caseName: z.string(),
+    decisionTarget: z.string().nullable(),
+    decisionTime: z.string().nullable(),
+    prerequisitesMet: z.number().min(0).max(5),
+    reviewPermission: z.enum(["advisory_only", "permitted", "strong", "regulator_ready"])
+  }).optional()
 });
+
+interface CaseContext {
+  caseId: number;
+  caseName: string;
+  decisionTarget: string | null;
+  decisionTime: string | null;
+  prerequisitesMet: number;
+  reviewPermission: "advisory_only" | "permitted" | "strong" | "regulator_ready";
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -856,11 +873,11 @@ export async function registerRoutes(
   // Chat endpoint with Canon retrieval
   app.post("/api/chat", async (req, res) => {
     try {
-      const { message, mode } = chatRequestSchema.parse(req.body);
+      const { message, mode, caseContext } = chatRequestSchema.parse(req.body);
       
       const relevantChunks = await storage.searchCanonChunks(message, 5);
       
-      const response = generateEpistemicResponse(message, relevantChunks, mode);
+      const response = generateEpistemicResponse(message, relevantChunks, mode, caseContext);
       
       res.json(response);
     } catch (error) {
@@ -915,7 +932,7 @@ interface ChatResponse {
 }
 
 // Canonical Intent types
-type CanonicalIntent = "readiness" | "sufficiency" | "gaps" | "limits" | "risks" | "next_action" | "closure" | "defensibility";
+type CanonicalIntent = "readiness" | "sufficiency" | "gaps" | "limits" | "risks" | "next_action" | "closure" | "defensibility" | "permission";
 
 // Intent classification patterns
 const INTENT_PATTERNS: { intent: CanonicalIntent; patterns: RegExp[] }[] = [
@@ -992,6 +1009,17 @@ const INTENT_PATTERNS: { intent: CanonicalIntent; patterns: RegExp[] }[] = [
       /\bcan (we|I) (defend|justify|support) (this|the)\b/,
       /\bwill (this|it) (hold up|stand up|withstand) (to |)(scrutiny|audit|review)\b/
     ]
+  },
+  {
+    intent: "permission",
+    patterns: [
+      /\b(are|is) (we|it) (allowed|permitted|authorized) (to |)(decide|determine|proceed)\b/,
+      /\bcan (we|I) (decide|determine|make a decision|proceed) (now|yet|already)\b/,
+      /\b(allowed|permitted|authorized) to (decide|determine|proceed)\b/,
+      /\bdo (we|I) have (permission|authorization|approval) (to |)(decide|determine|proceed)\b/,
+      /\b(decision|determine|proceed).*\b(allowed|permitted|authorized)\b/,
+      /\bpermission (to |)(decide|determine|proceed|review)\b/
+    ]
   }
 ];
 
@@ -1005,7 +1033,12 @@ function classifyIntent(message: string): CanonicalIntent | null {
   return null;
 }
 
-function getIntentResponse(intent: CanonicalIntent, citations: Citation[]): ChatResponse {
+function getIntentResponse(intent: CanonicalIntent, citations: Citation[], caseContext?: CaseContext): ChatResponse {
+  // Handle permission intent with case context
+  if (intent === "permission") {
+    return getPermissionResponse(citations, caseContext);
+  }
+
   switch (intent) {
     case "readiness":
       return {
@@ -1245,7 +1278,156 @@ A determination made now would have PARTIAL defensibility:
   }
 }
 
-function generateEpistemicResponse(message: string, chunks: CanonChunk[], mode: string): ChatResponse {
+function getPermissionResponse(citations: Citation[], caseContext?: CaseContext): ChatResponse {
+  // If no case context provided, we cannot determine permission
+  if (!caseContext) {
+    return {
+      content: `## Decision Permission Status: Context Required
+
+**I need case context to answer this question.**
+
+To determine if you are allowed to decide, I need to know:
+- Which case you're asking about
+- The active Decision Target
+- The current prerequisite status
+
+**Action Required:**
+Select a case and set a Decision Target, then ask again.`,
+      citations,
+      userSummary: {
+        status: "cannot_determine",
+        statusLabel: "No case context",
+        meaning: "I cannot determine permission without knowing which case and decision target you're asking about.",
+        missing: ["Active case selection", "Decision target"],
+        nextStep: "Select a case and set a Decision Target to enable permission determination."
+      }
+    };
+  }
+
+  // If no decision target, we cannot determine permission
+  if (!caseContext.decisionTarget) {
+    return {
+      content: `## Decision Permission Status: Decision Target Required
+
+**The case "${caseContext.caseName}" has no active Decision Target.**
+
+Before I can determine if you're allowed to decide, you must define *what decision* is being imaged.
+
+**Action Required:**
+Set a Decision Target for this case (e.g., "Was the termination procedurally valid?").`,
+      citations,
+      userSummary: {
+        status: "cannot_determine",
+        statusLabel: "No decision target",
+        meaning: "I cannot determine permission without knowing what decision you're asking about.",
+        missing: ["Decision target"],
+        nextStep: "Set a Decision Target to enable permission determination."
+      }
+    };
+  }
+
+  // Generate permission response based on prerequisite status
+  const { prerequisitesMet, reviewPermission, decisionTarget, caseName } = caseContext;
+  
+  const permissionLabels = {
+    "advisory_only": "NOT PERMITTED",
+    "permitted": "PERMITTED (with procedural risk)",
+    "strong": "PERMITTED (defensible)",
+    "regulator_ready": "PERMITTED (regulator-ready)"
+  };
+
+  const statusLabels = {
+    "advisory_only": "Advisory only — decision not permitted",
+    "permitted": "Decision permitted with noted risks",
+    "strong": "Decision permitted — defensible",
+    "regulator_ready": "Decision permitted — regulator-ready"
+  };
+
+  const nextSteps = {
+    "advisory_only": "Satisfy at least 3 prerequisites to unlock decision permission.",
+    "permitted": "Consider strengthening to 4+ prerequisites for full defensibility.",
+    "strong": "You may proceed. Consider adding one more prerequisite for regulator-readiness.",
+    "regulator_ready": "You may proceed with full confidence."
+  };
+
+  const userStatuses: Record<string, "can_proceed" | "needs_more" | "cannot_determine" | "refused"> = {
+    "advisory_only": "needs_more",
+    "permitted": "can_proceed",
+    "strong": "can_proceed",
+    "regulator_ready": "can_proceed"
+  };
+
+  return {
+    content: `## Decision Permission Status: ${permissionLabels[reviewPermission]}
+
+**Case:** ${caseName}
+**Decision Target:** "${decisionTarget}"
+**Prerequisites Met:** ${prerequisitesMet}/5
+
+### Procedural Determination
+
+${reviewPermission === "advisory_only" 
+  ? `With only ${prerequisitesMet} prerequisite(s) satisfied, this case is in **Advisory Only** status.
+
+**What this means:**
+- Imaging can provide guidance, but formal decision is not procedurally authorized
+- Any decision made now would lack procedural defensibility
+- Minimum threshold is 3/5 prerequisites for decision permission
+
+**Required Action:**
+Address the missing prerequisites to unlock decision permission.`
+  : reviewPermission === "permitted"
+  ? `With ${prerequisitesMet} prerequisites satisfied, decision is **PERMITTED** but carries procedural risk.
+
+**What this means:**
+- You have cleared the minimum threshold for decision authority
+- The decision is defensible but may have weak points under scrutiny
+- Consider strengthening to 4-5 prerequisites for full robustness
+
+**You may proceed**, but note the procedural risk.`
+  : reviewPermission === "strong"
+  ? `With ${prerequisitesMet} prerequisites satisfied, decision is **PERMITTED** and **defensible**.
+
+**What this means:**
+- You have strong procedural grounding
+- The decision should withstand normal audit and review
+- One more prerequisite would achieve regulator-ready status
+
+**You may proceed** with confidence.`
+  : `With ${prerequisitesMet} prerequisites satisfied, decision is **PERMITTED** and **regulator-ready**.
+
+**What this means:**
+- Full procedural compliance achieved
+- The decision should withstand rigorous regulatory scrutiny
+- This is the highest level of procedural defensibility
+
+**You may proceed** with full confidence.`}`,
+    citations,
+    userSummary: {
+      status: userStatuses[reviewPermission],
+      statusLabel: statusLabels[reviewPermission],
+      meaning: prerequisitesMet >= 3 
+        ? `With ${prerequisitesMet}/5 prerequisites met, you have procedural authorization to decide.`
+        : `With only ${prerequisitesMet}/5 prerequisites met, formal decision is not yet authorized.`,
+      missing: prerequisitesMet < 5 
+        ? [`${5 - prerequisitesMet} more prerequisite(s) for maximum defensibility`]
+        : undefined,
+      nextStep: nextSteps[reviewPermission],
+      counterfactuals: [
+        { 
+          condition: "One additional prerequisite was satisfied", 
+          wouldChange: prerequisitesMet < 3 
+            ? "Would move closer to decision permission threshold" 
+            : prerequisitesMet < 5 
+            ? "Would increase defensibility status" 
+            : "N/A - maximum already achieved"
+        }
+      ]
+    }
+  };
+}
+
+function generateEpistemicResponse(message: string, chunks: CanonChunk[], mode: string, caseContext?: CaseContext): ChatResponse {
   const lowerMessage = message.toLowerCase();
   
   const citations: Citation[] = chunks.slice(0, 3).map(chunk => ({
@@ -1259,7 +1441,7 @@ function generateEpistemicResponse(message: string, chunks: CanonChunk[], mode: 
   // CANONICAL INTENT CLASSIFICATION - Check for standardized intents first
   const intent = classifyIntent(message);
   if (intent) {
-    return getIntentResponse(intent, citations);
+    return getIntentResponse(intent, citations, caseContext);
   }
 
   // FINANCIAL INTERPRETATION LAYER - Scenario analysis, not templates

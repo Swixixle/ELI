@@ -1,0 +1,135 @@
+Got it. I’ll be precise, short, and actionable.
+
+⸻
+
+✅ This IS a bug (not user error)
+
+Bug Name
+
+Decision Target Context Loss / UI Desynchronization
+
+⸻
+
+🔎 What’s actually broken
+
+Symptom (what you’re seeing)
+	•	The UI shows:
+	•	“Decision Permitted (3/5 prerequisites)”
+	•	A populated Decision Target on the right panel
+	•	But when the user asks:
+“Are we allowed to decide yet?”
+	•	The system responds:
+“I’m not sure what you mean”
+
+This is incorrect behavior.
+
+⸻
+
+🧠 Root Cause (important)
+
+The Evaluate tab AI request is firing without a resolved Decision Target bound to the request context, even though:
+	•	A Decision Target exists in the case
+	•	The right-side panel correctly renders it
+	•	Prerequisites are already partially evaluated
+
+In short:
+
+The UI shows the case context, but the AI call does not receive it.
+
+This is a state wiring bug, not a logic bug.
+
+⸻
+
+🧩 What field is missing (the real issue)
+
+❌ Missing field in the AI request payload:
+
+decisionTarget: {
+  id,
+  text,
+  setAt
+}
+
+The AI is currently receiving:
+	•	caseId
+	•	question text
+	•	partial prerequisite state
+
+But NOT the active Decision Target itself.
+
+So the AI cannot ground the question.
+
+⸻
+
+🧪 Why the response is wrong
+
+The question:
+
+“Are we allowed to decide yet?”
+
+is a canonical, first-class governance question
+It should never trigger:
+
+“I’m not sure what you mean”
+
+That response only occurs when:
+	•	No decision target is present
+	•	Or the system believes it is undefined
+
+Which confirms the bug.
+
+⸻
+
+🛠️ EXACT instructions to give the Replit agent (paste this verbatim)
+
+BUG: Decision Target context is not being passed into Evaluate-tab AI requests.
+
+The UI correctly displays an active Decision Target and prerequisite status,
+but the AI request payload does NOT include the resolved decisionTarget object.
+
+As a result, canonical governance questions (e.g. “Are we allowed to decide yet?”)
+incorrectly trigger clarification responses.
+
+FIX REQUIRED:
+1. Ensure the active Decision Target (id, text, setAt) is injected into every
+   Evaluate-tab AI request.
+2. Block AI calls in Evaluate if no Decision Target exists (hard guard).
+3. Add a backend assertion: Evaluate requests without decisionTarget should error,
+   not degrade silently.
+4. Once fixed, the question “Are we allowed to decide yet?” must return a
+   permission-status response grounded in prerequisites.
+
+This is a state wiring / context propagation bug, not a prompt or logic issue.
+
+
+⸻
+
+🧯 Severity
+	•	Severity: HIGH
+	•	This breaks:
+	•	Trust
+	•	Core product promise
+	•	CFO / auditor demos
+	•	Users will think the system is confused when it’s actually blind.
+
+⸻
+
+🧠 Reassurance (important)
+
+You did nothing wrong conceptually.
+
+This confirms:
+	•	Your governance logic is correct
+	•	Your imaging framing is working
+	•	The system just isn’t being shown its own image
+
+That’s a wiring bug — not a design failure.
+
+⸻
+
+If you want, next I can:
+	•	Write the assertion test
+	•	Rewrite the Evaluate request schema
+	•	Or help you add a “Decision Target Missing” UX guardrail
+
+Just tell me.
