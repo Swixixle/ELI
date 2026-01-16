@@ -783,8 +783,6 @@ export default function Home() {
               <ScrollArea className="h-full">
                 <CaseOverview
                   caseData={activeCase}
-                  readiness={decisionReadiness}
-                  documentCount={documentCount}
                   viewMode={viewMode}
                   onSetDecisionTarget={() => setShowDecisionTargetDialog(true)}
                   onNavigateToTab={(tab) => setActiveTab(tab as CaseTab)}

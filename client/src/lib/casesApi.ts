@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Case, InsertCase, CanonDocument } from "@shared/schema";
+import type { Case, InsertCase, CanonDocument, CaseOverview } from "@shared/schema";
 
 async function fetchCases(): Promise<Case[]> {
   const res = await fetch("/api/cases");
@@ -44,6 +44,12 @@ async function fetchCaseDocuments(caseId: string): Promise<CanonDocument[]> {
   return res.json();
 }
 
+async function fetchCaseOverview(caseId: string): Promise<CaseOverview> {
+  const res = await fetch(`/api/cases/${caseId}/overview`);
+  if (!res.ok) throw new Error("Failed to fetch case overview");
+  return res.json();
+}
+
 export function useCases() {
   return useQuery({ queryKey: ["cases"], queryFn: fetchCases });
 }
@@ -60,6 +66,14 @@ export function useCaseDocuments(caseId: string | null) {
   return useQuery({
     queryKey: ["cases", caseId, "documents"],
     queryFn: () => fetchCaseDocuments(caseId!),
+    enabled: !!caseId
+  });
+}
+
+export function useCaseOverview(caseId: string | null) {
+  return useQuery({
+    queryKey: ["cases", caseId, "overview"],
+    queryFn: () => fetchCaseOverview(caseId!),
     enabled: !!caseId
   });
 }

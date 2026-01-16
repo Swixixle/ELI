@@ -115,11 +115,10 @@ export async function registerRoutes(
       const evaluation = evaluateCanonConditions(evalContext);
       const { checklist, summary } = evaluation;
       
-      // Extract prerequisite statuses from checklist
+      // Extract prerequisite statuses strictly from evaluator checklist
       const prerequisiteStatus = {
         decisionTarget: checklist.A_decision_target_defined.met ? "met" as const : "unmet" as const,
-        temporalVerification: checklist.B_temporal_verification.met ? "met" as const : 
-          (events.length > 0 ? "partial" as const : "unmet" as const),
+        temporalVerification: checklist.B_temporal_verification.met ? "met" as const : "unmet" as const,
         independentVerification: checklist.C_independent_verification.met ? "met" as const : "unmet" as const,
         policyApplication: checklist.D_policy_application_record.met ? "met" as const : "unmet" as const,
         contextualConstraints: checklist.E_contextual_constraints.met ? "met" as const : "unmet" as const,
@@ -452,8 +451,6 @@ export async function registerRoutes(
       const determination = await storage.createDetermination({
         caseId: req.params.id,
         status: evaluation.summary.status,
-        conditionsMet: evaluation.summary.conditionsMet,
-        conditionsTotal: evaluation.summary.conditionsTotal,
         receiptJson: signedReceipt,
         caseStateHash,
       });

@@ -88,9 +88,27 @@ Case-scoped API endpoints:
 - `GET /api/cases` - List all cases
 - `POST /api/cases` - Create new case
 - `GET /api/cases/:id` - Get case details
+- `GET /api/cases/:id/overview` - Get derived case overview (read-only aggregation)
 - `GET /api/cases/:id/documents` - List documents in case
 - `POST /api/cases/:id/documents` - Create document in case
 - `DELETE /api/cases/:caseId/documents/:docId` - Delete document (validates ownership)
+
+### Case Overview (Derived View)
+
+The `/api/cases/:id/overview` endpoint provides a computed, read-only snapshot for immediate case comprehension:
+- **No LLM calls** - Pure aggregation from existing tables
+- **No mutations** - Read-only derived data
+- **< 10 second comprehension** - Designed for quick case understanding
+
+**Overview contents:**
+- Case ID, title, domain, type, phase
+- Decision target and decision time
+- Document and evidence counts (verified vs unverified)
+- Prerequisite status (all 5 prerequisites from Canon evaluator)
+- Risk tier and review permission
+- "What We Know" / "What's Missing" narrative lists
+- Next action hint
+- Last evaluation and printout timestamps
 
 ### Canon v4.0 Evaluation System
 

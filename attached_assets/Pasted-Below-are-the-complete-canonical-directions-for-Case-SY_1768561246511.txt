@@ -1,0 +1,145 @@
+Below are the complete, canonical directions for Case SYN-DEMO-006, structured exactly like 007 and 008, and grounded in the actual artifacts you uploaded.
+
+This is written so you can paste the final section verbatim to the Replit agent.
+
+⸻
+
+1. SYN-DEMO-006 — Canonical Case Overview (What the user should see)
+
+Case ID: SYN-DEMO-006
+Domain: Medical — Consent Documentation Review  ￼
+Case Type: Medical Risk / Peer Review Intake (Synthetic Demo)
+
+⸻
+
+Decision Under Review
+
+Determine whether a consent-related concern is procedurally admissible for substantive review.
+￼
+
+This is strictly procedural. No clinical judgment, no outcome evaluation, no fault attribution.
+
+⸻
+
+Governing Policy
+
+Informed Consent Documentation Policy v1.9
+Effective: 2025-01-01
+
+Key requirements:
+	•	Procedures requiring informed consent must include:
+	•	a time-stamped consent form and
+	•	documented discussion note
+	•	Any exception requires contemporaneous rationale documentation
+
+￼
+
+⸻
+
+Verified Evidence (Independent Artifacts)
+
+Artifact	Status	Timestamp
+Procedure Note (references consent)	Verified	2026-01-22 09:30
+Consent Form PDF	Partially Verified (signature present, no timestamp)	Unknown
+Patient Portal Message (post-visit concern)	Verified	2026-01-23 11:05
+
+￼
+
+⸻
+
+Procedural Prerequisite Status (Computed)
+
+Prerequisite	Status	Basis
+Decision Target Defined	✅ Met	Explicit procedural target exists
+Temporal Verification	❌ Unmet	Consent execution time not verifiable
+Independent Verification	⚠️ Partial	Consent referenced, but artifact incomplete
+Policy Applicability	✅ Met	Policy v1.9 governs
+Contextual Sufficiency	⚠️ Partial	No contemporaneous exception rationale
+
+
+⸻
+
+Current Procedural Posture
+
+Advisory Only — Review Unsafe
+
+Audit intake explicitly concludes:
+
+“Consent is referenced, but execution time is not verifiable. Advisory only until a time-stamped consent artifact or contemporaneous documentation is provided.”
+￼
+
+⸻
+
+Next Action (System-Generated)
+
+Upload a time-stamped consent form or contemporaneous documentation establishing when consent was obtained, or a documented exception rationale per policy.
+
+⸻
+
+2. Why this framing is correct (anchor yourself)
+	•	The policy requirement is binary: consent must be time-stamped or exception documented  ￼
+	•	The evidence gap is real and provable, not interpretive  ￼
+	•	The audit posture matches ELI math exactly (0–2 prerequisites → advisory only)  ￼
+	•	The system is not asked to judge consent validity, only procedural admissibility  ￼
+
+So:
+	•	Canon aligned ✅
+	•	Threshold logic aligned ✅
+	•	Governance-safe ✅
+
+The system is behaving correctly — it just doesn’t explain itself yet.
+
+⸻
+
+3. EXACT TEXT TO PASTE TO THE REPLIT AGENT (SYN-DEMO-006)
+
+Paste verbatim:
+
+⸻
+
+Replit Agent — SYN-DEMO-006 Case Visibility Fix
+
+For case SYN-DEMO-006, users cannot understand the case because we do not surface a computed Case Overview.
+
+All required data already exists (policy, evidence, decision target, audit posture). We need to assemble and display it.
+
+Required implementation:
+	1.	Implement a derived, read-only CaseOverview object for SYN-DEMO-006 that includes:
+	•	Case ID, domain, case type
+	•	Decision target (procedural admissibility of consent concern)
+	•	Governing policy (Informed Consent Documentation Policy v1.9)
+	•	Evidence summary with verification status (procedure note, consent form, portal message)
+	•	Computed prerequisite status showing temporal and evidentiary gaps
+	•	Current procedural posture: Advisory Only — Review Unsafe
+	•	System-generated “Next Action” guidance
+	2.	Expose via:
+
+GET /api/cases/:id/overview
+
+	•	No LLM calls
+	•	No mutation
+	•	Pure aggregation of existing tables
+
+	3.	UI:
+
+	•	When SYN-DEMO-006 is opened, render the CaseOverview as the default view
+	•	User should understand why review is blocked and what is missing in <10 seconds
+
+This is an assembly and presentation fix only.
+Do not modify Canon logic, thresholds, or evaluation rules.
+
+⸻
+
+Final grounding sentence
+
+SYN-DEMO-006 is actually your strongest trust case:
+
+It proves ELI will say “stop” when procedure is incomplete — even when the narrative pressure is high.
+
+That’s not a weakness.
+That’s what buyers pay for.
+
+If you want, I can now:
+	•	Normalize 006/007/008 into a single demo storyline
+	•	Help you explain “Advisory Only” without sounding defensive
+	•	Prepare a one-page buyer explainer for medical leadership
