@@ -1,0 +1,259 @@
+You can accomplish exactly what you want, but you only get it if you accept one design principle:
+
+You separate “conversation” from “governance.”
+The user gets to be messy; the engine stays strict.
+
+That means a two-stage pipeline:
+	1.	Interpreter (messy human → structured evidence)
+	2.	Speech Governor (structured evidence → bounded governance output)
+
+The Speech Governor remains your rigid, auditable core. The Interpreter is the “friendly layer” that digests bumbling questions.
+
+Below is the deployment architecture that does this without twisting everything together.
+
+⸻
+
+The System You Actually Want: Dual-Model, Two-Stage
+
+Stage A — The Interpreter (User-facing, conversational)
+
+Job: Take natural language and produce structured inputs for the Governor.
+
+Allowed behaviors:
+	•	Ask clarifying questions when essential
+	•	Extract facts, timestamps, artifacts, and constraints
+	•	Identify unknowns explicitly
+	•	Detect contamination (“I feel,” “he lied”) and translate it into:
+	•	“user belief/interpretation” (not evidence)
+	•	“requested claim”
+	•	“missing contemporaneous artifacts”
+
+Forbidden behaviors:
+	•	Making conclusions
+	•	Assigning intent
+	•	Generating irreversible action recommendations
+	•	Pretending something is a fact when it’s a feeling
+
+Output: Strict JSON to the Governor.
+
+⸻
+
+Stage B — The Speech Governor (Back-end, non-conversational)
+
+Job: Decide what claims are admissible and return bounded outputs.
+
+It never sees the user’s messy language.
+It only sees a clean JSON object and responds in JSON.
+
+⸻
+
+Why this solves your “twisted together” problem
+
+Right now you’re trying to make one model do:
+	•	conversation,
+	•	extraction,
+	•	governance,
+	•	and explanation.
+
+That produces drift.
+
+The dual-stage design gives you:
+	•	Human-friendly input
+	•	Machine-strict reasoning
+	•	Auditable outputs
+	•	No test-key leakage
+	•	No narrative contamination
+
+⸻
+
+Exact Interaction Flow (What the User Experiences)
+
+User says (messy):
+
+“Okay so he promised the deploy would be safe and then everything blew up. I think he lied.”
+
+The app responds conversationally:
+
+“I can help, but I need to separate facts from interpretations.
+	1.	What is the timestamp of the promise?
+	2.	Was it in Slack/email or verbal?
+	3.	What alerts occurred and when?”
+
+User answers casually.
+
+Then the app says:
+
+“Got it. Here is what I extracted as time-stamped facts, and here are the unknowns. I’m now evaluating what claims are admissible.”
+
+Then it returns the Governor’s output in clean terms.
+
+⸻
+
+What the Interpreter Must Produce (Your “Digest into Evidence”)
+
+The Interpreter creates three things:
+
+1) Evidence candidates
+	•	Timestamped artifacts (Slack messages, tickets, logs)
+	•	Observable events (alerts, actions)
+	•	Documented constraints (policies, role obligations)
+
+2) A proposed claim (the user’s intent)
+
+It rewrites “he lied” into:
+	•	“Employee intentionally misled supervisor about deployment safety.”
+
+But labels it as:
+	•	user-proposed claim, not truth.
+
+3) Unknowns
+
+It creates the missing evidence list:
+	•	peer approval record
+	•	flag checklist record
+	•	incident declaration timing
+
+⸻
+
+Minimal Schema (So you don’t burden the user)
+
+You do not require users to fill JSON.
+
+You require your Interpreter to fill JSON.
+
+A practical schema for the Governor:
+
+{
+  "metadata": {
+    "decision_time_t": "ISO-8601 or null",
+    "lane_request": "Lane_1_Certainty | Lane_2_Risk_Response",
+    "policy_version": "v2.1"
+  },
+  "epistemic_inputs": {
+    "I_t": [],
+    "C_t": [],
+    "O": []
+  },
+  "proposed_claim": "",
+  "unknowns": []
+}
+
+If timestamps are unknown, the Interpreter sets them null and the Governor will respond:
+	•	DISALLOWED with required_data: [“decision_time_t”, “timestamped artifacts”]
+
+⸻
+
+The Critical Trick: “Soft UI, Hard Core”
+
+You want:
+	•	regular human conversation
+	•	with correct terminology appearing in output
+
+You get that by having the Interpreter do terminology injection:
+
+Example:
+User: “He was sketchy”
+Interpreter translates:
+	•	Proposed claim: “intent attribution”
+	•	Evidence: none
+	•	Unknowns: “contemporaneous statement” “artifact record”
+
+Then Governor returns:
+	•	“intent attribution not entailed by Iₜ”
+	•	“Lane 2 precaution only”
+	•	“required_data: …”
+
+The user learns your terms by seeing them, not by speaking them.
+
+⸻
+
+How to keep the Interpreter from corrupting the Governor
+
+Three hard rules:
+
+Rule 1: Interpreter must label everything
+
+Every extracted item must be tagged as one of:
+	•	fact (observable, timestamped)
+	•	artifact (document/log)
+	•	allegation (someone’s account)
+	•	interpretation (emotion, judgment)
+	•	unknown
+
+Only “fact” and “artifact” go into Iₜ.
+
+Rule 2: Governor never sees raw conversation
+
+Governor sees only structured JSON.
+
+Rule 3: Governor output is translated back to human
+
+The Interpreter can provide a human explanation, but:
+	•	it cannot upgrade admissibility
+	•	it cannot add facts
+	•	it can only restate the Governor’s decision
+
+⸻
+
+Implementation (Replit app level)
+
+In your app you implement:
+
+Endpoint 1: /api/intake
+	•	input: user message + conversation history
+	•	output: extracted JSON + clarifying questions (if needed)
+
+Endpoint 2: /api/govern
+	•	input: sanitized JSON
+	•	output: bounded Governor JSON
+
+Endpoint 3: /api/explain
+	•	input: Governor JSON + user language preference
+	•	output: human-friendly explanation, with terminology introduced
+
+This preserves:
+	•	conversational UX
+	•	strict core logic
+	•	auditability
+
+⸻
+
+What You Will Demonstrate to a CEO (15-minute demo)
+	1.	CEO describes a messy situation
+	2.	The Interpreter says: “Here’s what I captured; here are unknowns”
+	3.	Governor returns: “This claim is DISALLOWED in Lane 1; here is admissible phrasing; here is required data”
+	4.	CEO immediately understands:
+
+	•	what can be said,
+	•	what can’t,
+	•	and what evidence upgrades it.
+
+That is the “language barrier” solution.
+
+⸻
+
+The only unavoidable tradeoff
+
+If the user refuses to provide:
+	•	timestamps
+	•	artifacts
+	•	observable actions
+
+the system must refuse or downgrade.
+
+If it doesn’t, it becomes narrative theater again.
+
+So the Interpreter’s job is to make evidence collection easy, not optional.
+
+⸻
+
+If you want, I can deliver the exact prompts
+
+I can write:
+	1.	The Interpreter system prompt (messy → structured)
+	2.	The Governor system prompt (strict JSON-only)
+	3.	The Explainer prompt (Governor JSON → plain English)
+
+And give you a drop-in Replit route outline matching your existing project.
+
+But the key is the architecture above: two-stage.
