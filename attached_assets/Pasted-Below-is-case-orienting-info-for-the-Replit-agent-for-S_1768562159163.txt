@@ -1,0 +1,90 @@
+Below is **case-orienting info for the Replit agent** for **SYN-DEMO-009 (Demo 9)**, written to keep the agent strictly inside **procedural admissibility** scope.
+
+---
+
+## ELI Case Orientation — SYN-DEMO-009
+
+### Case Identity
+
+* **Case ID:** SYN-DEMO-009 
+* **Domain:** Medical (High-Risk Medication Double-Check Review) 
+* **Case Type:** Medical Risk / Peer Review Intake (Synthetic Demo Case) 
+* **Date Opened:** 2026-01-28 
+* **Prepared By:** ELI Expert System 
+
+### Decision Target (What ELI is allowed to decide)
+
+* **Determine procedural admissibility of a high-risk medication dual-verification allegation.** 
+
+### Scope Constraints (Hard boundaries for the agent)
+
+* Procedural readiness evaluation only
+* **No clinical determination**
+* **No outcome judgment**
+* **No attribution of fault** 
+
+---
+
+## Evidence Artifacts (Evidence Log)
+
+1. **Medication Administration Record (MAR)**
+
+* Source: EHR
+* Verification: Verified
+* Timestamp: 2026-01-24T16:22 
+
+2. **Pharmacy Dispense Log**
+
+* Source: Pharmacy System
+* Verification: Verified
+* Timestamp: 2026-01-24T16:05 
+
+3. **Nurse Statement (post-shift recollection)**
+
+* Source: Email
+* Verification: Unverified
+* Timestamp: 2026-01-25T09:12 
+
+---
+
+## Policy Anchor (Normative Reference)
+
+* **Policy:** High-Risk Medication Dual Verification Policy
+* **Version:** v4.0
+* **Effective Date:** 2026-01-25
+* **Relevant Excerpt:** High-risk medication administration requires **dual verification documented in the MAR at time of administration**. 
+
+---
+
+## Preliminary Intake Finding
+
+* **Finding:** The cited policy version becomes effective **after** the medication administration event timestamp. 
+* **Recommendation:** **Advisory only** until the governing policy active at the time of the event is identified and provided. 
+
+---
+
+## Key Procedural Blockers (Why admissibility is constrained)
+
+* **Policy mismatch:** Administration occurred on 2026-01-24; policy v4.0 is effective 2026-01-25. Applicability cannot be assumed.
+* **No verified dual-check record** is present in the MAR (only administration is verified). 
+* Allegation support relies partly on an **unverified post-shift recollection**, which cannot establish contemporaneous procedure. 
+
+---
+
+## Missing / Required Items to Proceed
+
+* Policy version **in force on 2026-01-24**, or an explicit applicability rule stating v4.0 applies retroactively.
+* Any **verified dual-verification documentation** contemporaneous with administration (if it exists outside the MAR). 
+
+---
+
+## One-Paragraph Agent Brief
+
+This is a procedural admissibility intake for a high-risk medication dual-verification allegation (SYN-DEMO-009). Verified records show pharmacy dispense at 16:05 and medication administration at 16:22 on 2026-01-24. The cited High-Risk Medication Dual Verification Policy v4.0 requires documented dual verification in the MAR but is effective 2026-01-25—after the event—rendering policy applicability uncertain. An unverified post-shift nurse statement alleges a verification issue but cannot establish contemporaneous procedure. Preliminary audit findings therefore recommend **advisory-only status** pending identification of the governing policy active at the time of administration and any verified dual-check documentation.
+
+---
+
+If you want, I can now:
+
+* Emit this as **JSON** for direct ingestion by the Replit agent, or
+* Add a compact **`decision_logic`** section (conditions → ADVISORY vs HOLD vs PROCEED) consistent with ELI governance.
