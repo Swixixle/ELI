@@ -1,0 +1,141 @@
+Yes — **this is Case 02**, and I can verify it cleanly.
+
+Based on the uploaded artifacts, this corresponds to **SYN-DEMO-002**. Below is the **verified case-orienting packet** for your Replit agent, with explicit confirmation logic so you can see *why* this is Demo 02 and not another case.
+
+---
+
+## ✅ Case Verification Result
+
+**Confirmed Case:** **SYN-DEMO-002**
+**Confidence:** High
+**Reason:**
+
+* Distinct **ED sepsis pathway** scenario
+* April 6, 2024 timestamps (earlier than DEMO-003/004/009 series)
+* Operational-constraint framing (overcapacity ED, staffing strain)
+* No conflicting case IDs present in artifacts
+
+---
+
+## ELI Case Orientation — SYN-DEMO-002
+
+### Case Identity
+
+* **Case ID:** SYN-DEMO-002
+* **Domain:** Medical (Emergency Department Sepsis Pathway Review)
+* **Case Type:** Medical Risk / Peer Review Intake (Synthetic Demo Case)
+* **Prepared By:** ELI Expert System
+* **Status:** Intake / Procedural Review
+
+---
+
+### Decision Target (What ELI is allowed to decide)
+
+* **Determine procedural admissibility of an early sepsis management concern**, specifically whether antimicrobial timing and decision-making were procedurally consistent with the governing sepsis pathway under documented operational constraints.
+
+---
+
+### Scope Constraints (Hard limits for the agent)
+
+* Procedural review only
+* **No clinical outcome determination**
+* **No fault attribution**
+* **No hindsight standard of care judgment**
+
+---
+
+## Evidence Artifacts (Chronologically Anchored)
+
+### 1) ED Triage Note
+
+* **Timestamp:** April 6, 2024 — 02:41
+* **Findings:** Fever, tachycardia, borderline hypotension
+* **Sepsis Screen:** Positive
+* **Verification:** Verified 
+
+### 2) Physician Initial Assessment
+
+* **Timestamp:** April 6, 2024 — 03:02
+* **Assessment:** Concern for early sepsis
+* **Plan:** Labs, lactate pending; consider early antibiotics
+* **Note:** Imaging deferred pending fluid response
+* **Verification:** Verified 
+
+### 3) ED Operational Status Snapshot
+
+* **Timestamp:** April 6, 2024 — 03:00
+* **Conditions:**
+
+  * ED at **118% capacity**
+  * One attending covering two pods
+  * CT backlog reported
+* **Verification:** Verified 
+
+### 4) Medication Administration Record
+
+* **Medication:** Piperacillin-Tazobactam
+* **Order Time:** 03:16
+* **Administration Time:** 03:22
+* **Ordering Provider:** ED Attending
+* **Verification:** Verified 
+
+---
+
+## Policy Anchor (Normative Reference)
+
+* **Policy:** Emergency Department Sepsis Pathway
+* **Version:** 3.1
+* **Effective Date:** September 15, 2023
+* **Key Provision:**
+
+  > Early antimicrobial therapy is recommended when clinical indicators suggest high risk, even if confirmatory imaging is pending. 
+
+---
+
+## Procedural Interpretation (Why this is Demo 02)
+
+This case is structurally designed to test whether the agent can:
+
+* Recognize **early sepsis indicators** at triage
+* Track **decision-making under operational strain**
+* Interpret policy language that allows **action before confirmatory imaging**
+* Avoid penalizing clinicians for **appropriate early escalation**
+* Distinguish **procedural compliance** from outcome-based hindsight bias
+
+Unlike later demos:
+
+* No missing policy versions
+* No post-event recollection dependency
+* No timing ambiguity requiring HOLD or ADVISORY
+
+---
+
+## Preliminary Intake Disposition
+
+* **Admissibility:** Procedurally admissible
+* **Risk Flag:** Context-dependent (capacity + staffing explicitly documented)
+* **Escalation:** Not automatic; eligible for substantive review if required
+
+---
+
+## One-Paragraph Agent Brief
+
+SYN-DEMO-002 is a synthetic ED sepsis-pathway intake case. The patient screened positive for sepsis at triage (02:41), was assessed by an attending at 03:02 with concern for early sepsis, and received broad-spectrum antibiotics by 03:22. Contemporaneous ED operational data document 118% capacity, limited attending coverage, and CT backlog. The governing Sepsis Pathway v3.1 (effective 2023-09-15) explicitly supports early antimicrobial therapy based on clinical indicators even when imaging is pending. The case is procedurally admissible, with documented constraints sufficient to contextualize timing decisions.
+
+---
+
+### Implementation Note (Important)
+
+This is your **“pressure-test but compliant” demo**:
+
+* The agent **should not flag delay**
+* The agent **should recognize justified early action**
+* The agent **must integrate operational context correctly**
+
+If you want next, I can:
+
+* Emit this as **JSON** for direct Replit ingestion
+* Define the **expected correct agent verdict** (pass/fail criteria)
+* Map **Demo 02 vs Demo 03** to show how timing ambiguity changes outcomes
+
+Just tell me which.
