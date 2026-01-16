@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, type Case, type InsertCase, type CaseEvent, type InsertCaseEvent, type DecisionTarget, type InsertDecisionTarget, type Determination, type InsertDetermination, users, canonDocuments, canonChunks, cases, caseEvents, decisionTargets, determinations } from "@shared/schema";
+import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, type Case, type InsertCase, type CaseEvent, type InsertCaseEvent, type DecisionTarget, type InsertDecisionTarget, type Determination, type InsertDetermination, type CasePrintout, type InsertCasePrintout, users, canonDocuments, canonChunks, cases, caseEvents, decisionTargets, determinations, casePrintouts } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, or, sql, and } from "drizzle-orm";
 
@@ -32,6 +32,12 @@ export interface IStorage {
   
   createDetermination(determination: InsertDetermination): Promise<Determination>;
   getLatestDetermination(caseId: string): Promise<Determination | null>;
+  getDetermination(id: string): Promise<Determination | undefined>;
+  
+  createCasePrintout(printout: InsertCasePrintout): Promise<CasePrintout>;
+  getCasePrintouts(caseId: string): Promise<CasePrintout[]>;
+  getCasePrintout(id: string): Promise<CasePrintout | undefined>;
+  getNextPrintoutNumber(caseId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -198,6 +204,34 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(determinations.createdAt))
       .limit(1);
     return det ?? null;
+  }
+
+  async getDetermination(id: string): Promise<Determination | undefined> {
+    const [det] = await db.select().from(determinations).where(eq(determinations.id, id));
+    return det;
+  }
+
+  async createCasePrintout(printout: InsertCasePrintout): Promise<CasePrintout> {
+    const [newPrintout] = await db.insert(casePrintouts).values(printout).returning();
+    return newPrintout;
+  }
+
+  async getCasePrintouts(caseId: string): Promise<CasePrintout[]> {
+    return await db.select().from(casePrintouts)
+      .where(eq(casePrintouts.caseId, caseId))
+      .orderBy(desc(casePrintouts.issuedAt));
+  }
+
+  async getCasePrintout(id: string): Promise<CasePrintout | undefined> {
+    const [printout] = await db.select().from(casePrintouts).where(eq(casePrintouts.id, id));
+    return printout;
+  }
+
+  async getNextPrintoutNumber(caseId: string): Promise<number> {
+    const [result] = await db.select({ maxNum: sql<number>`COALESCE(MAX(${casePrintouts.printoutNumber}), 0)` })
+      .from(casePrintouts)
+      .where(eq(casePrintouts.caseId, caseId));
+    return (result?.maxNum ?? 0) + 1;
   }
 }
 
