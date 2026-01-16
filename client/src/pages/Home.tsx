@@ -955,6 +955,25 @@ export default function Home() {
                     readiness={decisionReadiness}
                     onSetDecisionTarget={() => setShowDecisionTargetDialog(true)}
                   />
+                  
+                  {/* Judgment Records Link */}
+                  <a
+                    href={`/cases/${activeCase.id}/printouts`}
+                    className="flex items-center justify-between p-4 bg-card border border-border rounded-xl hover:border-primary/50 hover:shadow-sm transition-all group"
+                    data-testid="link-judgment-records"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <Gavel className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-foreground">Judgment Records</h4>
+                        <p className="text-xs text-muted-foreground">View or issue immutable printouts</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </a>
+                  
                   <CaseTimeline caseData={activeCase} />
                   <DocumentsConsidered caseData={activeCase} />
                 </div>

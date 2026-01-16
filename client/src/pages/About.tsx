@@ -420,20 +420,20 @@ export default function About() {
               <div className="w-10 h-10 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center mb-4">
                 <Scale className="w-5 h-5" />
               </div>
-              <h3 className="font-display font-semibold text-foreground mb-2">Advisor Mode</h3>
+              <h3 className="font-display font-semibold text-foreground mb-2">Builder Mode</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Neutral, governance-first analysis. Heavy on citations. 
-                No sales language. Refuses to generate positioning statements.
+                Active case construction. Upload documents, set decision targets, 
+                build timeline evidence. Focuses on gathering the procedural prerequisites.
               </p>
             </div>
             <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
               <div className="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-lg flex items-center justify-center mb-4">
                 <FileCheck className="w-5 h-5" />
               </div>
-              <h3 className="font-display font-semibold text-foreground mb-2">Sales Mode</h3>
+              <h3 className="font-display font-semibold text-foreground mb-2">Audit Mode</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Benefit-led, concise, objection handling. 
-                Still strictly bounded by canon — cannot invent claims beyond what is documented.
+                Review and verification. Evaluate procedural readiness, issue determinations, 
+                and generate immutable judgment records. Read-only posture.
               </p>
             </div>
           </div>
