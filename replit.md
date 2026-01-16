@@ -40,10 +40,12 @@ Preferred communication style: Simple, everyday language.
 - **Styling**: Tailwind CSS v4 with CSS variables for theming
 - **Fonts**: Inter (sans), Space Grotesk (display), JetBrains Mono (mono)
 
-The frontend follows a page-based structure with three main routes:
+The frontend follows a page-based structure with these routes:
 - `/` - Home (main advisor chat interface with guided demo)
 - `/canon` - Canon Library (document management)
 - `/about` - How It Works (system explanation)
+- `/cases/:caseId/printouts` - Judgment records list (issue new printouts)
+- `/cases/:caseId/printouts/:printoutId` - View immutable judgment record
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express
@@ -64,6 +66,7 @@ Current tables:
 - `decision_targets` - Stores decision target history per case (text, setAt, setBy, isActive)
 - `case_events` - Stores timeline events for cases (type, description, timestamp, documentRef)
 - `determinations` - Stores signed determination receipts (status, conditionsMet, receiptJson, caseStateHash)
+- `case_printouts` - Immutable judgment records (title, renderedContent, summary, prerequisites, cryptographic signature)
 
 ### Case-Centric Document Management
 All documents are bound to cases. The system enforces case ownership at multiple layers:
@@ -110,6 +113,28 @@ Case-scoped API endpoints:
 - Ed25519 signing for receipt authenticity
 - Keys loaded from ED25519_PRIVATE_KEY/ED25519_PUBLIC_KEY environment variables
 - Deterministic serialization ensures reproducible hashes
+
+### Immutable Judgment Printouts
+
+**Purpose:** Creates permanent, cryptographically signed judgment records that cannot be modified or deleted once issued.
+
+**Printout endpoints:**
+- `POST /api/cases/:id/printouts` - Issue new printout from latest determination
+- `GET /api/cases/:id/printouts` - List all printouts for a case
+- `GET /api/cases/:caseId/printouts/:printoutId` - Get single printout (read-only)
+- `DELETE/PATCH/PUT /api/cases/:caseId/printouts/:printoutId` - Explicitly rejected (403) for immutability
+
+**Printout contents:**
+- Case information (name, decision target, decision time)
+- Determination status and Canon version
+- Full procedural prerequisite checklist with evidence
+- Evidence roster (documents and timeline events)
+- Cryptographic verification (SHA-256 content hash, Ed25519 signature, public key ID)
+- Issuance timestamp
+
+**Frontend routes:**
+- `/cases/:caseId/printouts` - List and issue printouts
+- `/cases/:caseId/printouts/:printoutId` - View/print judgment record
 
 ### Canon Ingestion System
 - **Ingestion Script**: `server/ingestCanon.ts` - Extracts, chunks, and indexes Canon PDFs
