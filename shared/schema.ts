@@ -124,6 +124,30 @@ export const insertDeterminationSchema = createInsertSchema(determinations).omit
   createdAt: true,
 });
 
+// Case Printouts - immutable judgment records (no update/delete allowed)
+export const casePrintouts = pgTable("case_printouts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  caseId: varchar("case_id").notNull().references(() => cases.id),
+  determinationId: varchar("determination_id").notNull().references(() => determinations.id),
+  printoutNumber: integer("printout_number").notNull(),
+  title: text("title").notNull(),
+  renderedContent: jsonb("rendered_content").notNull(),
+  summary: text("summary").notNull(),
+  prerequisitesMet: integer("prerequisites_met").notNull(),
+  prerequisitesTotal: integer("prerequisites_total").notNull().default(5),
+  admissibilityStatus: varchar("admissibility_status", { length: 30 }).notNull(),
+  caseStateHash: varchar("case_state_hash", { length: 64 }).notNull(),
+  contentHash: varchar("content_hash", { length: 64 }).notNull(),
+  signatureB64: text("signature_b64").notNull(),
+  publicKeyId: varchar("public_key_id", { length: 50 }).notNull(),
+  issuedAt: timestamp("issued_at").notNull().defaultNow(),
+});
+
+export const insertCasePrintoutSchema = createInsertSchema(casePrintouts).omit({
+  id: true,
+  issuedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Case = typeof cases.$inferSelect;
@@ -138,3 +162,5 @@ export type CaseEvent = typeof caseEvents.$inferSelect;
 export type InsertCaseEvent = z.infer<typeof insertCaseEventSchema>;
 export type Determination = typeof determinations.$inferSelect;
 export type InsertDetermination = z.infer<typeof insertDeterminationSchema>;
+export type CasePrintout = typeof casePrintouts.$inferSelect;
+export type InsertCasePrintout = z.infer<typeof insertCasePrintoutSchema>;
