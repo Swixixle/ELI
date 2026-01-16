@@ -1,0 +1,181 @@
+Good. This is the correct strategic move.
+You are not rebranding fluff — you are clarifying the ontology of the system.
+
+Below is exactly what you need, in three parts:
+	1.	What “ELI Imaging” is (canon-level definition)
+	2.	The Canon text to embed verbatim
+	3.	Exact instructions to give the Replit agent (copy/paste ready)
+
+No hype. No ambiguity. This locks authorship, intent, and UX together.
+
+⸻
+
+1. What “ELI Imaging” Actually Means (so you don’t lose the plot)
+
+You are not changing the system’s function.
+You are naming what it already does, in a way CFOs, auditors, and regulators already understand.
+
+ELI Imaging = Procedural Imaging
+
+Just like:
+	•	MRI images tissue structure
+	•	CT images internal anatomy
+	•	Imaging ≠ diagnosis
+
+ELI images the internal procedural structure of a decision.
+
+It answers:
+	•	Is the decision imaginable in a defensible way?
+	•	Are the acquisition conditions sufficient?
+	•	Is interpretation admissible?
+
+It does not answer:
+	•	Was the decision correct?
+	•	Who is at fault?
+	•	What should have been done?
+
+That separation is the entire value.
+
+⸻
+
+2. CANON TEXT — EMBED THIS VERBATIM
+
+This is the authoritative Canon addition.
+You can paste this into your Canon file exactly as written.
+
+⸻
+
+Canon §0.3 — ELI Imaging (Procedural Imaging Model)
+
+ELI Expert is formally defined as a procedural imaging system.
+
+ELI Imaging produces structured representations of a decision’s procedural and epistemic state at a specific point in time. Its function is to determine whether a decision is in a condition that permits fair, outcome-blind evaluation by human authorities.
+
+ELI Imaging does not render judgments, diagnoses, or determinations of correctness. It evaluates whether the conditions required for judgment are present.
+
+Imaging Analogy (Normative)
+	•	Imaging does not diagnose; it determines whether diagnosis is possible.
+	•	Imaging requires acquisition protocols; incomplete scans are reported as limited.
+	•	Imaging separates measurement from interpretation.
+	•	Imaging explicitly discloses artifacts and limitations.
+	•	Imaging outputs may be “non-diagnostic” without being erroneous.
+
+ELI Imaging applies these same principles to governance, compliance, and risk decisions.
+
+What ELI Imaging Captures
+An ELI Imaging scan evaluates and records:
+	1.	Decision Target — the specific decision under review
+	2.	Temporal Boundary — the information available at decision time
+	3.	Independent Verification — corroboration beyond narrative assertion
+	4.	Policy Application — governing standards active at that time
+	5.	Contextual Constraints — operational limits shaping available options
+
+Failure to satisfy acquisition requirements results in a limited or unsafe scan, not a synthesized or inferred conclusion.
+
+Output Classification (Imaging Readiness)
+ELI Imaging produces readiness states, not verdicts:
+	•	Advisory Only / Unsafe — evaluation procedurally inadmissible
+	•	Permitted / High Risk — evaluation allowed with significant limitations
+	•	Permitted / Defensible — evaluation supported by sufficient acquisition
+	•	Permitted / Regulator-Ready — evaluation meets audit and regulatory standards
+
+These outputs describe procedural visibility, not decision quality.
+
+Separation of Roles
+	•	ELI Imaging measures and records procedural structure
+	•	Human authorities interpret, judge, and decide
+
+This separation is mandatory and enforced by system architecture.
+
+⸻
+
+Canon §0.4 — System Authorship & Accountability
+
+ELI Imaging’s procedural model, acquisition rules, thresholds, refusal conditions, and invariants were authored by Alexander John Maksimovich under Nikodemus Systems.
+
+Machine learning components operate strictly within these constraints and are incapable of overriding procedural rules, thresholds, or immutability guarantees.
+
+Authorship, accountability, and governance responsibility reside with the human system designer, not the model.
+
+⸻
+
+That’s the Canon.
+That alone reframes everything.
+
+⸻
+
+3. EXACT MESSAGE TO SEND THE REPLIT AGENT (COPY/PASTE)
+
+Paste the following in full, without editing:
+
+⸻
+
+TASK: CONVERT ELI EXPERT TO “ELI IMAGING” (PROCEDURAL IMAGING MODEL)
+
+We are formally redefining the system as ELI Imaging, a procedural imaging instrument (not a decision engine, not a chatbot).
+
+REQUIRED CHANGES (DO NOT SKIP):
+
+1. Terminology (Global)
+	•	Replace references to “evaluation engine” / “decision evaluator” with “procedural imaging system”
+	•	Use “scan” / “imaging output” / “readiness state” where appropriate
+	•	Never describe outputs as judgments, verdicts, or conclusions
+
+2. Overview / First Screen (CRITICAL UX FIX)
+Users currently cannot “see the case.”
+
+Add a Case Imaging Overview panel as the default view:
+	•	Decision Target (imaged subject)
+	•	Decision Time (temporal anchor)
+	•	5-Prerequisite acquisition strip (visual)
+	•	Imaging Status: Limited / Unsafe / Defensible / Regulator-Ready
+	•	Explicit “This is not a judgment” disclaimer
+
+This is the missing field causing user confusion.
+
+3. Canon Integration
+Embed the provided Canon sections:
+	•	§0.3 ELI Imaging (Procedural Imaging Model)
+	•	§0.4 System Authorship & Accountability
+
+These must be treated as authoritative Canon text.
+
+4. Language Constraints
+	•	ELI does NOT “decide,” “rule,” “assess fault,” or “determine correctness”
+	•	ELI “images,” “records,” “flags limitations,” and “certifies procedural visibility”
+
+5. UI Copy
+Every output must clearly state:
+
+“This output describes procedural readiness for evaluation, not the quality or correctness of the decision.”
+
+6. No Functional Changes
+This is a conceptual + UX + language refactor, not a logic rewrite.
+
+Confirm back with:
+	•	Where the Overview panel was added
+	•	Which terms were globally updated
+	•	Where the Canon text was embedded
+
+⸻
+
+Final grounding statement (important)
+
+You are not “pivoting.”
+You are naming the thing correctly.
+
+Calling this imaging:
+	•	removes AI stigma
+	•	removes liability confusion
+	•	gives CFOs a mental model they already trust
+	•	anchors authorship to you
+	•	and explains refusals as safety, not failure
+
+This is the move that makes ELI sellable.
+
+If you want, next I can:
+	•	rewrite the entire UI copy in imaging language
+	•	draft a regulatory positioning memo titled “Procedural Imaging”
+	•	or help you define CPT-style analogies for pricing conversations
+
+Say the word.

@@ -1,17 +1,19 @@
-# ELI EXPERT — SYSTEM AUTHORSHIP, INTELLECTUAL OWNERSHIP, AND ACCOUNTABILITY
+# Canon §0.4 — SYSTEM AUTHORSHIP, INTELLECTUAL OWNERSHIP, AND ACCOUNTABILITY
 
 **Canonical Status:** Binding  
-**Applies To:** All deployments, determinations, printouts, and derivative uses of ELI Expert  
+**Applies To:** All deployments, determinations, printouts, and derivative uses of ELI Imaging  
 **Effective Date:** January 2026  
-**Version:** 1.0
+**Version:** 1.1
 
 ---
 
 ## 1. System Authorship
 
-ELI Expert is a human-authored governance system.
+ELI Imaging is a human-authored procedural imaging system.
 
-The procedural architecture, decision prerequisites, threshold logic, refusal conditions, invariants, and cryptographic enforcement mechanisms of ELI Expert were designed, specified, and authored by a human system architect, not by a machine learning model.
+ELI Imaging's procedural model, acquisition rules, thresholds, refusal conditions, and invariants were authored by Alexander John Maksimovich under Nikodemus Systems.
+
+The procedural architecture, decision prerequisites, threshold logic, refusal conditions, invariants, and cryptographic enforcement mechanisms of ELI Imaging were designed, specified, and authored by a human system architect, not by a machine learning model.
 
 **Primary Author and System Architect:**  
 Alexander John Maksimovich  
