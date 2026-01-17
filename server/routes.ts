@@ -6,6 +6,7 @@ import { z } from "zod";
 import { evaluateCanonConditions, type EvaluationContext } from "./canonEvaluator";
 import { computeCaseStateHash, signReceipt, hashSHA256 } from "./crypto";
 import { registerELIRoutes } from "./eli/routes";
+import { computeCaseLifecycle } from "./eli/lifecycle";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -343,6 +344,16 @@ export async function registerRoutes(
       const domain = caseData.description?.split(" - ")[0] || "General Governance";
       const caseType = caseData.phase || "intake";
 
+      // Compute canonical lifecycle from persisted facts
+      const lifecycle = computeCaseLifecycle({
+        caseData,
+        documents,
+        events,
+        activeDecisionTarget,
+        latestDetermination,
+        printouts
+      });
+
       const overview = {
         caseId: caseData.id,
         caseTitle: caseData.name,
@@ -370,6 +381,8 @@ export async function registerRoutes(
         nextActionHint,
         whatWeKnow,
         whatsMissing,
+        
+        lifecycle,
       };
 
       res.json(overview);

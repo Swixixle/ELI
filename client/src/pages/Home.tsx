@@ -2,6 +2,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { INITIAL_MESSAGES, Message, SCENARIO_RESPONSES, CANONICAL_INTENTS, QUESTION_BANK } from "@/lib/types";
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "wouter";
 import { Send, Sparkles, Briefcase, FileText, Settings2, Shield, CalendarClock, Play, HelpCircle, Ban, Calculator, Gavel, FolderOpen, CheckCircle, AlertCircle, AlertTriangle, ArrowRight, CheckSquare, Lock, FileSearch, CircleSlash, Wrench, Search, X, ChevronDown, Info, MessageCircle, LayoutDashboard, Upload, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/shared/Badge";
@@ -199,6 +200,7 @@ const QUESTION_BANK_ICONS: Record<string, React.ReactNode> = {
 type DecisionTimeMode = "live" | "fixed";
 
 export default function Home() {
+  const [, navigate] = useLocation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -954,10 +956,7 @@ export default function Home() {
               if (!open) setCaseSelectorInitialTab("cases");
             }}
             onSelectCase={(c) => {
-              setActiveCase(c);
-              setShowDemo(false);
-              setMessages([]);
-              setExpandedAuditMessages(new Set());
+              navigate(`/cases/${c.id}/overview`);
             }}
             currentCaseId={activeCase?.id}
             initialTab={caseSelectorInitialTab}

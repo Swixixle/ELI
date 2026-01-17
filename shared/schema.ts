@@ -206,6 +206,55 @@ export type InsertCasePrintout = z.infer<typeof insertCasePrintoutSchema>;
 export type PrerequisiteStatusValue = "met" | "partial" | "unmet";
 export type RiskTier = "unsafe" | "high_risk" | "defensible" | "regulator_ready" | "unknown";
 
+// Case Lifecycle - canonical state machine (A1 from UX spec)
+export const CASE_STAGES = [
+  "INTAKE_EMPTY",
+  "TARGET_REQUIRED",
+  "TIME_REQUIRED",
+  "POLICY_REQUIRED",
+  "CONSTRAINTS_REQUIRED",
+  "READY_FOR_EVALUATION",
+  "EVALUATED",
+  "SEALED"
+] as const;
+export type CaseStage = typeof CASE_STAGES[number];
+
+// Prerequisite Status - explicit booleans (A2 from UX spec)
+export interface PrereqStatus {
+  has_documents: boolean;
+  has_target: boolean;
+  has_decision_time: boolean;
+  decision_time_mode: "live" | "fixed";
+  has_policy: boolean;
+  has_constraints: boolean;
+  has_independent_verification: boolean;
+  has_timeline_event: boolean;
+  has_evaluation_for_current_context: boolean;
+  has_seal: boolean;
+}
+
+// Next Action - single canonical action (C1 from UX spec)
+export interface NextAction {
+  label: string;
+  description: string;
+  route: string;
+  anchor?: string;
+  blocking_prereqs: string[];
+  action_type: "navigation" | "modal" | "api_call";
+}
+
+// Complete Lifecycle Status
+export interface CaseLifecycle {
+  case_stage: CaseStage;
+  prereq_status: PrereqStatus;
+  next_action: NextAction;
+  prerequisites_met: number;
+  prerequisites_total: number;
+  review_permission: "blocked" | "advisory_only" | "permitted";
+  what_we_know: string[];
+  what_is_missing: string[];
+}
+
 export interface CaseOverview {
   caseId: string;
   caseTitle: string;
@@ -239,4 +288,6 @@ export interface CaseOverview {
   nextActionHint: string;
   whatWeKnow: string[];
   whatsMissing: string[];
+  
+  lifecycle: CaseLifecycle;
 }

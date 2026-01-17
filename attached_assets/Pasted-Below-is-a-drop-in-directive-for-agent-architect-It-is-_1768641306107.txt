@@ -1,0 +1,231 @@
+Below is a drop-in directive for agent:architect. It is written as a product-true spec: fix flow, navigation, and action affordances so the UI always produces a visible state change and the “Next Step” logic never loops users back to where they already are.
+
+⸻
+
+agent:architect — Fix Flow/Usability: Tabs That Don’t Move, “Next Step” Loops, and Non-Deterministic Navigation
+
+Context / Observed Failures
+
+In the current Replit prototype, users frequently:
+	•	Click a tab and land in the same screen/state with no visible change.
+	•	Get routed to Build even when docs are already present or Build is not the correct next action.
+	•	See “Next Step” repeatedly suggest actions that are either already satisfied (docs uploaded) or not the next gating move.
+	•	Experience “Set Target / Set Time” that appears to work but does not always produce durable progress or clear completion feedback.
+
+This breaks the core promise: procedural, auditable, deterministic.
+
+Objective
+
+Make the product behave like a real system by enforcing:
+	1.	Explicit state machine (case lifecycle + prerequisites).
+	2.	Deterministic navigation (tabs always move to a meaningful subview).
+	3.	Single canonical “Next Action” derived from prerequisites and current state.
+	4.	No dead clicks: every click produces either state change, route change, or explicit explanation.
+
+⸻
+
+A) Define a Case Lifecycle State Machine (Non-Negotiable)
+
+A1. Canonical Stages (minimum)
+
+Define case_stage as one of:
+	1.	INTAKE_EMPTY — no documents attached
+	2.	INTAKE_READY — documents attached, not yet normalized/canonized (if you have a step)
+	3.	TARGET_REQUIRED — target missing
+	4.	TIME_REQUIRED — decision time missing (if required by policy)
+	5.	POLICY_REQUIRED — governing policy missing
+	6.	CONSTRAINTS_REQUIRED — constraints missing
+	7.	READY_FOR_EVALUATION — all prerequisites satisfied
+	8.	EVALUATED — evaluation exists for current decision context
+	9.	SEALED — immutable record created (printout/seal)
+
+Rule: Stage must be computed from persisted facts, not UI heuristics.
+
+A2. Prerequisite Truth Table
+
+Maintain a computed object prereq_status with explicit booleans:
+	•	has_documents
+	•	has_target
+	•	has_decision_time (or decision_time_mode=LIVE|FIXED with FIXED required under certain policies)
+	•	has_policy
+	•	has_constraints
+	•	has_independent_verification (if required)
+	•	has_timeline_event (if “temporal verification” requires at least one timestamped event)
+	•	has_evaluation_for_current_context
+	•	has_seal
+
+Derive “What We Know / What’s Missing” from this structure only.
+
+⸻
+
+B) Fix Tab Navigation: Tabs Must Be Real Routes with Real Subviews
+
+B1. Each top tab must map to a distinct route
+
+Do not implement tabs as “same page + scroll to section” unless the user sees an obvious shift.
+
+Required routes (example):
+	•	/case/:id/overview
+	•	/case/:id/build
+	•	/case/:id/evaluate
+	•	/case/:id/audit
+
+B2. Each route must have a default subview that is not identical across tabs
+
+Right now the user experiences “tab click → same place.” Fix by defining unique default views:
+
+Overview
+	•	A read-only status dashboard: prerequisites, stage, last evaluation time, decision context summary.
+
+Build
+	•	The actual editing workspace: documents, target selection/edit, policy upload/selection, constraints editor, timeline events.
+
+Evaluate
+	•	Evaluation output for current decision context + “Run evaluation” if ready. If not ready, show blockers with direct jump actions.
+
+Audit
+	•	Event log, sealed artifacts, provenance, what changed when, and export controls.
+
+Rule: If a user lands in the same visual component tree after switching tabs, it is a bug.
+
+B3. Visual Confirmation of Navigation
+
+On each tab click, ensure at least one of:
+	•	Different header title/subtitle
+	•	Different primary CTA
+	•	Different main panel content
+	•	Different URL + breadcrumb
+
+No “soft navigation” that looks identical.
+
+⸻
+
+C) Fix “Next Step” and CTA Logic: One System, One Next Action
+
+C1. Replace “Next Step” with next_action computed from case_stage
+
+Define exactly one next_action object:
+	•	label
+	•	description
+	•	route
+	•	anchor (optional UI anchor / open modal)
+	•	blocking_prereqs (list)
+
+Examples:
+	•	If !has_documents → next_action = “Upload documents” → /build?panel=documents
+	•	Else if !has_target → “Set decision target” → /build?modal=target
+	•	Else if decision_time_required && !has_decision_time → “Set decision time” → /overview?modal=time (or /build)
+	•	Else if !has_policy → “Attach governing policy” → /build?panel=policy
+	•	Else if !has_constraints → “Set constraints” → /build?panel=constraints
+	•	Else if temporal_verification_required && !has_timeline_event → “Add timestamped evidence” → /build?panel=timeline
+	•	Else if !has_evaluation_for_current_context → “Run evaluation” → /evaluate
+	•	Else → “Seal artifact” → /audit?panel=seal
+
+C2. “Go to Build” Must Never Fire When Build Adds No Value
+
+Current complaint: it routes to Build even after docs are already uploaded. That is a rules failure.
+
+Hard rule: The next_action route must always point to where the first missing prerequisite can be satisfied with minimal clicks.
+If docs exist, never route to documents panel unless documents are the missing item.
+
+C3. Buttons must be disabled or swapped when action is already satisfied
+
+If has_target=true, the “Set Target” CTA should change to:
+	•	“Edit Target” (secondary) OR show completed state with inline edit icon.
+
+Do not leave “Set X” buttons visible as primary when X is already set.
+
+⸻
+
+D) Eliminate No-Op Interactions (“Dead Clicks”)
+
+D1. Every click must produce one of:
+	•	State change (persisted)
+	•	Route change (tab/subview changes)
+	•	Modal open with clear purpose
+	•	Explicit error/toast explaining why nothing happened
+
+If none of the above occurs, it’s a bug.
+
+D2. Instrument “no-op” detection
+
+Add lightweight logging:
+	•	ui_action_clicked
+	•	ui_action_result = {navigated, modal_opened, persisted, blocked_with_reason}
+Track and surface in dev console.
+
+⸻
+
+E) Clarify the “Imaging Acquisition Status” Strip (Target/Time/Independent/Policy/Constraints)
+
+E1. These are prerequisites, not navigation
+
+Right now they read as both “status” and “tabs.” Decide:
+
+Option 1 (recommended): keep them as status pills only (non-clickable), with a single “Fix” CTA under each missing item.
+
+Option 2: allow clicking, but clicking must open the correct editor modal/panel and must not land you back on the same view.
+
+E2. Ensure a consistent completion affordance
+
+When a prerequisite becomes satisfied:
+	•	Show immediate UI confirmation (checkmark + text changes)
+	•	Persist and reflect after refresh
+	•	Add a case_event entry (even in prototype)
+
+⸻
+
+F) Fix the Target Selection Modal Flow (Observed Confusion)
+
+F1. Selecting target must:
+	•	Close modal
+	•	Update status strip (Target becomes completed)
+	•	Update “What’s Missing”
+	•	Update “Next Step”
+	•	Persist across refresh
+
+If the modal closes and nothing else changes, it is a failure.
+
+F2. If target selection requires “Save”
+
+Then selection UI must show:
+	•	A clear selected state
+	•	“Save Target” enabled only when a target is selected
+	•	Error if save fails
+
+Do not allow “Set Decision Target” to click and silently no-op.
+
+⸻
+
+G) Evaluate vs Build: Remove Redundant Loopbacks
+
+G1. Gate Evaluate properly
+
+If prerequisites missing, Evaluate tab should not show the same overview dashboard. It should show:
+	•	“Blocked: Not ready to evaluate” with the blockers list
+	•	Buttons: “Fix Target”, “Fix Decision Time”, etc. deep-linking to exact editor
+
+G2. Once evaluated, Overview should not keep pushing Build
+
+After evaluation exists:
+	•	Overview’s primary CTA becomes “View Evaluation” or “Seal Artifact,” depending on sealing state.
+
+⸻
+
+H) Acceptance Criteria (Must Pass)
+	1.	Tab click changes URL and main content every time; no “same screen” landings.
+	2.	“Next Step” always points to the first missing prerequisite and never loops to completed steps.
+	3.	After setting Target or Decision Time, the UI immediately reflects completion, persists on refresh, and updates “What’s Missing” + “Next Step.”
+	4.	Evaluate tab either shows evaluation output or a blocker list with direct deep links—never a redundant overview clone.
+	5.	No primary CTA says “Set X” when X is already set; it becomes “Edit X” or completed state.
+	6.	Add instrumentation so you can prove clicks are not no-ops.
+
+⸻
+
+Non-Negotiables
+	•	No dead clicks.
+	•	No fake routing.
+	•	“Next Step” is computed, deterministic, and always changes when prerequisites change.
+	•	Tabs are not cosmetic—they are distinct workspaces.
+
+⸻

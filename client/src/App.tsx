@@ -11,6 +11,10 @@ import About from "@/pages/About";
 import PrintoutView from "@/pages/PrintoutView";
 import PrintoutsList from "@/pages/PrintoutsList";
 import ValueImaging from "@/pages/ValueImaging";
+import CaseOverviewPage from "@/pages/case/CaseOverviewPage";
+import CaseBuildPage from "@/pages/case/CaseBuildPage";
+import CaseEvaluatePage from "@/pages/case/CaseEvaluatePage";
+import CaseAuditPage from "@/pages/case/CaseAuditPage";
 
 function Router() {
   return (
@@ -19,6 +23,10 @@ function Router() {
       <Route path="/canon" component={CanonLibrary} />
       <Route path="/canon/document/:documentId" component={DocumentViewer} />
       <Route path="/about" component={About} />
+      <Route path="/cases/:caseId/overview" component={CaseOverviewPage} />
+      <Route path="/cases/:caseId/build" component={CaseBuildPage} />
+      <Route path="/cases/:caseId/evaluate" component={CaseEvaluatePage} />
+      <Route path="/cases/:caseId/audit" component={CaseAuditPage} />
       <Route path="/cases/:caseId/printouts" component={PrintoutsList} />
       <Route path="/cases/:caseId/printouts/:printoutId" component={PrintoutView} />
       <Route path="/value-imaging" component={ValueImaging} />
