@@ -136,3 +136,43 @@ Append-only record of system changes.
 - `curl localhost:5000/api` returns Scope Integrity Statement
 - `curl localhost:5000/api/printouts/{id}/verify` returns verification fields
 - All 409/403/405 responses return machine codes only
+
+---
+
+## RRS-1 / DISS-1 Compliance Patch
+
+**Date:** 2026-01-17  
+**Commit:** (pending)
+
+**What Changed:**
+
+**B) RRS-1 G5 "Where" Completeness:**
+- Added `environment`, `service`, `requestId`, `origin` to audit event metadata
+- Archive events now include full Who/What/When/Where context
+- User-created timeline events also augmented with Where fields
+
+**C) DISS-1 Neutral Codes:**
+- Replaced interpretive threshold labels with neutral procedural tiers
+- `unsafe` → `P0`, `high_risk` → `P3`, `defensible` → `P4`, `regulator_ready` → `P5`
+- API response `currentRiskTier` now returns P0/P3/P4/P5
+
+**D) DISS-1 Anti-Undo:**
+- Removed `reasonNote` free-text field entirely
+- Removed `OTHER` from valid reason codes
+- Archive accepts only: DUPLICATE | ENTERED_IN_ERROR | COMPLETED | CANCELLED
+- No editable free-text fields remain
+
+**Files Touched:**
+- `server/routes.ts` (archive endpoint, overview endpoint)
+- `server/storage.ts` (ArchiveCaseParams, archiveCase)
+- `shared/schema.ts` (ARCHIVE_REASON_CODES)
+- `client/src/lib/casesApi.ts` (ArchiveCaseParams)
+- `client/src/components/cases/CaseSelector.tsx` (archive modal UI)
+- `docs/SYSTEM_STATE.md` (updated)
+
+**Evidence Artifacts:**
+- G1-E1: `GET /api` returns Scope Integrity Statement
+- G4-E1: `DELETE /api/cases/:id` returns `{"error":"DELETE_NOT_ALLOWED","status":405}`
+- G4-E2: Archived case mutation returns `{"error":"ARCHIVED_RESOURCE_IMMUTABLE","status":409}`
+- G5-E1: Archive event metadata includes environment/service/requestId/origin
+- G5-E2: Schema shows Where fields in metadata JSONB

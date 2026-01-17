@@ -36,8 +36,7 @@ async function updateCase(id: string, data: Partial<InsertCase>): Promise<Case> 
 }
 
 interface ArchiveCaseParams {
-  reasonCode: "DUPLICATE" | "ENTERED_IN_ERROR" | "COMPLETED" | "CANCELLED" | "OTHER";
-  reasonNote?: string;
+  reasonCode: "DUPLICATE" | "ENTERED_IN_ERROR" | "COMPLETED" | "CANCELLED";
 }
 
 interface ArchiveCaseResult {

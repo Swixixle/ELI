@@ -1,0 +1,78 @@
+Send the following verbatim to the Replit agent/architect. It is scoped, binding, and maps directly to the gates you must satisfy (RRS-1 G1/G5) and drift resistance (DISS-1).  ￼  ￼
+
+⸻
+
+MESSAGE TO REPLIT AGENT / ARCHITECT (VERBATIM):
+
+We need a strict patch set to bring ELI Imaging — System State into compliance with the binding substrates. This is a narrow implementation directive. No refactors, no UX improvements, no additional copy.
+
+A) Implement RRS-1 Gate G1 (Scope Integrity Statement) — REQUIRED
+
+Add the following statement verbatim in exactly one non-interactive location:
+	•	UI footer OR API docs header (choose one; do not add both).
+
+Text (verbatim):
+“ELI asserts only that sufficient system evidence exists to confirm entry into the results environment at a specific time.”
+
+Constraints:
+	•	No other explanatory text.
+	•	No tooltips, dialogs, banners, or confirmations.  ￼
+
+B) Implement RRS-1 Gate G5 “Where” completeness — REQUIRED
+
+Audit events currently capture Who/What/When. Add “Where” fields to the audit event metadata for all case mutations and archive events:
+	•	environment (demo/staging/prod)
+	•	service (api name)
+	•	requestId (or trace id)
+	•	origin (ip or client identifier, whichever is already available without new tracking)
+
+Constraints:
+	•	Do not add new logging that risks PHI/PII leakage.
+	•	Keep payload machine-only.  ￼
+
+C) DISS-1 Anti-Drift: Remove interpretation-coded labels from user-facing surface — REQUIRED
+
+The prerequisite threshold labels currently include interpretive terms:
+unsafe, high_risk, defensible, regulator_ready.
+
+Change these to neutral codes for any user-facing API/UI output:
+	•	Replace with P0–P5 (or equivalent neutral scheme).
+	•	If you need to retain meanings internally, keep them server-side only and out of UI/API responses intended for users.
+
+Reason: prevent “clinical context creep” and soften drift.  ￼
+
+D) DISS-1 Anti-Undo: Constrain narrative surface area — REQUIRED
+
+Archive endpoint currently allows reasonNote and requires it for reasonCode=OTHER. This invites later “Undo / correction” requests.
+
+Implement one of the following minimal constraints (choose the lowest-impact option):
+	1.	Replace reasonNote with a fixed enum extension (no free text), OR
+	2.	Make reasonNote append-only via a separate immutable event (no edits), OR
+	3.	Remove reasonNote entirely and require a structured reasonCode only.
+
+Hard constraint:
+	•	No free-text fields that can be edited later.  ￼
+
+E) Deliverables (must return after patch)
+	1.	Diff summary (files changed + what changed)
+	2.	Updated System State doc reflecting changes
+	3.	Evidence artifacts for REI-1 Gate rows:
+
+	•	Screenshot showing the Scope Integrity statement placement (G1-E1)
+	•	Sample API responses for 409 and 405 (G4-E1/E2)
+	•	Sample log bundle showing Who/What/When/Where (G5-E1)
+	•	Schema excerpt proving added “Where” fields (G5-E2)  ￼
+
+F) Explicit Non-Scope
+
+Do not:
+	•	add dashboards, tooltips, confirmations, banners, or explanatory copy
+	•	add new features beyond the above
+	•	refactor unrelated code
+	•	change archive terminality or immutability semantics
+
+Proceed only with items A–D and stop.
+
+⸻
+
+If you want, tell me what the agent replies and I’ll approve/reject the diffs against RRS-1/DISS-1 line-by-line.

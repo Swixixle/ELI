@@ -15,7 +15,7 @@ export type CasePhase = typeof CASE_PHASES[number];
 export const CASE_STATUSES = ["active", "archived"] as const;
 export type CaseStatus = typeof CASE_STATUSES[number];
 
-export const ARCHIVE_REASON_CODES = ["DUPLICATE", "ENTERED_IN_ERROR", "COMPLETED", "CANCELLED", "OTHER"] as const;
+export const ARCHIVE_REASON_CODES = ["DUPLICATE", "ENTERED_IN_ERROR", "COMPLETED", "CANCELLED"] as const;
 export type ArchiveReasonCode = typeof ARCHIVE_REASON_CODES[number];
 
 export const cases = pgTable("cases", {

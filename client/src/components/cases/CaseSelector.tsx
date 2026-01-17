@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 type CaseStatusFilter = "active" | "archived" | "all";
-type ArchiveReasonCode = "DUPLICATE" | "ENTERED_IN_ERROR" | "COMPLETED" | "CANCELLED" | "OTHER";
+type ArchiveReasonCode = "DUPLICATE" | "ENTERED_IN_ERROR" | "COMPLETED" | "CANCELLED";
 
 interface CaseSelectorProps {
   open: boolean;
@@ -28,7 +28,6 @@ export function CaseSelector({ open, onOpenChange, onSelectCase, currentCaseId }
   const [archiveModalOpen, setArchiveModalOpen] = useState(false);
   const [archiveCaseId, setArchiveCaseId] = useState<string | null>(null);
   const [archiveReasonCode, setArchiveReasonCode] = useState<ArchiveReasonCode | null>(null);
-  const [archiveReasonNote, setArchiveReasonNote] = useState("");
   
   const { data: cases, isLoading } = useCases(statusFilter);
   const createCase = useCreateCase();
@@ -54,29 +53,22 @@ export function CaseSelector({ open, onOpenChange, onSelectCase, currentCaseId }
     e.stopPropagation();
     setArchiveCaseId(id);
     setArchiveReasonCode(null);
-    setArchiveReasonNote("");
     setArchiveModalOpen(true);
   };
 
   const handleArchiveConfirm = async () => {
     if (!archiveCaseId || !archiveReasonCode) return;
     
-    if (archiveReasonCode === "OTHER" && !archiveReasonNote.trim()) {
-      return;
-    }
-    
     try {
       await archiveCase.mutateAsync({
         id: archiveCaseId,
         params: {
-          reasonCode: archiveReasonCode,
-          reasonNote: archiveReasonNote.trim() || undefined
+          reasonCode: archiveReasonCode
         }
       });
       setArchiveModalOpen(false);
       setArchiveCaseId(null);
       setArchiveReasonCode(null);
-      setArchiveReasonNote("");
     } catch (error) {
       console.error("Archive failed:", error);
     }
@@ -290,22 +282,9 @@ export function CaseSelector({ open, onOpenChange, onSelectCase, currentCaseId }
                   <SelectItem value="CANCELLED">Cancelled - No longer needed</SelectItem>
                   <SelectItem value="DUPLICATE">Duplicate - Merged with another case</SelectItem>
                   <SelectItem value="ENTERED_IN_ERROR">Entered in Error</SelectItem>
-                  <SelectItem value="OTHER">Other reason</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            
-            {archiveReasonCode === "OTHER" && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Please specify reason</label>
-                <Input
-                  placeholder="Enter reason for archiving..."
-                  value={archiveReasonNote}
-                  onChange={(e) => setArchiveReasonNote(e.target.value)}
-                  data-testid="input-archive-note"
-                />
-              </div>
-            )}
           </div>
 
           <DialogFooter>
@@ -315,11 +294,7 @@ export function CaseSelector({ open, onOpenChange, onSelectCase, currentCaseId }
             <Button 
               variant="default"
               onClick={handleArchiveConfirm}
-              disabled={
-                !archiveReasonCode || 
-                (archiveReasonCode === "OTHER" && !archiveReasonNote.trim()) ||
-                archiveCase.isPending
-              }
+              disabled={!archiveReasonCode || archiveCase.isPending}
               data-testid="button-confirm-archive"
             >
               {archiveCase.isPending ? (

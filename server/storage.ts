@@ -4,7 +4,6 @@ import { eq, desc, ilike, or, sql, and, ne } from "drizzle-orm";
 
 export interface ArchiveCaseParams {
   reasonCode: ArchiveReasonCode;
-  reasonNote?: string;
   archivedBy?: string;
 }
 
@@ -107,7 +106,6 @@ export class DatabaseStorage implements IStorage {
         archivedAt: new Date(),
         archivedBy: params.archivedBy || "system",
         archiveReasonCode: params.reasonCode,
-        archiveReasonNote: params.reasonNote || null,
         updatedAt: new Date()
       })
       .where(eq(cases.id, id))

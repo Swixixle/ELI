@@ -8,13 +8,30 @@ Updated automatically after each completed fix.
 
 ---
 
+## Scope Integrity Statement (RRS-1 G1)
+
+Available at: `GET /api`
+
+> "ELI asserts only that sufficient system evidence exists to confirm entry into the results environment at a specific time."
+
+---
+
 ## Error Semantics
 
-| Code | Meaning |
-|------|---------|
-| 405 | Method Not Allowed — operation is structurally unsupported |
-| 409 | Conflict — operation blocked due to case state |
-| 403 | Forbidden — immutability or authorization enforcement |
+All error responses are machine-only (no explanatory text).
+
+| Code | Error Key | Meaning |
+|------|-----------|---------|
+| 400 | REASON_CODE_REQUIRED | Missing required field |
+| 400 | INVALID_REASON_CODE | Invalid enum value |
+| 404 | CASE_NOT_FOUND | Resource does not exist |
+| 404 | PRINTOUT_NOT_FOUND | Resource does not exist |
+| 405 | DELETE_NOT_ALLOWED | Operation structurally unsupported |
+| 409 | ARCHIVED_RESOURCE_IMMUTABLE | Operation blocked by case state |
+| 409 | ALREADY_ARCHIVED | Case is already in terminal state |
+| 403 | PRINTOUT_IMMUTABLE | Immutability enforcement |
+| 500 | ARCHIVE_FAILED | Internal error |
+| 500 | VERIFICATION_FAILED | Internal error |
 
 ---
 
@@ -68,21 +85,35 @@ All archived case mutations blocked at two layers:
 
 ---
 
-## Archive Behavior
+## Archive Behavior (DISS-1 Compliant)
 
 **Endpoint:** `POST /api/cases/:id/archive`
 
 **Required Fields:**
-- `reasonCode`: DUPLICATE | ENTERED_IN_ERROR | COMPLETED | CANCELLED | OTHER
-- `reasonNote`: Required if reasonCode is OTHER
+- `reasonCode`: DUPLICATE | ENTERED_IN_ERROR | COMPLETED | CANCELLED
+
+**No free-text fields.** `reasonNote` removed per DISS-1 Anti-Undo constraint.
 
 **Records:**
 - `archivedAt`: Timestamp
 - `archivedBy`: Actor identifier
 - `archiveReasonCode`: Reason code
-- `archiveReasonNote`: Optional note
 
-**Audit Event:** `CASE_ARCHIVED` event created with metadata
+**Audit Event:** `CASE_ARCHIVED` event created with Who/What/When/Where metadata
+
+---
+
+## Audit Event Metadata (RRS-1 G5)
+
+All case mutation events include:
+
+| Field | Description |
+|-------|-------------|
+| `reasonCode` | What action was taken |
+| `environment` | demo / staging / prod |
+| `service` | API service name (eli-imaging-api) |
+| `requestId` | Trace identifier |
+| `origin` | IP or client identifier |
 
 ---
 
@@ -93,6 +124,21 @@ All archived case mutations blocked at two layers:
 **Query Parameter:** `?status=active|archived|all`
 
 **Default:** `active` (excludes archived)
+
+---
+
+## Verification Endpoint
+
+**Endpoint:** `GET /api/printouts/:id/verify`
+
+**Returns:**
+- `id`: Printout identifier
+- `contentHash`: SHA-256 of content
+- `caseStateHash`: SHA-256 of case state
+- `signatureB64`: Ed25519 signature
+- `publicKeyId`: Signing key identifier
+- `issuedAt`: Timestamp
+- `verificationStatus`: SIGNATURE_PRESENT | UNSIGNED
 
 ---
 
@@ -126,11 +172,11 @@ All archived case mutations blocked at two layers:
 4. D — Policy Application Record
 5. E — Contextual Constraints
 
-**Threshold Policy:**
-- 0-2 met: `unsafe` / advisory only
-- 3 met: `high_risk` / permitted
-- 4 met: `defensible` / permitted
-- 5 met: `regulator_ready` / permitted
+**Procedural Tier (DISS-1 Neutral Codes):**
+- P0: 0-2 prerequisites met / advisory only
+- P3: 3 prerequisites met / permitted
+- P4: 4 prerequisites met / permitted
+- P5: 5 prerequisites met / permitted
 
 ---
 

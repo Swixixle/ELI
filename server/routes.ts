@@ -118,27 +118,24 @@ export async function registerRoutes(
   // Archive case - soft delete with audit trail
   app.post("/api/cases/:id/archive", async (req, res) => {
     try {
-      const { reasonCode, reasonNote } = req.body;
+      const { reasonCode } = req.body;
+      const requestId = req.headers["x-request-id"] || `req_${Date.now()}`;
+      const origin = req.ip || req.headers["x-forwarded-for"] || "unknown";
       
       if (!reasonCode) {
-        res.status(400).json({ error: "reasonCode is required" });
+        res.status(400).json({ error: "REASON_CODE_REQUIRED", status: 400 });
         return;
       }
       
-      const validReasonCodes = ["DUPLICATE", "ENTERED_IN_ERROR", "COMPLETED", "CANCELLED", "OTHER"];
+      const validReasonCodes = ["DUPLICATE", "ENTERED_IN_ERROR", "COMPLETED", "CANCELLED"];
       if (!validReasonCodes.includes(reasonCode)) {
-        res.status(400).json({ error: `Invalid reasonCode. Must be one of: ${validReasonCodes.join(", ")}` });
-        return;
-      }
-      
-      if (reasonCode === "OTHER" && !reasonNote) {
-        res.status(400).json({ error: "reasonNote is required when reasonCode is OTHER" });
+        res.status(400).json({ error: "INVALID_REASON_CODE", status: 400 });
         return;
       }
       
       const existingCase = await storage.getCase(req.params.id);
       if (!existingCase) {
-        res.status(404).json({ error: "Case not found" });
+        res.status(404).json({ error: "CASE_NOT_FOUND", status: 404 });
         return;
       }
       
@@ -149,17 +146,22 @@ export async function registerRoutes(
       
       const archivedCase = await storage.archiveCase(req.params.id, {
         reasonCode,
-        reasonNote,
         archivedBy: "user"
       });
       
-      // Create audit event
+      // Create audit event with Who/What/When/Where (B: RRS-1 G5)
       await storage.createCaseEvent({
         caseId: req.params.id,
         eventType: "CASE_ARCHIVED",
-        description: `Case archived. Reason: ${reasonCode}${reasonNote ? ` - ${reasonNote}` : ""}`,
+        description: `Case archived. Reason: ${reasonCode}`,
         eventTime: new Date(),
-        metadata: { reasonCode, reasonNote }
+        metadata: {
+          reasonCode,
+          environment: process.env.NODE_ENV || "development",
+          service: "eli-imaging-api",
+          requestId,
+          origin
+        }
       });
       
       res.json({
@@ -171,7 +173,7 @@ export async function registerRoutes(
       });
     } catch (error) {
       console.error("Error archiving case:", error);
-      res.status(500).json({ error: "Failed to archive case" });
+      res.status(500).json({ error: "ARCHIVE_FAILED", status: 500 });
     }
   });
 
@@ -217,22 +219,22 @@ export async function registerRoutes(
       const prereqValues = Object.values(prerequisiteStatus) as string[];
       const prerequisitesMet = prereqValues.filter(s => s === "met").length;
 
-      // Determine risk tier
-      type RiskTier = "unsafe" | "high_risk" | "defensible" | "regulator_ready" | "unknown";
-      let currentRiskTier: RiskTier = "unknown";
+      // Determine procedural tier (C: DISS-1 neutral codes)
+      type ProceduralTier = "P0" | "P3" | "P4" | "P5";
+      let currentRiskTier: ProceduralTier = "P0";
       let reviewPermission: "advisory_only" | "permitted" = "advisory_only";
       
       if (prerequisitesMet >= 5) {
-        currentRiskTier = "regulator_ready";
+        currentRiskTier = "P5";
         reviewPermission = "permitted";
       } else if (prerequisitesMet >= 4) {
-        currentRiskTier = "defensible";
+        currentRiskTier = "P4";
         reviewPermission = "permitted";
       } else if (prerequisitesMet >= 3) {
-        currentRiskTier = "high_risk";
+        currentRiskTier = "P3";
         reviewPermission = "permitted";
       } else {
-        currentRiskTier = "unsafe";
+        currentRiskTier = "P0";
         reviewPermission = "advisory_only";
       }
 
@@ -407,9 +409,23 @@ export async function registerRoutes(
         res.status(409).json({ error: "ARCHIVED_RESOURCE_IMMUTABLE", status: 409 });
         return;
       }
+      const requestId = req.headers["x-request-id"] || `req_${Date.now()}`;
+      const origin = req.ip || req.headers["x-forwarded-for"] || "unknown";
+      
+      // Augment metadata with Where fields (B: RRS-1 G5)
+      const userMetadata = req.body.metadata || {};
+      const augmentedMetadata = {
+        ...userMetadata,
+        environment: process.env.NODE_ENV || "development",
+        service: "eli-imaging-api",
+        requestId,
+        origin
+      };
+      
       const eventData = {
         ...req.body,
         caseId: req.params.id,
+        metadata: augmentedMetadata
       };
       const validatedData = insertCaseEventSchema.parse(eventData);
       const newEvent = await storage.createCaseEvent(validatedData);
