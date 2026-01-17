@@ -1,0 +1,78 @@
+Yes, it makes sense—and you’re thinking about it the right way.
+
+What you want is to stop producing “one big audit document” that becomes stale immediately, and replace it with a living, fact-only “state ledger” that updates after each fix, is easy to access, and does not leak strategy/IP.
+
+What’s wrong with the current “audit”
+
+In your screenshot the agent created docs/SYSTEM_REVIEW_AUDIT_JAN2026.md. That has three problems:
+	1.	It is a snapshot
+The moment you implement Fix #1, it’s outdated.
+	2.	It encourages unsupervised decision-making
+The agent asks to implement “top priority fixes.” That’s autonomy drift.
+	3.	It becomes an authored narrative
+A “comprehensive audit” tends to include recommendations, interpretations, and architecture language that can become your system’s “official story,” even if it’s not accurate.
+
+What you want instead
+
+A two-part system:
+
+1) A Living State Ledger (fact-only)
+A single file that always reflects “what is true in the code right now,” such as:
+	•	current case lifecycle states
+	•	what is immutable vs mutable
+	•	which endpoints allow which transitions
+	•	audit events recorded and when
+	•	deletion/archive behavior
+	•	key invariants enforced by code
+
+This file should be boring, mechanical, and non-prescriptive.
+
+Call it something like:
+	•	docs/SYSTEM_STATE.md (recommended)
+	•	or docs/STATE_LEDGER.md
+
+2) A Fix Log (append-only)
+A second file that tracks changes per fix:
+	•	Fix ID (e.g., Fix #4)
+	•	what changed (files, endpoints, schema)
+	•	what tests were added/updated
+	•	how to verify (commands / manual steps)
+	•	any new invariants introduced
+
+Call it:
+	•	docs/FIX_LOG.md or docs/CHANGELOG_SYSTEM.md
+
+This one is allowed to be chronological, but still should be non-strategic and non-opinionated.
+
+How it updates “after each fix”
+
+After each fix, the agent must do two things:
+	1.	Update SYSTEM_STATE.md to reflect the new reality
+	2.	Append an entry to FIX_LOG.md recording what changed and how to verify
+
+This gives you:
+	•	a stable “current truth” document
+	•	a traceable history of edits
+
+Why this solves your problem
+	•	You no longer have to re-run “a comprehensive audit” repeatedly.
+	•	You can hand me only the relevant sections (e.g., lifecycle + immutability) without giving away your full IP.
+	•	It prevents the agent from rewriting your system’s story each time.
+
+⸻
+
+What to tell the agent (paste this)
+
+Use this exact instruction:
+
+Stop creating “comprehensive audit” snapshots like docs/SYSTEM_REVIEW_AUDIT_*.md.
+
+Replace with two docs:
+	1.	docs/SYSTEM_STATE.md = single source of truth, fact-only, updated after every fix. No recommendations.
+	2.	docs/FIX_LOG.md = append-only log. Each fix adds an entry: what changed, files touched, tests added, verification steps. No strategy, no priorities.
+
+After implementing any fix: update SYSTEM_STATE.md, append to FIX_LOG.md, then stop and report.
+
+⸻
+
+If you want, I can also give you a template for SYSTEM_STATE.md (headings only, extremely minimal) so it stays consistent and easy to scan.

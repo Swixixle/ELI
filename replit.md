@@ -15,7 +15,8 @@ This checkpoint represents the complete **procedural imaging system** ready for:
 - `06cff98` - Integration positioning docs added
 - `431a28a` - Published app
 
-**Latest Audit:** `docs/SYSTEM_REVIEW_AUDIT_JAN2026.md`
+**Living State:** `docs/SYSTEM_STATE.md` (fact-only, updated after each fix)  
+**Fix History:** `docs/FIX_LOG.md` (append-only change log)
 
 ---
 
