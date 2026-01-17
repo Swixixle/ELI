@@ -209,6 +209,7 @@ export default function Home() {
   const [expandedAuditMessages, setExpandedAuditMessages] = useState<Set<string>>(new Set());
   const [documentCount, setDocumentCount] = useState(0);
   const [showDecisionTargetDialog, setShowDecisionTargetDialog] = useState(false);
+  const [showDecisionTimePopover, setShowDecisionTimePopover] = useState(false);
   const [viewMode, setViewMode] = useState<"builder" | "audit">("builder");
   const [showFreeText, setShowFreeText] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
@@ -222,8 +223,16 @@ export default function Home() {
         .then(res => res.json())
         .then(docs => setDocumentCount(docs.length))
         .catch(() => setDocumentCount(0));
+      
+      // Hydrate decisionTime from server value when case is loaded
+      if (activeCase.decisionTime) {
+        setDecisionTime(new Date(activeCase.decisionTime));
+      } else {
+        setDecisionTime(undefined);
+      }
     } else {
       setDocumentCount(0);
+      setDecisionTime(undefined);
     }
   }, [activeCase]);
 
@@ -272,6 +281,28 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Failed to set decision target:", error);
+    }
+  };
+
+  const handleSetDecisionTime = async (date: Date | undefined) => {
+    setDecisionTime(date);
+    
+    if (!activeCase || isArchived) return;
+    
+    try {
+      const response = await fetch(`/api/cases/${activeCase.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decisionTime: date ? date.toISOString() : null })
+      });
+      
+      if (response.ok) {
+        const updated = await response.json();
+        setActiveCase(updated);
+        queryClient.invalidateQueries({ queryKey: ["cases", activeCase.id, "overview"] });
+      }
+    } catch (error) {
+      console.error("Failed to set decision time:", error);
     }
   };
 
@@ -690,7 +721,7 @@ export default function Home() {
              {/* Decision Time Selector */}
              <div className="flex flex-col items-end">
                 <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Decision Context</span>
-                <Popover>
+                <Popover open={showDecisionTimePopover} onOpenChange={setShowDecisionTimePopover}>
                   <PopoverTrigger asChild>
                     <button className={cn(
                       "flex items-center gap-2 px-3 py-1.5 text-xs font-mono border rounded-md transition-colors",
@@ -709,13 +740,19 @@ export default function Home() {
                     <Calendar
                       mode="single"
                       selected={decisionTime}
-                      onSelect={setDecisionTime}
+                      onSelect={(date) => {
+                        handleSetDecisionTime(date);
+                        setShowDecisionTimePopover(false);
+                      }}
                       initialFocus
                       className="p-2"
                     />
                     <div className="p-2 border-t">
                       <button 
-                        onClick={() => setDecisionTime(undefined)}
+                        onClick={() => {
+                          handleSetDecisionTime(undefined);
+                          setShowDecisionTimePopover(false);
+                        }}
                         className="w-full text-xs text-muted-foreground hover:text-primary py-1"
                       >
                         Reset to Now (Live)
@@ -858,7 +895,9 @@ export default function Home() {
                 <CaseOverview
                   caseData={activeCase}
                   viewMode={viewMode}
+                  decisionTime={decisionTime}
                   onSetDecisionTarget={() => setShowDecisionTargetDialog(true)}
+                  onSetDecisionTime={handleSetDecisionTime}
                   onNavigateToTab={(tab) => setActiveTab(tab as CaseTab)}
                 />
               </ScrollArea>

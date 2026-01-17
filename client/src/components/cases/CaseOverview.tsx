@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 import { 
   Target, 
   Clock, 
@@ -11,16 +12,21 @@ import {
   Gavel,
   Upload,
   FileCheck,
-  AlertTriangle
+  AlertTriangle,
+  CalendarClock
 } from "lucide-react";
 import { Badge } from "@/components/shared/Badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import type { Case, CaseOverview as CaseOverviewType, PrerequisiteStatusValue } from "@shared/schema";
 import { useCaseOverview } from "@/lib/casesApi";
 
 interface CaseOverviewProps {
   caseData: Case;
   viewMode: "builder" | "audit";
+  decisionTime?: Date;
   onSetDecisionTarget: () => void;
+  onSetDecisionTime: (date: Date | undefined) => void;
   onNavigateToTab: (tab: string) => void;
 }
 
@@ -88,9 +94,12 @@ function getPrerequisites(overview: CaseOverviewType): Prerequisite[] {
 export function CaseOverview({ 
   caseData, 
   viewMode,
+  decisionTime,
   onSetDecisionTarget,
+  onSetDecisionTime,
   onNavigateToTab
 }: CaseOverviewProps) {
+  const [showInlineDecisionTime, setShowInlineDecisionTime] = useState(false);
   const { data: overview, isLoading, error } = useCaseOverview(caseData.id);
 
   if (isLoading) {
@@ -115,12 +124,22 @@ export function CaseOverview({
   const prerequisites = getPrerequisites(overview);
   const nextAction = overview.nextActionHint;
 
+  const needsDecisionTime = nextAction?.toLowerCase().includes("decision time");
+  
   const handleNextAction = () => {
     if (!overview.decisionTarget) {
       onSetDecisionTarget();
+    } else if (needsDecisionTime) {
+      setShowInlineDecisionTime(true);
     } else {
       onNavigateToTab("build");
     }
+  };
+  
+  const getNextActionButtonLabel = () => {
+    if (!overview.decisionTarget) return "Set Target";
+    if (needsDecisionTime) return "Set Decision Time";
+    return "Go to Build";
   };
 
   return (
@@ -309,13 +328,58 @@ export function CaseOverview({
                 <p className="text-sm text-muted-foreground">{nextAction}</p>
               </div>
             </div>
-            <button
-              onClick={handleNextAction}
-              className="px-5 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
-              data-testid="button-next-action"
-            >
-              {!overview.decisionTarget ? "Set Target" : "Go to Build"}
-            </button>
+            {needsDecisionTime && showInlineDecisionTime ? (
+              <Popover open={showInlineDecisionTime} onOpenChange={setShowInlineDecisionTime}>
+                <PopoverTrigger asChild>
+                  <button
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border rounded-lg transition-colors",
+                      decisionTime
+                        ? "bg-amber-50 text-amber-900 border-amber-200"
+                        : "bg-background text-foreground border-border hover:border-primary"
+                    )}
+                    data-testid="button-decision-time-inline"
+                  >
+                    <CalendarClock className="w-4 h-4" />
+                    {decisionTime ? decisionTime.toLocaleDateString() : "Select Date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <div className="p-3 border-b text-xs text-muted-foreground bg-muted/30">
+                    Setting a past date excludes all subsequent knowledge (hindsight).
+                  </div>
+                  <Calendar
+                    mode="single"
+                    selected={decisionTime}
+                    onSelect={(date) => {
+                      onSetDecisionTime(date);
+                      setShowInlineDecisionTime(false);
+                    }}
+                    initialFocus
+                    className="p-2"
+                  />
+                  <div className="p-2 border-t">
+                    <button
+                      onClick={() => {
+                        onSetDecisionTime(undefined);
+                        setShowInlineDecisionTime(false);
+                      }}
+                      className="w-full text-xs text-muted-foreground hover:text-primary py-1"
+                    >
+                      Reset to Now (Live)
+                    </button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <button
+                onClick={handleNextAction}
+                className="px-5 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                data-testid="button-next-action"
+              >
+                {getNextActionButtonLabel()}
+              </button>
+            )}
           </div>
         </div>
       )}

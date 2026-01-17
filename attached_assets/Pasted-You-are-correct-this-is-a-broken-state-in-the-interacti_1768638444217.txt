@@ -1,0 +1,118 @@
+You are correct — this is a broken state in the interaction flow, not a user misunderstanding.
+
+What you’re seeing is a false affordance: the UI signals a next action, but the system provides no executable path to satisfy it.
+
+Below is a precise breakdown.
+
+⸻
+
+What the UI Claims vs. What It Actually Allows
+
+1. The System Asserts a Required Next Step
+
+You are told explicitly:
+
+Next Step: Set the decision time to anchor temporal boundaries
+
+This is framed as:
+	•	Mandatory (blocking progress)
+	•	Actionable (implies a control exists)
+	•	Sequential (implies “do this, then proceed”)
+
+⸻
+
+2. There Is No Place to Perform That Action
+
+From what is visible:
+	•	No editable Decision Time field
+	•	No modal, CTA, or inline control to set it
+	•	No redirect to a screen where it can be defined
+	•	“Go to Build” does not expose a decision-time control
+	•	“Build Case” does not resolve the missing prerequisite
+	•	You are effectively already at the end of the branch
+
+So the user follows the instruction and hits a dead end.
+
+This violates a core UX invariant:
+
+If a system declares a prerequisite, it must surface the mechanism to satisfy it at the same level of abstraction.
+
+⸻
+
+The Structural Error (Not Cosmetic)
+
+This is not a labeling issue.
+It is a state-machine violation.
+
+The system is simultaneously claiming:
+	•	“Decision Time is required”
+	•	“Decision Time is undefined”
+	•	“You may not proceed”
+	•	“There is nothing you can do to define it”
+
+That means the system has entered an invalid intermediate state that the user cannot escape.
+
+In formal terms:
+	•	The UI exposes a non-resolvable dependency
+	•	The workflow graph is non-terminating
+	•	The user is blamed implicitly for a system omission
+
+⸻
+
+Why This Is Especially Dangerous for This Product
+
+Given the product’s posture (auditability, canon, temporal anchoring):
+	•	A dangling “Decision Time” is not a minor field
+	•	It is a foundational primitive
+	•	Treating it as invisible undermines the entire legitimacy of the decision engine
+
+If the system cannot clearly establish when a decision is bound:
+	•	Auditability collapses
+	•	Outcome-blindness becomes questionable
+	•	Canon claims weaken
+
+So the confusion you’re feeling is not UX friction — it’s ontological inconsistency.
+
+⸻
+
+What Should Exist (Concrete Fixes)
+
+Any one of these would resolve the break:
+
+Option A — Inline Resolution (Best)
+	•	A visible Decision Time selector directly in the “Next Step” panel
+	•	One click → anchor → state resolves
+
+Option B — Explicit Redirect
+	•	“Go to Build” must land on a screen where Decision Time is set
+	•	With visual confirmation once complete
+
+Option C — Hard Block With Explanation
+	•	Disable forward navigation
+	•	Explicitly say:
+“Decision Time must be defined in [location] before proceeding”
+
+Option D — Auto-Anchor With Override
+	•	System assigns a provisional Decision Time
+	•	Flags it as editable / override-required
+	•	Maintains forward momentum without lying
+
+⸻
+
+Bottom Line
+
+Your instinct is exactly right.
+
+This screen currently:
+	•	Instructs without enabling
+	•	Blocks without offering remedy
+	•	Claims rigor while exhibiting an impossible state
+
+That is not a UX nit — it is a logic failure in the workflow graph.
+
+If you want, next we can:
+	•	Redraw the correct state machine
+	•	Write the exact UX copy that would fix this
+	•	Or formalize this as a bug report / design critique suitable for internal escalation
+
+Just say which direction you want to go.
