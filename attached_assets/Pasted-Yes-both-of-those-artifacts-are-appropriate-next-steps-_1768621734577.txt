@@ -1,0 +1,231 @@
+Yes—both of those artifacts are appropriate next steps for locking down implementation correctness under your event-sourced/WORM constraints. Below are production-usable drafts you can hand to engineering immediately: (1) a sequence diagram for Archive + Signature/Verification and (2) a JSON Schema for the Prerequisites Evaluation model (including signing fields, state-binding, and WORM-compatibility constraints).
+
+1) Sequence diagram: Archive + Determination Signature + Verification
+
+sequenceDiagram
+  autonumber
+  participant UI as Client/UI
+  participant API as API Gateway
+  participant CS as Case Service
+  participant ES as Event Store (append-only)
+  participant WORM as WORM Object Store (immutable blobs)
+  participant KMS as Key Service / KMS (Ed25519)
+  participant VR as Verifier (internal/external)
+
+  %% Pre-archive readiness
+  UI->>API: GET /api/cases/:id (includes prerequisites summary + version)
+  API->>CS: Load case projection
+  CS->>ES: Read events (case stream)
+  ES-->>CS: Events
+  CS-->>API: Case snapshot + caseStateHash + version
+  API-->>UI: 200 OK
+
+  Note over UI: UI validates 5/5 prerequisites met<br/>and confirmation prior to archive
+
+  %% Archive request (idempotent)
+  UI->>API: POST /api/cases/:id/archive (idempotencyKey)
+  API->>CS: ArchiveCase(cmd)
+  CS->>ES: Append CASE_ARCHIVE_REQUESTED (idempotencyKey, actor, reason)
+  ES-->>CS: OK (eventNumber)
+
+  CS->>ES: Append CASE_ARCHIVED (archivedAt, reasonCode, reasonNote, prereqDigest, caseStateHash, priorVersion)
+  ES-->>CS: OK
+
+  CS-->>API: ArchiveResult(state=ARCHIVED, caseStateHash, version++)
+  API-->>UI: 204 No Content (or 200 with state)
+
+  %% Determination creation after archive (should be blocked if policy)
+  Note over UI,API: If determinations allowed only pre-archive,<br/>API returns 409/403 and UI switches to read-only
+
+  %% Determination issuance (when allowed by policy)
+  UI->>API: POST /api/cases/:id/determinations (payload)
+  API->>CS: CreateDetermination(cmd)
+  CS->>ES: Read case projection (must match expectedVersion)
+  ES-->>CS: Events
+  CS->>CS: Compute contentHash + caseStateHash
+  CS->>KMS: Sign (contentHash || caseStateHash || canonicalFields)
+  KMS-->>CS: signatureB64 + publicKeyId
+
+  CS->>WORM: Put determination JSON/PDF (content-addressed by contentHash)
+  WORM-->>CS: objectUri (immutable)
+
+  CS->>ES: Append DETERMINATION_ISSUED (contentHash, signatureB64, publicKeyId, caseStateHash, objectUri)
+  ES-->>CS: OK
+  CS-->>API: DeterminationRef
+  API-->>UI: 201 Created
+
+  %% Verification workflow (external or internal)
+  VR->>API: GET /api/determinations/:id (or objectUri)
+  API->>CS: Load determination ref + objectUri
+  CS->>ES: Read determination events
+  ES-->>CS: Events
+  CS-->>API: Determination metadata + objectUri + signing fields
+  API-->>VR: 200 OK
+
+  VR->>WORM: Fetch content (immutable)
+  WORM-->>VR: content bytes / canonical JSON
+  VR->>VR: Recompute contentHash
+  VR->>VR: Verify Ed25519 signature using publicKeyId
+  VR->>API: GET /api/cases/:id/state-hash?version=...
+  API-->>VR: caseStateHash (recomputed from event stream)
+  VR->>VR: Validate (hashes + signature + context)
+
+Implementation notes embedded in the diagram
+	•	Idempotency: archive should accept a stable idempotencyKey and return 200/204 if the same key was previously applied to the same case. A 409 should be reserved for true logical conflicts (e.g., expectedVersion mismatch without an idempotency key).
+	•	State binding: sign over contentHash + caseStateHash (+ canonicalFields) to ensure the signature is invalid if either the document content or the underlying case state changes.
+	•	WORM separation: event store holds the fact; WORM store holds the artifact; events reference immutable objectUri and contentHash.
+
+⸻
+
+2) Draft JSON Schema: Prerequisites Evaluation (WORM + event-sourced friendly)
+
+This schema models a single prerequisite evaluation record. In an event-sourced system you typically persist it as an immutable event payload (or as an immutable “evaluation” entity that is only append-updated by new versions).
+
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/prerequisite-evaluation.schema.json",
+  "title": "PrerequisiteEvaluation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evaluationId",
+    "caseId",
+    "prerequisiteCode",
+    "status",
+    "evaluatedAt",
+    "evaluator",
+    "inputs",
+    "outputs",
+    "contentHash",
+    "caseStateHash",
+    "signature",
+    "storage"
+  ],
+  "properties": {
+    "evaluationId": {
+      "type": "string",
+      "description": "ULID/UUID. Immutable identity of this evaluation record."
+    },
+    "caseId": {
+      "type": "string",
+      "description": "Parent case identifier."
+    },
+    "prerequisiteCode": {
+      "type": "string",
+      "description": "One of the five prerequisite evaluation types.",
+      "enum": [
+        "PREREQ_1",
+        "PREREQ_2",
+        "PREREQ_3",
+        "PREREQ_4",
+        "PREREQ_5"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "description": "Terminality depends on your policy. Under WORM, you create a new evaluationId for a revised evaluation, or version it immutably.",
+      "enum": ["PASS", "FAIL", "NOT_APPLICABLE", "INCOMPLETE"]
+    },
+    "evaluatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorId", "actorType"],
+      "properties": {
+        "actorId": { "type": "string" },
+        "actorType": { "type": "string", "enum": ["USER", "SERVICE"] },
+        "displayName": { "type": "string" },
+        "role": { "type": "string" }
+      }
+    },
+
+    "inputs": {
+      "type": "object",
+      "description": "Structured inputs used to arrive at the evaluation result (patient data references, image ids, measurements). Must be deterministic for hashing.",
+      "additionalProperties": true
+    },
+
+    "outputs": {
+      "type": "object",
+      "description": "Structured outputs (scores, thresholds met, reasoning codes). Keep free-text constrained to avoid PII drift and nondeterminism.",
+      "additionalProperties": true
+    },
+
+    "contentHash": {
+      "type": "string",
+      "description": "SHA-256 hash of canonicalized evaluation payload (excluding signature block).",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "caseStateHash": {
+      "type": "string",
+      "description": "SHA-256 hash of the case state (or state-relevant subset) at the time of evaluation.",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alg", "publicKeyId", "signatureB64", "signedFields"],
+      "properties": {
+        "alg": { "type": "string", "enum": ["Ed25519"] },
+        "publicKeyId": { "type": "string" },
+        "signatureB64": { "type": "string" },
+        "signedFields": {
+          "type": "array",
+          "description": "Explicit list of JSON pointer paths included in canonical signing input.",
+          "minItems": 1,
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "objectUri", "wormPolicy"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["WORM"] },
+        "objectUri": { "type": "string", "description": "Immutable object address in WORM store." },
+        "wormPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["retention", "legalHold"],
+          "properties": {
+            "retention": { "type": "string", "description": "e.g., P7Y, P10Y (ISO 8601 duration) or org policy ID." },
+            "legalHold": { "type": "boolean" }
+          }
+        }
+      }
+    },
+
+    "versioning": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional: only if you support immutable revisions.",
+      "properties": {
+        "supersedesEvaluationId": { "type": "string" },
+        "revisionReasonCode": { "type": "string" },
+        "revisionNote": { "type": "string", "maxLength": 2000 }
+      }
+    }
+  }
+}
+
+Key schema decisions (aligned with your constraints)
+	•	Hashing: contentHash should be computed over a canonical form of the evaluation payload (e.g., JSON Canonicalization Scheme), excluding signature and any non-deterministic fields.
+	•	Context binding: caseStateHash is first-class and signed, preventing “valid evaluation attached to wrong case version.”
+	•	WORM references: objectUri is immutable; events refer to it; no deletes.
+
+⸻
+
+Recommended next move
+
+If you want maximum engineering leverage, generate one combined artifact:
+	•	A “Canonicalization & Signing” mini-spec (exact byte payload to hash/sign, field ordering, JSON pointers in signedFields, and what is excluded), plus
+	•	An “Archive Idempotency Contract” (required header/field, replay behavior, and exact response codes).
+
+If you tell me your five actual prerequisite codes/names and whether prerequisites can ever be revised post-creation (immutable revision chain vs “one-and-done”), I will tighten the schema enums and the event/route semantics accordingly.
