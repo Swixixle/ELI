@@ -184,19 +184,19 @@ export function useDeleteCaseDocument(caseId: string | null) {
   });
 }
 
-interface EvaluationResult {
+interface DeterminationResult {
+  id: string;
+  caseId: string;
   status: string;
-  canonVersion: string;
-  prerequisites: Record<string, boolean>;
-  prerequisitesMet: number;
-  prerequisitesTotal: number;
-  riskTier: string;
-  reviewPermission: string;
-  evaluatedAt: string;
+  conditionsMet: number;
+  conditionsTotal: number;
+  caseStateHash: string;
+  receiptJson: any;
+  createdAt: string;
 }
 
-async function evaluateCase(caseId: string): Promise<EvaluationResult> {
-  const res = await fetch(`/api/cases/${caseId}/evaluate`, {
+async function createDetermination(caseId: string): Promise<DeterminationResult> {
+  const res = await fetch(`/api/cases/${caseId}/determine`, {
     method: "POST",
     headers: { "Content-Type": "application/json" }
   });
@@ -210,9 +210,10 @@ async function evaluateCase(caseId: string): Promise<EvaluationResult> {
 export function useEvaluateCase() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (caseId: string) => evaluateCase(caseId),
+    mutationFn: (caseId: string) => createDetermination(caseId),
     onSuccess: (_data, caseId) => {
       queryClient.invalidateQueries({ queryKey: ["cases", caseId, "overview"] });
+      queryClient.invalidateQueries({ queryKey: ["cases", caseId] });
     }
   });
 }
