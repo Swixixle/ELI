@@ -9,11 +9,13 @@ This checkpoint represents the complete **procedural imaging system** ready for:
 - Strategic partner demos
 
 **Key commits to return to:**
+- `9721b5e` - System review + branding consistency
+- `0650429` - Case archival with defense-in-depth guards
 - `e92cfea` - Rebranded to ELI Imaging with Canon §0.3 and §0.4
 - `06cff98` - Integration positioning docs added
 - `431a28a` - Published app
-- `bb5a03d` - Demo banner added
-- `af9bde4` - UX improvements complete
+
+**Latest Audit:** `docs/SYSTEM_REVIEW_AUDIT_JAN2026.md`
 
 ---
 

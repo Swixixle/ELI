@@ -206,9 +206,8 @@ export async function registerRoutes(
 
       // Count prerequisites met
       const hasTarget = prerequisiteStatus.decisionTarget === "met";
-      const prereqValues = Object.values(prerequisiteStatus);
+      const prereqValues = Object.values(prerequisiteStatus) as string[];
       const prerequisitesMet = prereqValues.filter(s => s === "met").length;
-      const partialCount = prereqValues.filter(s => s === "partial").length;
 
       // Determine risk tier
       type RiskTier = "unsafe" | "high_risk" | "defensible" | "regulator_ready" | "unknown";

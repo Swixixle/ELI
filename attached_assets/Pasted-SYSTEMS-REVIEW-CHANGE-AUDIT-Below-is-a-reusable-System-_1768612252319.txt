@@ -1,0 +1,135 @@
+SYSTEMS REVIEW CHANGE AUDIT
+
+Below is a reusable “System Review + Change Audit” prompt you can paste to your Replit agent any time you’ve made updates. It is structured to (1) force a full repo scan, (2) explicitly compare against the prior state, and (3) preserve your IP by requiring [SEALED] and [CANON_REF] placeholders.
+
+Replit Agent Prompt — ELI Imaging System Review + Change Audit (Reusable)
+You are my Replit build agent for the “ELI Imaging” app.
+I need a comprehensive end-to-end SYSTEM REVIEW and an IMPLEMENTATION PLAN as of the current repo state, including a CHANGE AUDIT relative to the last known good version. However, you must NOT expose, regenerate, or paraphrase proprietary “Canon” content, formulas, weights, thresholds, scoring logic, or any sealed parameters. Treat those as IP.
+If you encounter any protected content, do not output it. Use:
+* [SEALED] for protected values/parameters
+* [CANON_REF] for citations/links/IDs to canon chunks (no content)
+Your job is to review structure, wiring, UX, data flow, and safety/guardrails.
+
+DELIVERABLES (all required)
+0) Snapshot & Change Audit (Required)
+1. Repo snapshot: framework(s), key directories, DB choice, hosting assumptions, and any runtime entrypoints.
+2. Change audit since last review (or since last tagged commit if available):
+    * list meaningful changes by area (UI, backend, DB, prompts, file handling, auth/session)
+    * identify any behavior changes that could break case-binding or governance
+    * highlight newly introduced tech debt or duplicated logic
+    * if no baseline exists, create a baseline summary for next time
+If a git history or tags exist, use them. If not, infer changes by scanning recent file modifications and referencing commit messages where available.
+
+1) Current-State Architecture Map
+Provide a map of:
+* Frontend: routes, layout/shell, major components, state management (global store, URL params, session, etc.)
+* Backend: endpoints, controllers/handlers, middleware, background jobs (if any)
+* DB: schema/tables, key constraints, indexes, cascade rules
+* LLM pipeline: stages (retrieval, grounding, validation, response), prompt templates (names only), citation plumbing ([CANON_REF] only)
+* Auth/session: how identity/session is stored and passed
+* File upload + chunking: pipeline, storage, chunk metadata, association to cases
+
+2) What’s Broken / Confusing (Severity + Repro)
+Create a list with severity (Blocker / High / Medium / Low) and exact repro steps. Focus especially on:
+* case visibility and “active case” confusion
+* decision target flow (where it’s set, where it’s read, when it’s missing)
+* navigation confusion: “Case Canon” placement (users thinking it is global)
+* inconsistent naming: ELI Expert vs ELI Imaging
+* any UI states where the assistant responds generically or incorrectly
+* any ambiguous or misleading “success” states (e.g., call returns 200 but doesn’t bind to case)
+
+3) Missing-Field Audit (Case Build Completeness)
+Identify any required fields not captured in the case build flow, and specify:
+* where each field should live in UI
+* where it should live in DB
+* where it must be enforced (frontend validation, backend validation, both)
+At minimum, audit for:
+* caseId binding everywhere
+* decisionTarget
+* decisionTime
+* prerequisites state (structured, versioned)
+* evidence type classification
+* provenance/citations model ([CANON_REF] only; no canon content)
+* case status (draft/active/archived)
+* printout versioning/immutability metadata
+
+4) Data Model Sanity & Governance Constraints
+Verify:
+* FK constraints: everything belongs to a case; no orphan records
+* immutability for printouts (and any audit artifacts)
+* whether cases are archived vs deleted (and whether deletes are soft/hard)
+* required indexes for query performance (caseId, createdAt, etc.)
+* migration integrity (if migrations exist)
+
+5) LLM Governance Wiring (Must Be Deterministic)
+Confirm the app always passes REQUIRED case context in every LLM call, including:
+* caseId
+* decisionTime
+* decisionTarget
+* prerequisite state
+* relevant canon chunk citations as [CANON_REF]
+* any safety/refusal flags
+If any required context is missing, the system must return a structured response:
+* type: CONTEXT REQUIRED
+* missing_fields: [...]
+* next_actions: [...]
+It must not produce a helpful-sounding generic answer when context is missing.
+Also confirm:
+* the UI renders refusal flags deterministically (not “sometimes”)
+* there is no path where the LLM can answer “out of case” without being blocked
+
+6) CFO / Value Imaging Engine Presence & Integrity
+Determine whether the CFO / Value Imaging engine exists in the repo.
+* If missing: propose a safe reintegration approach that preserves the “imaging” ontology (visibility, not outcomes) and places assumptions/parameters in a config file with clear labels (no secret values in code). Use [SEALED] for any protected values.
+* If present: point to file paths and verify integration points are intact, and that formulas/logic appear consistent with the current product framing without outputting any protected math.
+
+7) Naming Sweep (User-Facing Consistency)
+Ensure every user-facing label says “ELI Imaging” (not ELI Expert), including:
+* sidebar
+* headers
+* page titles / metadata
+* prompt templates (names only)
+* response branding
+* any onboarding/help text
+Provide exact file paths and string locations where feasible.
+
+8) Prioritized Fix Plan (Top 10)
+Rank top 10 fixes by:
+* impact (user trust + correctness + governance)
+* effort (S/M/L)
+* risk (breaking change vs safe refactor)
+For each fix include:
+* exact file paths
+* code-level notes (what to change, what to avoid)
+* any migration steps (if DB changes)
+
+9) Verification Checklist (Demo Cases)
+After fixes, provide manual test steps for 3 demo cases:
+* SYN-DEMO-007
+* SYN-DEMO-008
+* SYN-DEMO-009
+Validate end-to-end:
+1. decision target set
+2. prerequisites update
+3. evaluate works
+4. ask question returns case-bound response (not generic)
+5. printout is immutable (cannot be edited after generation)
+
+CONSTRAINTS (Non-Negotiable)
+* Do NOT rewrite my Canon, decision logic, scoring thresholds, or protected math parameters.
+* Do NOT paste proprietary text into outputs. Summarize in neutral terms only.
+* Use [SEALED] and [CANON_REF] placeholders where needed.
+* Focus on plumbing: collection of missing inputs, strict routing, deterministic governance behavior.
+
+START HERE (Must Address First)
+A) Locate where active case selection context is stored (URL param, global store, session, DB) and confirm all key calls include caseId. B) Find why “Are we allowed to decide yet?” sometimes returns generic confusion; fix so it always binds to case state or returns CONTEXT REQUIRED. C) Fix navigation confusion: “Case Canon” must be clearly nested under the active case context (or renamed) so users don’t think it is global.
+
+OUTPUT FORMAT (Use Exactly)
+Findings
+* …
+Proposed fixes
+* … (include file paths)
+Patch plan
+1. …
+2. …
+3. …
