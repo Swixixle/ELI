@@ -1,0 +1,133 @@
+Understood. This is not “getting old” — this is a real blocking failure, and your frustration is warranted.
+
+Let’s strip the emotion out and treat this like a systems fault.
+
+What the screenshot tells us (important)
+	•	UI state says “Ready for Evaluation”
+	•	Prerequisites: 3/5 met → this is already a red flag
+	•	Button is enabled, but execution returns:
+“An unexpected error occurred. Please try again or contact support.”
+
+That message almost never comes from the frontend alone. It’s a caught exception from the evaluation trigger path — usually backend or permissions.
+
+⸻
+
+Most Likely Failure Modes (ranked)
+
+1. Backend endpoint is throwing (500)
+
+Common causes:
+	•	Missing env var (API key, org ID, model name)
+	•	Null/undefined case object passed into evaluator
+	•	Evaluation job expects fields that aren’t populated yet
+
+Action (5 minutes):
+	•	Open DevTools → Network
+	•	Click Run Evaluation
+	•	Look for the request (likely /api/evaluate, /run-evaluation, or similar)
+	•	Check:
+	•	Status code (500 vs 403 vs 400)
+	•	Response body (often the real error is there)
+
+If you paste that response here, we’ll know immediately.
+
+⸻
+
+2. Prerequisite gating logic is inconsistent
+
+UI says:
+	•	“Ready for Evaluation”
+	•	But also: 3/5 prerequisites met
+
+That implies:
+	•	Frontend gating ≠ backend gating
+	•	Backend may still be enforcing 5/5
+
+This is a logic desync bug, not user error.
+
+Action:
+	•	Identify what the missing 2 prerequisites are:
+	•	Data snapshot?
+	•	CFO deck attached?
+	•	Governance rider acknowledged?
+	•	Thresholds computed but not persisted?
+
+If one of those is “soft-optional” in UI but “hard-required” in backend → boom, dead end.
+
+⸻
+
+3. Permission / role mismatch
+
+It says:
+
+Review permission: permitted
+
+But evaluation may require:
+	•	evaluator
+	•	admin
+	•	system
+
+If the backend checks role claims differently than the UI badge, you get this exact behavior.
+
+Action:
+	•	Inspect request headers → auth token → role claims
+	•	Or temporarily bypass permission check to confirm
+
+⸻
+
+4. Evaluation job is async but infra isn’t wired
+
+Very common in Replit / early infra:
+	•	Button triggers job enqueue
+	•	Queue / worker isn’t running
+	•	Backend throws generic error instead of “worker unavailable”
+
+Action:
+	•	Check server logs at click time
+	•	Look for:
+	•	“Queue not initialized”
+	•	“Worker not found”
+	•	“Cannot read property ‘run’ of undefined”
+
+⸻
+
+5. Silent schema mismatch
+
+If the evaluation engine expects something like:
+
+case.stabilizationThresholds.minimum
+
+…and you recently renamed or refactored it, the UI won’t care — backend will explode.
+
+Action:
+	•	Log the case object right before evaluation starts
+	•	Compare against what the evaluator expects (not what UI displays)
+
+⸻
+
+The key point (important)
+
+This is not a conceptual dead end.
+This is a plumbing failure.
+
+Nothing here suggests:
+	•	bad product logic
+	•	flawed governance model
+	•	wrong direction
+
+It suggests one unhandled backend assumption.
+
+⸻
+
+Fastest path forward
+
+If you want to move efficiently, send one of the following:
+	1.	Network tab response body from clicking “Run Evaluation”
+	2.	Backend error log from that click
+	3.	The evaluation trigger code (controller / handler)
+
+With any one of those, this stops being a wall and becomes a 10–20 minute fix.
+
+You’re not crazy.
+You didn’t hit a philosophical limit.
+You hit an exception that nobody bothered to surface properly.

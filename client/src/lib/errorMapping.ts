@@ -42,6 +42,11 @@ const ERROR_MAP: Record<string, ErrorMapping> = {
     title: "Decision Target Required",
     message: "Set a decision target before proceeding.",
   },
+  "No decision target defined": {
+    title: "Decision Target Required",
+    message: "Set a decision target before running evaluation.",
+    action: "Set Target",
+  },
   DOCUMENT_NOT_FOUND: {
     title: "Document Not Found",
     message: "The requested document could not be found.",
@@ -49,6 +54,20 @@ const ERROR_MAP: Record<string, ErrorMapping> = {
   INVALID_DECISION_TIME: {
     title: "Invalid Decision Time",
     message: "The decision time must be in the past.",
+  },
+  "Decision time not set": {
+    title: "Decision Time Required",
+    message: "Set the decision time before running evaluation.",
+    action: "Set Decision Time",
+  },
+  "Documents missing content hash": {
+    title: "Documents Need Processing",
+    message: "Some documents haven't been fully processed. Please re-upload them.",
+    action: "Review Documents",
+  },
+  "Failed to create determination": {
+    title: "Evaluation Failed",
+    message: "Could not save the evaluation. Please try again.",
   },
   NO_DETERMINATION_FOR_PRINTOUT: {
     title: "No Determination Available",

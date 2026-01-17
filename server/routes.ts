@@ -585,13 +585,8 @@ export async function registerRoutes(
         return;
       }
 
-      if (!caseData.decisionTime) {
-        res.status(400).json({
-          error: "Decision time not set",
-          hint: "Set decision time before creating determination",
-        });
-        return;
-      }
+      // Use explicit decision time, or current time for "live" mode
+      const effectiveDecisionTime = caseData.decisionTime || new Date();
 
       const documentsConsidered = documents.map((doc) => ({
         docId: doc.id,
@@ -612,7 +607,7 @@ export async function registerRoutes(
       const caseStateHash = computeCaseStateHash({
         caseId: req.params.id,
         decisionTarget: activeTarget.text,
-        decisionTime: caseData.decisionTime!.toISOString(),
+        decisionTime: effectiveDecisionTime.toISOString(),
         documentsConsidered: documentsConsidered.map((d) => ({ docId: d.docId, sha256: d.sha256 })),
         checklistSnapshot,
       });
@@ -627,8 +622,8 @@ export async function registerRoutes(
           setBy: activeTarget.setBy || null,
         },
         decisionTime: {
-          mode: (caseData.decisionTimeMode as "explicit" | "inferred") || "explicit",
-          timestamp: caseData.decisionTime!.toISOString(),
+          mode: caseData.decisionTime ? "fixed" : "live",
+          timestamp: effectiveDecisionTime.toISOString(),
         },
         policyThresholds: {
           minConditionsMet: caseData.policyThresholdMin || 3,
