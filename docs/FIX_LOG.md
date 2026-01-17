@@ -256,3 +256,38 @@ Append-only record of system changes.
 3. Select a date in the inline calendar popover
 4. Verify case overview updates and Next Step advances
 5. Reload page and verify decision time persisted
+
+---
+
+## Decision Time Persistence + Modes (Spec Compliance)
+
+**Date:** 2026-01-17  
+**Commit:** `7b6abc3`
+
+**What Changed:**
+
+**A) Decision Time Control:**
+- Added `decisionTimeMode` state: "live" | "fixed"
+- Added `decisionTimeError` and `decisionTimeSaving` states for UX feedback
+- Optimistic update with rollback on failure (no silent reversion)
+- Error displayed inline in popover when commit fails
+- Mode switcher: explicit Live (Now) vs Fixed Date buttons
+
+**B) Home Page Redesign:**
+- Removed amber warning box ("No Case Loaded")
+- Replaced with neutral onboarding: "Start a Case" + "Upload materials or open an existing case"
+- Consolidated 3 tiles into: Primary "Open Case" button + Secondary "Upload New Documents" + Tertiary link "Or try a sample case"
+- Moved explanatory text to collapsible `<details>` element ("How ELI Imaging works")
+
+**Files Touched:**
+- `client/src/pages/Home.tsx` (state, handlers, UI)
+- `server/routes.ts` (PATCH endpoint date conversion)
+
+**Acceptance Criteria Met:**
+- ✓ Selecting date persists after closing picker, tab navigation, page refresh
+- ✓ "Decision time not anchored" disappears when set to FIXED
+- ✓ Commit failure shows visible error, UI does not pretend success
+- ✓ No false choice tiles on home page
+- ✓ Center of page contains actionable primary CTA
+- ✓ No warning/error styling on arrival
+- ✓ Explanatory content is secondary (collapsible)
