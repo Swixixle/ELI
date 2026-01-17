@@ -1,0 +1,152 @@
+You’re not wrong — based on what’s visible in the screenshots, this is not user error. It’s a state-management failure in the UI.
+
+Here’s what’s happening, concretely.
+
+⸻
+
+What the UI claims to do
+
+The Decision Context → Time control is supposed to:
+	1.	Let you select a historical decision date
+	2.	Persist that date as a temporal anchor
+	3.	Recompute the case as “knowledge-bounded to that date”
+	4.	Clear the “Decision time not anchored” warning
+
+That’s the entire point of the feature.
+
+⸻
+
+What it’s actually doing
+
+From the behavior you describe and what’s visible:
+	•	You click the date (e.g., 2026-01-17)
+	•	The date picker opens
+	•	You select the date
+	•	The UI reverts immediately
+	•	The warning remains
+	•	No state changes downstream
+
+That means:
+
+The selected date is never committed to authoritative state.
+
+This is almost certainly one of the following (ranked by likelihood):
+
+⸻
+
+Likely Root Causes (Engineering-Level)
+
+1. Controlled vs. uncontrolled state mismatch
+
+Classic React / frontend bug:
+	•	The calendar component updates local UI state
+	•	But the parent “Decision Context” state is either:
+	•	Read-only
+	•	Derived
+	•	Overwritten on re-render
+	•	On blur / re-render, it snaps back to the prior value
+
+Symptom match:
+✔ Date visually changes
+✔ Immediately reverts
+✔ No error shown
+
+⸻
+
+2. Validation rejects “past” dates silently
+
+You can see the tooltip:
+
+“Setting a past date excludes all subsequent knowledge (hindsight).”
+
+That implies:
+	•	There is validation logic
+	•	But instead of blocking selection or warning, it:
+	•	Rejects the update
+	•	Fails silently
+	•	Reverts state
+
+If that’s intentional, it’s still broken UX — but more importantly:
+
+The system should either allow it or explain why it won’t. Not pretend.
+
+⸻
+
+3. Server-side write fails; UI optimistically resets
+
+If this is persisted remotely:
+	•	UI allows selection
+	•	API call fails or is rejected
+	•	No error surfaced
+	•	UI resets to last known server value
+
+Symptom match:
+✔ Feels like “it does nothing”
+✔ Especially common in early demo / internal tools
+
+⸻
+
+4. Decision Time is derived, not writable
+
+Worst-case design flaw:
+	•	“Decision Time” is computed from another field
+	•	The date picker exists but is effectively cosmetic
+	•	Any manual override is discarded
+
+If so, this control should not exist in its current form.
+
+⸻
+
+Why this is genuinely bad (not just annoying)
+
+This isn’t a cosmetic bug. It breaks the core epistemic promise of the system:
+	•	The entire product claims:
+	•	Outcome-blind
+	•	Temporally bounded
+	•	Audit-safe
+	•	If you cannot anchor time, the audit chain is fiction
+
+In other words:
+
+This is a structural failure, not a UI nit.
+
+⸻
+
+What should happen (minimum acceptable behavior)
+
+One of these — any one — would be acceptable:
+	1.	Persist the date and re-evaluate
+	2.	Block selection with an explicit reason
+	3.	Show a validation error
+	4.	Disable the control entirely if unsupported
+
+What you currently have is the worst option:
+
+A control that pretends to work.
+
+⸻
+
+If you’re reporting this internally, here’s the clean phrasing
+
+You can paste this verbatim:
+
+Bug: Decision Context → Time selector does not persist selected date.
+Observed: Selecting a date briefly updates UI, then immediately reverts. “Decision time not anchored” remains.
+Expected: Selected date should commit to decision state and clear temporal warning, or user should receive an explicit validation error.
+Impact: Breaks temporal anchoring, undermining auditability and outcome-blind guarantees.
+Severity: High — core epistemic function is non-functional.
+
+⸻
+
+Blunt assessment
+
+You’re right to call it terrible.
+
+A system that markets temporal integrity but can’t commit a timestamp is worse than incomplete — it’s misleading.
+
+If you want, next we can:
+	•	Diagnose where this is likely breaking in the state graph
+	•	Redesign the interaction so it’s impossible to fail silently
+	•	Or write a minimal spec for how “Decision Time” must behave to be audit-legitimate
+
+Just say which direction you want to go.

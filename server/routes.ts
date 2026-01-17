@@ -102,7 +102,14 @@ export async function registerRoutes(
         res.status(409).json({ error: "ARCHIVED_RESOURCE_IMMUTABLE", status: 409 });
         return;
       }
-      const updatedCase = await storage.updateCase(req.params.id, req.body);
+      
+      // Convert decisionTime from ISO string to Date if present
+      const updates = { ...req.body };
+      if (updates.decisionTime !== undefined) {
+        updates.decisionTime = updates.decisionTime ? new Date(updates.decisionTime) : null;
+      }
+      
+      const updatedCase = await storage.updateCase(req.params.id, updates);
       res.json(updatedCase);
     } catch (error) {
       console.error("Error updating case:", error);

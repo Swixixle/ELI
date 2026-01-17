@@ -408,8 +408,8 @@ export function CaseOverview({
             <FileCheck className="w-5 h-5 text-amber-600" />
           </div>
           <div className="text-left">
-            <h4 className="font-medium text-foreground">Judgment Records</h4>
-            <p className="text-xs text-muted-foreground">View or issue printouts</p>
+            <h4 className="font-medium text-foreground">Seal Artifact</h4>
+            <p className="text-xs text-muted-foreground">Create immutable judgment record</p>
           </div>
         </a>
       </div>
