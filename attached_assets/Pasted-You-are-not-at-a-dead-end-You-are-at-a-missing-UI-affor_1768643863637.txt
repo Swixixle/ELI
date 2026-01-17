@@ -1,0 +1,108 @@
+You are not at a “dead end.” You are at a missing UI affordance for a required field.
+
+Your screenshots show two mutually inconsistent states:
+	•	Banner: “Ready for Evaluation”
+	•	Prereqs: 3/5 prerequisites met
+	•	Error on click: “Set a decision target before running evaluation.”
+	•	Reality: no place in the UI to set it
+
+That is a straight-up product bug: the evaluation gate requires decisionTarget, but the app provides no control to populate it (or it exists but is hidden/unreachable).
+
+What to do immediately (fastest diagnosis)
+
+1) Confirm where the backend expects “decision target”
+
+Open DevTools → Network → click Run Evaluation.
+	•	Find the request (e.g., /api/evaluate, /api/cases/:id/evaluate)
+	•	Look at the response body. You’ll likely see something like:
+	•	decisionTarget is required
+	•	missing decisionTarget
+	•	prereq DECISION_TARGET not met
+
+This confirms the exact field name (decisionTarget, decision_target, etc.). That name matters for the fix.
+
+2) Check whether “decision target” is supposed to be set in another tab
+
+Given your nav: Overview / Build / Evaluate / Audit
+	•	If “decision target” exists anywhere, it should be in Build or Overview, not Evaluate.
+	•	If Build has no “Decision target” section, then it’s simply not implemented or not wired.
+
+The likely underlying bug (most probable)
+
+You have prerequisite logic that includes Decision Target, but:
+	•	the “decision target” setter UI was never built, or
+	•	it’s behind a feature flag, or
+	•	it’s not rendered for this case type, or
+	•	the field name changed and UI writes to the wrong property.
+
+This is why you get 3/5 met and a runtime block.
+
+Concrete fix (product-level)
+
+A) Make prerequisites actionable (stop this class of dead ends)
+
+In the Prerequisites Summary, list the missing prerequisites explicitly and provide CTAs:
+	•	✅ CFO Inputs Complete
+	•	✅ Governance Rider Attached
+	•	✅ Thresholds Computed
+	•	❌ Decision Target → Set Decision Target (button routes to Build section)
+	•	❌ (Whatever #5 is) → CTA
+
+Right now “3/5” is useless. It must show which 2.
+
+B) Implement “Decision Target” in Build (minimum viable)
+
+Add a small form in Build:
+
+Decision Target
+	•	dropdown: CFO, CEO, Board, Clinical, Legal (whatever your system uses)
+	•	optional: target notes
+	•	Save persists to case record (DB)
+
+Then the evaluation endpoint checks that field exists.
+
+C) Fix the gating contradiction
+
+Your stage label is wrong:
+	•	If decisionTarget missing, stage cannot be “READY FOR EVALUATION.”
+	•	Replace with: “BLOCKED: Missing prerequisites (3/5 met)” until 5/5.
+
+Concrete fix (engineering-level, no guessing required)
+
+Once you confirm the expected field name from the Network response:
+	1.	Schema
+
+	•	Add decisionTarget to Case model (nullable → then make required once UI exists).
+	•	Migration for existing cases.
+
+	2.	API
+
+	•	Ensure PATCH /cases/:id accepts decisionTarget
+	•	Ensure GET /cases/:id returns it
+
+	3.	Frontend
+
+	•	Build tab: component to set it
+	•	Evaluate tab: if missing, show inline CTA:
+	•	“Decision target required” + button “Go to Build → Decision Target”
+
+	4.	Prereq engine
+
+	•	missingPrereqs should be returned as a list of enums/strings
+	•	UI renders them
+
+Immediate workaround (to unblock you today)
+
+If you have any kind of DB console/admin panel or can edit a record:
+	•	Set decisionTarget directly on case SYN-DEMO-003
+	•	Refresh, rerun evaluation
+
+Even if the UI isn’t built yet, this will prove the rest of the evaluation pipeline works.
+
+One thing I need from you (to stop guessing and give you the exact patch)
+
+Paste either:
+	•	the Network response body from clicking Run Evaluation, or
+	•	the backend log line thrown on click
+
+With that, I can tell you the exact property name and where the check is firing (prereq engine vs evaluation handler), and you’ll have a precise, single-pass fix instead of whack-a-mole.

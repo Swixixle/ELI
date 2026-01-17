@@ -561,16 +561,29 @@ export async function registerRoutes(
       const events = await storage.getCaseEvents(req.params.id);
       const activeTarget = await storage.getActiveDecisionTarget(req.params.id);
 
-      if (!activeTarget) {
+      // Use decision target from decision_targets table, or fallback to case.decisionTarget
+      const effectiveDecisionTarget = activeTarget?.text || caseData.decisionTarget;
+      if (!effectiveDecisionTarget) {
         res.status(400).json({ error: "No decision target defined" });
         return;
       }
+
+      // Create a synthetic target object if using case.decisionTarget fallback
+      const targetForContext = activeTarget || {
+        id: "case-fallback",
+        caseId: req.params.id,
+        text: effectiveDecisionTarget,
+        setAt: caseData.updatedAt || caseData.createdAt,
+        setBy: "system" as string | null,
+        isActive: true,
+        lockedAt: null as Date | null,
+      };
 
       const ctx: EvaluationContext = {
         caseData,
         documents,
         events,
-        activeDecisionTarget: activeTarget,
+        activeDecisionTarget: targetForContext,
       };
 
       const evaluation = evaluateCanonConditions(ctx);
@@ -606,7 +619,7 @@ export async function registerRoutes(
 
       const caseStateHash = computeCaseStateHash({
         caseId: req.params.id,
-        decisionTarget: activeTarget.text,
+        decisionTarget: effectiveDecisionTarget,
         decisionTime: effectiveDecisionTime.toISOString(),
         documentsConsidered: documentsConsidered.map((d) => ({ docId: d.docId, sha256: d.sha256 })),
         checklistSnapshot,
@@ -617,9 +630,9 @@ export async function registerRoutes(
         canonVersion: "4.0",
         caseId: req.params.id,
         decisionTarget: {
-          text: activeTarget.text,
-          setAt: activeTarget.setAt?.toISOString() || null,
-          setBy: activeTarget.setBy || null,
+          text: effectiveDecisionTarget,
+          setAt: targetForContext.setAt?.toISOString() || null,
+          setBy: targetForContext.setBy || null,
         },
         decisionTime: {
           mode: caseData.decisionTime ? "fixed" : "live",
