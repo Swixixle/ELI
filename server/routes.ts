@@ -607,6 +607,135 @@ export async function registerRoutes(
     }
   });
 
+  // === SEAL ROUTES (Evidentiary Artifacts) ===
+
+  // POST /api/cases/:id/seal - Atomic seal operation
+  app.post("/api/cases/:id/seal", async (req, res) => {
+    try {
+      const caseId = req.params.id;
+
+      const caseData = await storage.getCase(caseId);
+      if (!caseData) {
+        res.status(404).json({ error: "CASE_NOT_FOUND", status: 404 });
+        return;
+      }
+      if (caseData.status === "archived") {
+        res.status(409).json({ error: "ARCHIVED_RESOURCE_IMMUTABLE", status: 409 });
+        return;
+      }
+
+      const determination = await storage.getLatestDetermination(caseId);
+      if (!determination) {
+        res.status(409).json({ error: "NO_DETERMINATION_EXISTS", status: 409 });
+        return;
+      }
+
+      const receiptData = determination.receiptJson as Record<string, unknown> || {};
+      const documents = await storage.getDocumentsByCase(caseId);
+      const events = await storage.getCaseEvents(caseId);
+      const activeTarget = await storage.getActiveDecisionTarget(caseId);
+
+      const printoutNumber = await storage.getNextPrintoutNumber(caseId);
+      const issuedAt = new Date();
+      const issuedAtISO = issuedAt.toISOString();
+
+      const rawChecklist = receiptData.checklist as Record<string, { met?: boolean; evidence?: string[] }> || {};
+      const normalizedChecklist: Record<string, { met: boolean; evidence: string[] }> = {};
+      for (const [key, value] of Object.entries(rawChecklist)) {
+        normalizedChecklist[key] = {
+          met: value?.met === true,
+          evidence: Array.isArray(value?.evidence) ? value.evidence : [],
+        };
+      }
+
+      const rawSummary = receiptData.summary as Record<string, unknown> || {};
+      const normalizedSummary = {
+        status: String(rawSummary.status || determination.status || "UNKNOWN"),
+        conditionsMet: Number(rawSummary.conditionsMet) || 0,
+        conditionsTotal: Number(rawSummary.conditionsTotal) || 5,
+        reviewPermitted: rawSummary.reviewPermitted === true,
+        proceduralNote: String(rawSummary.proceduralNote || ""),
+      };
+
+      const renderedContent = {
+        printoutVersion: "1.0",
+        printoutNumber,
+        issuedAt: issuedAtISO,
+        caseInfo: {
+          id: caseData.id,
+          name: caseData.name,
+          description: caseData.description,
+          phase: caseData.phase,
+          decisionTarget: activeTarget?.text || caseData.decisionTarget,
+          decisionTime: caseData.decisionTime?.toISOString() || null,
+        },
+        determination: {
+          id: determination.id,
+          status: determination.status,
+          canonVersion: determination.canonVersion,
+          createdAt: determination.createdAt?.toISOString() || null,
+        },
+        receipt: receiptData,
+        evidence: {
+          documents: documents.map((d) => ({
+            id: d.id,
+            name: d.name,
+            type: d.type,
+            version: d.version,
+            contentHash: d.contentHash,
+            uploadedAt: d.uploadedAt?.toISOString() || null,
+          })),
+          events: events.map((e) => ({
+            id: e.id,
+            type: e.eventType,
+            description: e.description,
+            eventTime: e.eventTime?.toISOString() || null,
+          })),
+          documentCount: documents.length,
+          eventCount: events.length,
+        },
+        checklist: normalizedChecklist,
+        summary: normalizedSummary,
+      };
+
+      const contentJson = JSON.stringify(renderedContent, null, 0);
+      const contentHash = hashSHA256(contentJson);
+      const signature = signReceipt(contentJson);
+
+      const summaryText = `${normalizedSummary.status} - ${normalizedSummary.conditionsMet}/${normalizedSummary.conditionsTotal} prerequisites met`;
+
+      const printout = await storage.createCasePrintout({
+        caseId,
+        determinationId: determination.id,
+        printoutNumber,
+        title: `Sealed Artifact #${printoutNumber}`,
+        renderedContent,
+        summary: summaryText,
+        prerequisitesMet: normalizedSummary.conditionsMet,
+        prerequisitesTotal: normalizedSummary.conditionsTotal,
+        admissibilityStatus: determination.status,
+        caseStateHash: determination.caseStateHash,
+        contentHash,
+        signatureB64: signature.signatureB64,
+        publicKeyId: signature.publicKeyId,
+      });
+
+      res.status(201).json({
+        artifactId: printout.id,
+        caseId: printout.caseId,
+        issuedAt: printout.issuedAt,
+        contentHash: printout.contentHash,
+        caseStateHash: printout.caseStateHash,
+        signatureB64: printout.signatureB64 || null,
+        publicKeyId: printout.publicKeyId || null,
+        sealStatus: "SEALED"
+      });
+    } catch (error) {
+      console.error("Error sealing artifact:", error);
+      res.status(500).json({ error: "SEAL_FAILED", status: 500 });
+    }
+  });
+
   // === PRINTOUT ROUTES (Immutable Judgment Records) ===
 
   // Create immutable printout from determination
@@ -738,33 +867,46 @@ export async function registerRoutes(
     }
   });
 
-  // Get all printouts for a case
+  // Get all printouts for a case (minimal fields per C.2)
   app.get("/api/cases/:id/printouts", async (req, res) => {
     try {
       const printouts = await storage.getCasePrintouts(req.params.id);
-      res.json(printouts);
+      res.json(printouts.map(p => ({
+        artifactId: p.id,
+        issuedAt: p.issuedAt,
+        verificationStatus: p.signatureB64 ? "SIGNATURE_PRESENT" : "UNSIGNED"
+      })));
     } catch (error) {
       console.error("Error fetching printouts:", error);
-      res.status(500).json({ error: "Failed to fetch printouts" });
+      res.status(500).json({ error: "FETCH_FAILED", status: 500 });
     }
   });
 
-  // Get single printout (read-only)
+  // Get single printout (read-only, C.1)
   app.get("/api/cases/:caseId/printouts/:printoutId", async (req, res) => {
     try {
       const printout = await storage.getCasePrintout(req.params.printoutId);
       if (!printout) {
-        res.status(404).json({ error: "Printout not found" });
+        res.status(404).json({ error: "ARTIFACT_NOT_FOUND", status: 404 });
         return;
       }
       if (printout.caseId !== req.params.caseId) {
-        res.status(404).json({ error: "Printout not found in this case" });
+        res.status(404).json({ error: "ARTIFACT_NOT_FOUND", status: 404 });
         return;
       }
-      res.json(printout);
+      res.json({
+        artifactId: printout.id,
+        caseId: printout.caseId,
+        issuedAt: printout.issuedAt,
+        contentHash: printout.contentHash,
+        caseStateHash: printout.caseStateHash,
+        signatureB64: printout.signatureB64 || null,
+        publicKeyId: printout.publicKeyId || null,
+        renderedContent: printout.renderedContent
+      });
     } catch (error) {
       console.error("Error fetching printout:", error);
-      res.status(500).json({ error: "Failed to fetch printout" });
+      res.status(500).json({ error: "FETCH_FAILED", status: 500 });
     }
   });
 

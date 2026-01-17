@@ -1,0 +1,110 @@
+MESSAGE TO REPLIT ARCHITECT (VERBATIM)
+
+Implement the “Seal” workflow as an evidentiary instrument. Scope is limited to UI labeling, artifact sealing, and artifact retrieval. Do not add interpretation, dashboards, or usage analytics. No refactors outside this scope.
+
+⸻
+
+A) UI: Rename and wire the action as “Seal”
+	1.	Replace any “Play” / “Run” / similar labeling with:
+
+	•	Primary button label: Seal
+	•	Confirmation modal title: Seal Artifact
+	•	Modal body (exact text, no edits):
+
+This action creates a sealed evidentiary artifact reflecting the current system state.
+Once sealed, the artifact cannot be modified or removed.
+
+	•	Buttons: Seal (primary), Cancel (secondary)
+
+	2.	No additional UI copy, tooltips, icons, animations, or status indicators.
+	3.	The Seal button must call a single backend action that performs sealing atomically (see Section B).
+
+⸻
+
+B) API: Seal an artifact (atomic operation)
+
+Create or confirm a single endpoint (preferred):
+	•	POST /api/cases/:id/seal
+
+This endpoint must atomically:
+	•	freeze the current case state
+	•	compute required hashes
+	•	apply cryptographic signature (if configured)
+	•	persist the sealed artifact as immutable
+	•	return identifiers required for retrieval
+
+Response (machine-only):
+	•	artifactId
+	•	caseId
+	•	issuedAt
+	•	contentHash (SHA-256)
+	•	caseStateHash (SHA-256)
+	•	signatureB64 (if signed)
+	•	publicKeyId (if signed)
+	•	sealStatus: SEALED
+
+Errors:
+	•	Return 409 if sealing is blocked by case state
+	•	No explanatory text; use stable error keys only
+
+⸻
+
+C) Retrieval: Sealed artifacts must be retrievable
+
+Implement or confirm the following endpoints with no interpretation:
+	1.	GET /api/printouts/:id
+Returns the sealed artifact payload and immutable metadata only:
+
+	•	identifiers
+	•	timestamps
+	•	hashes
+	•	signature fields
+	•	content or stable content reference
+
+	2.	GET /api/cases/:id/printouts
+Returns a list of sealed artifacts for the case:
+
+	•	artifactId
+	•	issuedAt
+	•	verificationStatus only
+
+No summaries, scores, or judgments.
+	3.	Keep or confirm verification endpoint:
+
+	•	GET /api/printouts/:id/verify
+Returns cryptographic verification fields only.
+
+⸻
+
+D) Error Semantics
+
+All errors must be machine-only with stable keys.
+Do not include explanatory text.
+
+If new keys are required, keep them narrowly scoped (e.g., ARTIFACT_NOT_FOUND, ARTIFACT_IMMUTABLE).
+
+⸻
+
+E) Non-Scope / Explicit Prohibitions
+
+Do not implement:
+	•	view/access logging
+	•	dashboards or metrics
+	•	“reviewed” or “acknowledged” states
+	•	free-text fields
+	•	interpretive UI
+	•	refactors unrelated to sealing/retrieval
+	•	wording beyond the exact strings provided above
+
+⸻
+
+F) Deliverables
+
+Return:
+	1.	A concise diff summary (files changed + purpose)
+	2.	Example responses for:
+	•	POST /api/cases/:id/seal
+	•	GET /api/printouts/:id
+	•	GET /api/printouts/:id/verify
+
+Stop after completing A–F.

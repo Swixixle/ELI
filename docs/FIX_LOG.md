@@ -176,3 +176,37 @@ Append-only record of system changes.
 - G4-E2: Archived case mutation returns `{"error":"ARCHIVED_RESOURCE_IMMUTABLE","status":409}`
 - G5-E1: Archive event metadata includes environment/service/requestId/origin
 - G5-E2: Schema shows Where fields in metadata JSONB
+
+---
+
+## Seal Workflow Implementation
+
+**Date:** 2026-01-17  
+**Commit:** (pending)
+
+**What Changed:**
+
+**A) UI Labeling:**
+- Button renamed: "Issue New Judgment Printout" → "Seal"
+- Modal title: "Seal Artifact"
+- Modal body: exact verbatim text per spec
+- Buttons: "Seal" (primary), "Cancel" (secondary)
+- Removed title input field (no free-text)
+
+**B) API Seal Endpoint:**
+- Added `POST /api/cases/:id/seal` - atomic sealing operation
+- Response: artifactId, caseId, issuedAt, contentHash, caseStateHash, signatureB64, publicKeyId, sealStatus
+
+**C) Retrieval Endpoints:**
+- `GET /api/cases/:id/printouts` returns minimal: artifactId, issuedAt, verificationStatus
+- `GET /api/cases/:caseId/printouts/:printoutId` returns: artifactId, caseId, issuedAt, hashes, signature fields, renderedContent
+- `GET /api/printouts/:id/verify` unchanged (cryptographic verification only)
+
+**D) Error Semantics:**
+- All errors machine-only with stable keys
+- Added: CASE_NOT_FOUND, ARTIFACT_NOT_FOUND, NO_DETERMINATION_EXISTS, SEAL_FAILED, FETCH_FAILED
+
+**Files Touched:**
+- `server/routes.ts` (seal endpoint, retrieval endpoints)
+- `client/src/pages/PrintoutsList.tsx` (Seal button/modal, minimal list fields)
+- `client/src/pages/PrintoutView.tsx` (updated interface for new response format)

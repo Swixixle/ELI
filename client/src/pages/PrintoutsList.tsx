@@ -1,21 +1,15 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, FileText, CheckCircle, AlertTriangle, Clock, Plus, ArrowLeft, Gavel, Lock, Eye } from "lucide-react";
+import { Shield, FileText, CheckCircle, AlertTriangle, Clock, ArrowLeft, Lock, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 interface PrintoutSummary {
-  id: string;
-  caseId: string;
-  printoutNumber: number;
-  title: string;
-  summary: string;
-  prerequisitesMet: number;
-  prerequisitesTotal: number;
-  admissibilityStatus: string;
+  artifactId: string;
   issuedAt: string;
+  verificationStatus: string;
 }
 
 interface CaseData {
@@ -34,13 +28,13 @@ interface Determination {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const isPermitted = status === "REVIEW_PERMITTED";
+  const isSigned = status === "SIGNATURE_PRESENT";
   return (
     <span className={cn(
       "inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full",
-      isPermitted ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"
+      isSigned ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"
     )}>
-      {isPermitted ? <CheckCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+      {isSigned ? <CheckCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
       {status.replace(/_/g, " ")}
     </span>
   );
@@ -51,7 +45,6 @@ export default function PrintoutsList() {
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
-  const [title, setTitle] = useState("");
 
   const { data: caseData, isLoading: caseLoading } = useQuery<CaseData>({
     queryKey: ["case", caseId],
@@ -86,22 +79,20 @@ export default function PrintoutsList() {
 
   const createPrintoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/cases/${caseId}/printouts`, {
+      const res = await fetch(`/api/cases/${caseId}/seal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title || undefined }),
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Failed to create printout");
+        throw new Error(err.error || "Failed to seal artifact");
       }
       return res.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["printouts", caseId] });
       setIsCreating(false);
-      setTitle("");
-      navigate(`/cases/${caseId}/printouts/${data.id}`);
+      navigate(`/cases/${caseId}/printouts/${data.artifactId}`);
     },
   });
 
@@ -164,47 +155,36 @@ export default function PrintoutsList() {
           <button
             onClick={() => setIsCreating(true)}
             className="w-full mb-6 p-4 border-2 border-dashed border-primary/30 rounded-xl hover:border-primary/50 hover:bg-primary/5 transition-colors flex items-center justify-center gap-3 text-primary"
-            data-testid="button-issue-printout"
+            data-testid="button-seal"
           >
-            <Plus className="w-5 h-5" />
-            <span className="font-medium">Issue New Judgment Printout</span>
+            <Lock className="w-5 h-5" />
+            <span className="font-medium">Seal</span>
           </button>
         )}
 
         {isCreating && (
           <div className="bg-card border rounded-xl p-6 mb-6">
             <h3 className="font-semibold flex items-center gap-2 mb-4">
-              <Gavel className="w-5 h-5 text-primary" />
-              Issue Judgment Printout
+              <Lock className="w-5 h-5 text-primary" />
+              Seal Artifact
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              This will create an immutable, cryptographically signed record of the current judgment.
-              Once issued, this record cannot be modified or deleted.
+              This action creates a sealed evidentiary artifact reflecting the current system state.
+              Once sealed, the artifact cannot be modified or removed.
             </p>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Title (optional)</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Final Judgment - Q3 Review"
-                className="w-full px-3 py-2 border rounded-lg bg-background"
-                data-testid="input-printout-title"
-              />
-            </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={handleCreate}
                 disabled={createPrintoutMutation.isPending}
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
-                data-testid="button-confirm-issue"
+                data-testid="button-confirm-seal"
               >
                 {createPrintoutMutation.isPending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
                 ) : (
                   <Lock className="w-4 h-4" />
                 )}
-                Issue Immutable Printout
+                Seal
               </button>
               <button
                 onClick={() => setIsCreating(false)}
@@ -225,38 +205,32 @@ export default function PrintoutsList() {
         {printouts.length === 0 ? (
           <div className="text-center py-12 border rounded-xl bg-muted/20">
             <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No Printouts Yet</h3>
+            <h3 className="text-lg font-medium mb-2">No Sealed Artifacts</h3>
             <p className="text-muted-foreground">
               {latestDetermination
-                ? "Issue your first judgment printout using the button above."
-                : "Complete a determination first to enable printouts."}
+                ? "Seal your first artifact using the button above."
+                : "Complete a determination first to enable sealing."}
             </p>
           </div>
         ) : (
           <div className="space-y-4">
             {printouts.map((printout) => (
               <div
-                key={printout.id}
+                key={printout.artifactId}
                 className="bg-card border rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => navigate(`/cases/${caseId}/printouts/${printout.id}`)}
-                data-testid={`printout-item-${printout.id}`}
+                onClick={() => navigate(`/cases/${caseId}/printouts/${printout.artifactId}`)}
+                data-testid={`printout-item-${printout.artifactId}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono text-muted-foreground">#{printout.printoutNumber}</span>
-                      <StatusBadge status={printout.admissibilityStatus} />
+                      <StatusBadge status={printout.verificationStatus} />
                     </div>
-                    <h3 className="font-semibold truncate">{printout.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{printout.summary}</p>
+                    <h3 className="font-semibold truncate font-mono text-sm">{printout.artifactId}</h3>
                     <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {format(new Date(printout.issuedAt), "PPp")}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" />
-                        {printout.prerequisitesMet}/{printout.prerequisitesTotal} prerequisites
                       </span>
                     </div>
                   </div>
@@ -264,9 +238,9 @@ export default function PrintoutsList() {
                     className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/cases/${caseId}/printouts/${printout.id}`);
+                      navigate(`/cases/${caseId}/printouts/${printout.artifactId}`);
                     }}
-                    data-testid={`button-view-${printout.id}`}
+                    data-testid={`button-view-${printout.artifactId}`}
                   >
                     <Eye className="w-5 h-5" />
                   </button>

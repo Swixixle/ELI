@@ -6,11 +6,13 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface PrintoutData {
-  id: string;
+  artifactId: string;
   caseId: string;
-  determinationId: string;
-  printoutNumber: number;
-  title: string;
+  issuedAt: string;
+  contentHash: string;
+  caseStateHash: string;
+  signatureB64: string | null;
+  publicKeyId: string | null;
   renderedContent: {
     printoutVersion: string;
     printoutNumber: number;
@@ -57,15 +59,6 @@ interface PrintoutData {
       proceduralNote: string;
     };
   };
-  summary: string;
-  prerequisitesMet: number;
-  prerequisitesTotal: number;
-  admissibilityStatus: string;
-  caseStateHash: string;
-  contentHash: string;
-  signatureB64: string;
-  publicKeyId: string;
-  issuedAt: string;
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -197,14 +190,14 @@ export default function PrintoutView() {
                     <Shield className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h1 className="text-xl font-bold font-display">{printout.title}</h1>
+                    <h1 className="text-xl font-bold font-display">Sealed Artifact #{content.printoutNumber}</h1>
                     <p className="text-sm text-muted-foreground">
-                      Judgment #{printout.printoutNumber} for {content.caseInfo.name}
+                      {content.caseInfo.name}
                     </p>
                   </div>
                 </div>
               </div>
-              <StatusBadge status={printout.admissibilityStatus} />
+              <StatusBadge status={content.determination.status} />
             </div>
 
             <div className="flex items-center gap-1.5 mt-4 px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
@@ -246,7 +239,7 @@ export default function PrintoutView() {
             <section>
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
                 <FileCheck className="w-4 h-4" />
-                Procedural Prerequisites ({printout.prerequisitesMet}/{printout.prerequisitesTotal})
+                Procedural Prerequisites ({content.summary.conditionsMet}/{content.summary.conditionsTotal})
               </h2>
               <div className="space-y-2">
                 {checklistEntries.map(([key, value]) => (
@@ -306,21 +299,25 @@ export default function PrintoutView() {
                   <p className="text-muted-foreground mb-1">Content Hash (SHA-256)</p>
                   <p className="break-all">{printout.contentHash}</p>
                 </div>
-                <div className="p-3 bg-muted/30 rounded-lg overflow-x-auto">
-                  <p className="text-muted-foreground mb-1">Signature (Ed25519)</p>
-                  <p className="break-all">{printout.signatureB64.substring(0, 64)}...</p>
-                </div>
-                <div className="p-3 bg-muted/30 rounded-lg">
-                  <p className="text-muted-foreground mb-1">Public Key ID</p>
-                  <p>{printout.publicKeyId}</p>
-                </div>
+                {printout.signatureB64 && (
+                  <div className="p-3 bg-muted/30 rounded-lg overflow-x-auto">
+                    <p className="text-muted-foreground mb-1">Signature (Ed25519)</p>
+                    <p className="break-all">{printout.signatureB64.substring(0, 64)}...</p>
+                  </div>
+                )}
+                {printout.publicKeyId && (
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-muted-foreground mb-1">Public Key ID</p>
+                    <p>{printout.publicKeyId}</p>
+                  </div>
+                )}
               </div>
             </section>
 
             <section className="border-t pt-6 text-center text-xs text-muted-foreground">
-              <p>This is an official judgment record issued by ELI Imaging v{content.printoutVersion}</p>
-              <p className="mt-1">Determination ID: {printout.determinationId}</p>
-              <p className="mt-1">Printout ID: {printout.id}</p>
+              <p>Sealed evidentiary artifact issued by ELI Imaging v{content.printoutVersion}</p>
+              <p className="mt-1">Determination ID: {content.determination.id}</p>
+              <p className="mt-1">Artifact ID: {printout.artifactId}</p>
             </section>
           </div>
         </div>
