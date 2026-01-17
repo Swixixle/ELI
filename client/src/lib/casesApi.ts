@@ -1,8 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Case, InsertCase, CanonDocument, CaseOverview } from "@shared/schema";
 
-async function fetchCases(): Promise<Case[]> {
-  const res = await fetch("/api/cases");
+type CaseStatusFilter = "active" | "archived" | "all";
+
+async function fetchCases(status: CaseStatusFilter = "active"): Promise<Case[]> {
+  const res = await fetch(`/api/cases?status=${status}`);
   if (!res.ok) throw new Error("Failed to fetch cases");
   return res.json();
 }
@@ -33,9 +35,30 @@ async function updateCase(id: string, data: Partial<InsertCase>): Promise<Case> 
   return res.json();
 }
 
-async function deleteCase(id: string): Promise<void> {
-  const res = await fetch(`/api/cases/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Failed to delete case");
+interface ArchiveCaseParams {
+  reasonCode: "DUPLICATE" | "ENTERED_IN_ERROR" | "COMPLETED" | "CANCELLED" | "OTHER";
+  reasonNote?: string;
+}
+
+interface ArchiveCaseResult {
+  id: string;
+  status: string;
+  archivedAt: string;
+  archivedBy: string;
+  archiveReasonCode: string;
+}
+
+async function archiveCase(id: string, params: ArchiveCaseParams): Promise<ArchiveCaseResult> {
+  const res = await fetch(`/api/cases/${id}/archive`, { 
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params)
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: "Failed to archive case" }));
+    throw new Error(error.error || "Failed to archive case");
+  }
+  return res.json();
 }
 
 async function fetchCaseDocuments(caseId: string): Promise<CanonDocument[]> {
@@ -50,8 +73,8 @@ async function fetchCaseOverview(caseId: string): Promise<CaseOverview> {
   return res.json();
 }
 
-export function useCases() {
-  return useQuery({ queryKey: ["cases"], queryFn: fetchCases });
+export function useCases(status: CaseStatusFilter = "active") {
+  return useQuery({ queryKey: ["cases", status], queryFn: () => fetchCases(status) });
 }
 
 export function useCase(id: string | null) {
@@ -94,10 +117,10 @@ export function useUpdateCase() {
   });
 }
 
-export function useDeleteCase() {
+export function useArchiveCase() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deleteCase,
+    mutationFn: ({ id, params }: { id: string; params: ArchiveCaseParams }) => archiveCase(id, params),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cases"] })
   });
 }

@@ -36,10 +36,12 @@ export async function registerRoutes(
   
   // === CASE ROUTES ===
   
-  // Get all cases
+  // Get all cases (defaults to active only, use ?status=archived or ?status=all)
   app.get("/api/cases", async (req, res) => {
     try {
-      const allCases = await storage.getAllCases();
+      const status = req.query.status as "active" | "archived" | "all" | undefined;
+      const validStatus = status === "archived" || status === "all" ? status : "active";
+      const allCases = await storage.getAllCases(validStatus);
       res.json(allCases);
     } catch (error) {
       console.error("Error fetching cases:", error);
@@ -78,14 +80,19 @@ export async function registerRoutes(
     }
   });
 
-  // Update case
+  // Update case (rejects archived cases)
   app.patch("/api/cases/:id", async (req, res) => {
     try {
-      const updatedCase = await storage.updateCase(req.params.id, req.body);
-      if (!updatedCase) {
+      const existingCase = await storage.getCase(req.params.id);
+      if (!existingCase) {
         res.status(404).json({ error: "Case not found" });
         return;
       }
+      if (existingCase.status === "archived") {
+        res.status(409).json({ error: "Case is archived and cannot be modified." });
+        return;
+      }
+      const updatedCase = await storage.updateCase(req.params.id, req.body);
       res.json(updatedCase);
     } catch (error) {
       console.error("Error updating case:", error);
@@ -93,14 +100,70 @@ export async function registerRoutes(
     }
   });
 
-  // Delete case
+  // Delete case - DISABLED, use Archive instead
   app.delete("/api/cases/:id", async (req, res) => {
+    res.status(405).json({ 
+      error: "Cases cannot be deleted. Use POST /api/cases/:id/archive to archive a case." 
+    });
+  });
+
+  // Archive case - soft delete with audit trail
+  app.post("/api/cases/:id/archive", async (req, res) => {
     try {
-      await storage.deleteCase(req.params.id);
-      res.status(204).send();
+      const { reasonCode, reasonNote } = req.body;
+      
+      if (!reasonCode) {
+        res.status(400).json({ error: "reasonCode is required" });
+        return;
+      }
+      
+      const validReasonCodes = ["DUPLICATE", "ENTERED_IN_ERROR", "COMPLETED", "CANCELLED", "OTHER"];
+      if (!validReasonCodes.includes(reasonCode)) {
+        res.status(400).json({ error: `Invalid reasonCode. Must be one of: ${validReasonCodes.join(", ")}` });
+        return;
+      }
+      
+      if (reasonCode === "OTHER" && !reasonNote) {
+        res.status(400).json({ error: "reasonNote is required when reasonCode is OTHER" });
+        return;
+      }
+      
+      const existingCase = await storage.getCase(req.params.id);
+      if (!existingCase) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+      
+      if (existingCase.status === "archived") {
+        res.status(409).json({ error: "Case is already archived" });
+        return;
+      }
+      
+      const archivedCase = await storage.archiveCase(req.params.id, {
+        reasonCode,
+        reasonNote,
+        archivedBy: "user"
+      });
+      
+      // Create audit event
+      await storage.createCaseEvent({
+        caseId: req.params.id,
+        eventType: "CASE_ARCHIVED",
+        description: `Case archived. Reason: ${reasonCode}${reasonNote ? ` - ${reasonNote}` : ""}`,
+        eventTime: new Date(),
+        metadata: { reasonCode, reasonNote }
+      });
+      
+      res.json({
+        id: archivedCase?.id,
+        status: archivedCase?.status,
+        archivedAt: archivedCase?.archivedAt,
+        archivedBy: archivedCase?.archivedBy,
+        archiveReasonCode: archivedCase?.archiveReasonCode
+      });
     } catch (error) {
-      console.error("Error deleting case:", error);
-      res.status(500).json({ error: "Failed to delete case" });
+      console.error("Error archiving case:", error);
+      res.status(500).json({ error: "Failed to archive case" });
     }
   });
 
@@ -249,6 +312,15 @@ export async function registerRoutes(
   // Set/update decision target for a case
   app.post("/api/cases/:id/decision-target", async (req, res) => {
     try {
+      const existingCase = await storage.getCase(req.params.id);
+      if (!existingCase) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+      if (existingCase.status === "archived") {
+        res.status(409).json({ error: "Case is archived and cannot be modified." });
+        return;
+      }
       const { text, setBy } = req.body;
       if (!text || typeof text !== "string") {
         res.status(400).json({ error: "Decision target text is required" });
@@ -280,6 +352,15 @@ export async function registerRoutes(
   // Set decision time for a case
   app.post("/api/cases/:id/decision-time", async (req, res) => {
     try {
+      const existingCase = await storage.getCase(req.params.id);
+      if (!existingCase) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+      if (existingCase.status === "archived") {
+        res.status(409).json({ error: "Case is archived and cannot be modified." });
+        return;
+      }
       const { timestamp, mode } = req.body;
       if (!timestamp) {
         res.status(400).json({ error: "Decision time timestamp is required" });
@@ -289,10 +370,6 @@ export async function registerRoutes(
         decisionTime: new Date(timestamp),
         decisionTimeMode: mode || "explicit",
       });
-      if (!updatedCase) {
-        res.status(404).json({ error: "Case not found" });
-        return;
-      }
       res.json(updatedCase);
     } catch (error) {
       console.error("Error setting decision time:", error);
@@ -314,6 +391,15 @@ export async function registerRoutes(
   // Create case event
   app.post("/api/cases/:id/events", async (req, res) => {
     try {
+      const existingCase = await storage.getCase(req.params.id);
+      if (!existingCase) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+      if (existingCase.status === "archived") {
+        res.status(409).json({ error: "Case is archived and cannot be modified." });
+        return;
+      }
       const eventData = {
         ...req.body,
         caseId: req.params.id,
@@ -365,6 +451,10 @@ export async function registerRoutes(
       const caseData = await storage.getCase(req.params.id);
       if (!caseData) {
         res.status(404).json({ error: "Case not found" });
+        return;
+      }
+      if (caseData.status === "archived") {
+        res.status(409).json({ error: "Case is archived and cannot be modified." });
         return;
       }
 
@@ -505,6 +595,10 @@ export async function registerRoutes(
       const caseData = await storage.getCase(caseId);
       if (!caseData) {
         res.status(404).json({ error: "Case not found" });
+        return;
+      }
+      if (caseData.status === "archived") {
+        res.status(409).json({ error: "Case is archived and cannot be modified." });
         return;
       }
 
@@ -693,6 +787,10 @@ export async function registerRoutes(
         res.status(404).json({ error: "Case not found" });
         return;
       }
+      if (caseData.status === "archived") {
+        res.status(409).json({ error: "Case is archived and cannot be modified." });
+        return;
+      }
       
       const docData = {
         ...req.body,
@@ -770,6 +868,10 @@ export async function registerRoutes(
       const caseData = await storage.getCase(caseId);
       if (!caseData) {
         res.status(404).json({ error: "Case not found" });
+        return;
+      }
+      if (caseData.status === "archived") {
+        res.status(409).json({ error: "Case is archived and cannot be modified." });
         return;
       }
       

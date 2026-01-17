@@ -1,0 +1,181 @@
+Below are precise, implementation-ready instructions you can paste to a Replit agent. They assume your current “Checkpoint A” system already has immutable printouts and the backend enforces immutability (e.g., 403 on delete/alter attempts). This task is Fix #4: Soft Delete / Archival implemented as case lifecycle termination, not deletion.
+
+⸻
+
+Replit Agent Instructions — Fix #4: Case Archival (Soft Delete)
+
+Objective
+
+Implement case archival so that cases can be removed from active workflows without being deleted, preserving referential integrity to immutable printouts and maintaining auditability. Archival must be a one-way terminal state (no “restore”) unless explicitly implemented as an elevated admin-only operation with full audit logging.
+
+⸻
+
+Non-Negotiable Invariants
+	1.	No hard deletes of cases or printouts in normal app operation.
+	2.	Archiving a case must not modify existing printouts; printouts remain immutable.
+	3.	Archived cases must remain queryable by ID (for audit, discovery, review).
+	4.	Archived cases must remain linked to their printouts (no orphan artifacts).
+	5.	The UI must not present archive as “delete” or “undo.” Language must be “Archive.”
+	6.	Archive action must record: timestamp, actor, and a reason code.
+
+⸻
+
+Data Model Changes
+
+If you have a cases table/collection, add:
+	•	status (enum/string): at minimum ACTIVE, ARCHIVED
+	•	Optional: LOCKED, SUPERSEDED if already used
+	•	archived_at (datetime, nullable)
+	•	archived_by (string/user id, nullable)
+	•	archive_reason_code (string, nullable)
+	•	archive_reason_note (string, nullable, max length e.g. 500)
+
+If you have an audit/log table, add an event type:
+	•	CASE_ARCHIVED
+Include: case_id, actor_id, timestamp, reason_code, reason_note.
+
+If no audit log exists, create minimal case_events or audit_events with:
+	•	id, case_id, event_type, actor_id, created_at, metadata (json)
+
+⸻
+
+API Requirements
+
+1) Archive endpoint (new)
+	•	POST /api/cases/:caseId/archive
+	•	Body:
+	•	reason_code (required, string)
+	•	reason_note (optional, string)
+	•	Behavior:
+	•	If case does not exist: 404
+	•	If case already archived: 409 (Conflict) with message “Case already archived”
+	•	If user unauthorized: 403
+	•	On success:
+	•	Set status = ARCHIVED
+	•	Set archived_at = now
+	•	Set archived_by = currentUserId
+	•	Set archive_reason_code, archive_reason_note
+	•	Append audit event CASE_ARCHIVED
+	•	Return updated case summary (id, status, archived_at, archived_by, reason_code)
+
+2) Prohibit delete endpoint for cases (if exists)
+
+If you currently have DELETE /api/cases/:caseId:
+	•	Replace behavior with 405 (Method Not Allowed) or 403 with clear message:
+	•	“Cases cannot be deleted. Use Archive.”
+
+3) Case listing must default to active cases
+	•	GET /api/cases should return ACTIVE only by default.
+	•	Add query param:
+	•	?status=ACTIVE|ARCHIVED|ALL
+	•	Ensure the UI uses default active behavior.
+
+4) Case retrieval by ID must work for archived cases
+	•	GET /api/cases/:caseId returns case regardless of status (unless security policy forbids).
+	•	Response includes archive fields.
+
+5) Printouts endpoints must remain unchanged and immutable
+	•	Ensure there is no endpoint that deletes printouts.
+	•	If there is one, enforce 403/405 consistently.
+
+⸻
+
+Frontend Requirements (React)
+
+1) Replace “Delete” with “Archive”
+
+Anywhere the UI offers delete/remove/reset:
+	•	Change label to Archive Case
+	•	Add confirmation modal with:
+	•	Warning text: “Archiving removes this case from active workflow. It does not delete records.”
+	•	Required dropdown: reason_code
+	•	Optional note field
+
+Reason codes (minimum set; can be extended later):
+	•	DUPLICATE
+	•	ENTERED_IN_ERROR
+	•	COMPLETED
+	•	CANCELLED
+	•	OTHER (require note if OTHER)
+
+2) Cases list behavior
+	•	Default list shows ACTIVE cases.
+	•	Add a filter/toggle to view Archived (or All).
+	•	Archived cases should show a badge “Archived” and archived_at date.
+
+3) Archived case UX restrictions
+
+When viewing an archived case:
+	•	Disable actions that mutate case state (editing, running new determinations, etc.).
+	•	Show read-only view:
+	•	case metadata + archive metadata
+	•	printouts list remains accessible and immutable
+
+4) PrintoutsList and PrintoutView
+
+No changes to immutability logic. Only ensure:
+	•	They still load for archived cases.
+	•	They do not provide delete/edit options.
+
+⸻
+
+Backend Guards (Important)
+
+Prevent mutation on archived cases
+
+Any endpoint that mutates a case (update fields, run governance steps, create new determinations) must:
+	•	Check case.status !== ARCHIVED
+	•	If archived: return 409 with message “Case is archived and cannot be modified.”
+
+This is essential for defensibility: archive is terminal.
+
+⸻
+
+Migration / Backfill
+
+If you have existing cases:
+	•	Default status = ACTIVE
+	•	No archive fields set
+
+Add DB migration accordingly.
+
+⸻
+
+Tests (Required)
+
+Implement automated tests or at least runnable checks verifying:
+	1.	Archive succeeds
+	•	Creates archive metadata
+	•	Adds audit event
+	2.	Archive is idempotent-protected
+	•	Archiving twice returns 409
+	3.	Archived case cannot be mutated
+	•	Any mutating endpoint returns 409
+	4.	Archived case is retrievable
+	•	GET by ID works
+	5.	Listing default excludes archived
+	•	GET /cases returns only active
+	•	GET /cases?status=ARCHIVED returns only archived
+	6.	Printouts still accessible
+	•	PrintoutsList loads for archived case
+	•	Any attempt to delete/alter printout returns 403/405
+
+⸻
+
+Acceptance Criteria (Definition of Done)
+	•	Users can archive a case with a reason code; case disappears from active lists.
+	•	Archived case remains retrievable by ID with full archive metadata.
+	•	Archived case cannot be modified via any API path.
+	•	Printouts remain immutable and linked; no delete path exists.
+	•	Audit trail includes a CASE_ARCHIVED event with actor + timestamp + reason.
+	•	UI reflects archive state and prevents mutating actions.
+
+⸻
+
+Implementation Notes
+	•	Use “ARCHIVE” terminology everywhere; do not call it soft delete in the UI.
+	•	If you later need “restore,” do not implement it as a flip back to ACTIVE without a governance spec. Prefer “create new case from archived case” (new ID) if reactivation is required.
+
+⸻
+
+If you paste this to the Replit agent and it asks about stack specifics (Express/FastAPI/Next/etc.), instruct it to apply the above in your existing backend conventions while keeping all invariants and acceptance criteria unchanged.

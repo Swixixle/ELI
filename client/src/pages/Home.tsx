@@ -228,6 +228,7 @@ export default function Home() {
   }, [activeCase]);
 
   const decisionReadiness = computeDecisionReadiness(activeCase, documentCount);
+  const isArchived = activeCase?.status === "archived";
 
   // Build case context for API calls
   const buildCaseContext = () => {
@@ -255,7 +256,7 @@ export default function Home() {
   };
 
   const handleSetDecisionTarget = async () => {
-    if (!activeCase || !decisionTargetInput.trim()) return;
+    if (!activeCase || !decisionTargetInput.trim() || isArchived) return;
     
     try {
       const response = await fetch(`/api/cases/${activeCase.id}`, {
@@ -612,7 +613,11 @@ export default function Home() {
                     <FolderOpen className="w-4 h-4" />
                     {activeCase.name}
                   </button>
-                  <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-mono">Active</span>
+                  {activeCase.status === "archived" ? (
+                    <span className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200 px-2 py-0.5 rounded-full font-mono">Archived (Read-Only)</span>
+                  ) : (
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-mono">Active</span>
+                  )}
                 </>
               ) : (
                 <span className="text-muted-foreground">No Case Loaded</span>
@@ -751,6 +756,19 @@ export default function Home() {
                 <Gavel className="w-4 h-4" />
                 Audit
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Archived Case Notice */}
+        {activeCase && isArchived && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-6 py-3">
+            <div className="flex items-center gap-3 text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+              <div className="text-sm">
+                <strong>This case is archived.</strong> All records are preserved but editing is disabled. 
+                View documents and printouts in read-only mode.
+              </div>
             </div>
           </div>
         )}

@@ -1,17 +1,23 @@
-import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, type Case, type InsertCase, type CaseEvent, type InsertCaseEvent, type DecisionTarget, type InsertDecisionTarget, type Determination, type InsertDetermination, type CasePrintout, type InsertCasePrintout, users, canonDocuments, canonChunks, cases, caseEvents, decisionTargets, determinations, casePrintouts } from "@shared/schema";
+import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, type Case, type InsertCase, type CaseEvent, type InsertCaseEvent, type DecisionTarget, type InsertDecisionTarget, type Determination, type InsertDetermination, type CasePrintout, type InsertCasePrintout, type ArchiveReasonCode, users, canonDocuments, canonChunks, cases, caseEvents, decisionTargets, determinations, casePrintouts } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, ilike, or, sql, and } from "drizzle-orm";
+import { eq, desc, ilike, or, sql, and, ne } from "drizzle-orm";
+
+export interface ArchiveCaseParams {
+  reasonCode: ArchiveReasonCode;
+  reasonNote?: string;
+  archivedBy?: string;
+}
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
-  getAllCases(): Promise<Case[]>;
+  getAllCases(status?: "active" | "archived" | "all"): Promise<Case[]>;
   getCase(id: string): Promise<Case | undefined>;
   createCase(caseData: InsertCase): Promise<Case>;
   updateCase(id: string, updates: Partial<InsertCase>): Promise<Case | undefined>;
-  deleteCase(id: string): Promise<void>;
+  archiveCase(id: string, params: ArchiveCaseParams): Promise<Case | undefined>;
   
   getAllCanonDocuments(): Promise<CanonDocument[]>;
   getDocumentsByCase(caseId: string): Promise<CanonDocument[]>;
@@ -56,8 +62,13 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getAllCases(): Promise<Case[]> {
-    return await db.select().from(cases).orderBy(desc(cases.updatedAt));
+  async getAllCases(status: "active" | "archived" | "all" = "active"): Promise<Case[]> {
+    if (status === "all") {
+      return await db.select().from(cases).orderBy(desc(cases.updatedAt));
+    }
+    return await db.select().from(cases)
+      .where(eq(cases.status, status))
+      .orderBy(desc(cases.updatedAt));
   }
 
   async getCase(id: string): Promise<Case | undefined> {
@@ -71,6 +82,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateCase(id: string, updates: Partial<InsertCase>): Promise<Case | undefined> {
+    // Defense-in-depth: Check if case is archived before updating
+    const existing = await this.getCase(id);
+    if (existing && existing.status === "archived") {
+      throw new Error("Case is archived and cannot be modified.");
+    }
+    
+    // Prevent unarchiving via status update (must use proper restore flow if implemented)
+    if (updates.status && updates.status !== existing?.status) {
+      throw new Error("Case status cannot be changed via update. Use archive/restore endpoints.");
+    }
+    
     const [updatedCase] = await db.update(cases)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(cases.id, id))
@@ -78,12 +100,19 @@ export class DatabaseStorage implements IStorage {
     return updatedCase;
   }
 
-  async deleteCase(id: string): Promise<void> {
-    await db.delete(determinations).where(eq(determinations.caseId, id));
-    await db.delete(caseEvents).where(eq(caseEvents.caseId, id));
-    await db.delete(decisionTargets).where(eq(decisionTargets.caseId, id));
-    await db.delete(canonDocuments).where(eq(canonDocuments.caseId, id));
-    await db.delete(cases).where(eq(cases.id, id));
+  async archiveCase(id: string, params: ArchiveCaseParams): Promise<Case | undefined> {
+    const [archivedCase] = await db.update(cases)
+      .set({
+        status: "archived",
+        archivedAt: new Date(),
+        archivedBy: params.archivedBy || "system",
+        archiveReasonCode: params.reasonCode,
+        archiveReasonNote: params.reasonNote || null,
+        updatedAt: new Date()
+      })
+      .where(eq(cases.id, id))
+      .returning();
+    return archivedCase;
   }
 
   async getAllCanonDocuments(): Promise<CanonDocument[]> {
@@ -108,10 +137,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCanonDocument(doc: InsertCanonDocument): Promise<CanonDocument> {
-    // Validate case existence before insert (defense-in-depth)
-    const [caseExists] = await db.select({ id: cases.id }).from(cases).where(eq(cases.id, doc.caseId));
-    if (!caseExists) {
+    // Validate case existence and status before insert (defense-in-depth)
+    const [caseData] = await db.select({ id: cases.id, status: cases.status }).from(cases).where(eq(cases.id, doc.caseId));
+    if (!caseData) {
       throw new Error(`Case ${doc.caseId} does not exist. Documents must be bound to a valid case.`);
+    }
+    if (caseData.status === "archived") {
+      throw new Error(`Case ${doc.caseId} is archived. Documents cannot be added to archived cases.`);
     }
     
     const [newDoc] = await db.insert(canonDocuments).values(doc).returning();
@@ -119,6 +151,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCanonDocument(id: string): Promise<void> {
+    // Defense-in-depth: Get document and check if parent case is archived
+    const doc = await this.getCanonDocument(id);
+    if (doc) {
+      const [caseData] = await db.select({ status: cases.status }).from(cases).where(eq(cases.id, doc.caseId));
+      if (caseData && caseData.status === "archived") {
+        throw new Error(`Case ${doc.caseId} is archived. Documents cannot be deleted from archived cases.`);
+      }
+    }
+    
     await db.delete(canonDocuments).where(eq(canonDocuments.id, id));
   }
 
@@ -154,6 +195,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCaseEvent(event: InsertCaseEvent): Promise<CaseEvent> {
+    // Defense-in-depth: Check if case is archived before creating event
+    const [caseData] = await db.select({ status: cases.status }).from(cases).where(eq(cases.id, event.caseId));
+    if (caseData && caseData.status === "archived") {
+      throw new Error(`Case ${event.caseId} is archived. Events cannot be added to archived cases.`);
+    }
+    
     const [newEvent] = await db.insert(caseEvents).values(event).returning();
     return newEvent;
   }
@@ -167,6 +214,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async setDecisionTarget(caseId: string, text: string, setBy?: string): Promise<DecisionTarget> {
+    // Defense-in-depth: Check if case is archived before setting decision target
+    const [caseData] = await db.select({ status: cases.status }).from(cases).where(eq(cases.id, caseId));
+    if (caseData && caseData.status === "archived") {
+      throw new Error(`Case ${caseId} is archived. Decision target cannot be modified.`);
+    }
+    
     await db.update(decisionTargets)
       .set({ isActive: false })
       .where(eq(decisionTargets.caseId, caseId));
@@ -186,6 +239,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async lockDecisionTarget(id: string): Promise<DecisionTarget | undefined> {
+    // Defense-in-depth: Check if parent case is archived before locking
+    const [target] = await db.select({ caseId: decisionTargets.caseId }).from(decisionTargets).where(eq(decisionTargets.id, id));
+    if (target) {
+      const [caseData] = await db.select({ status: cases.status }).from(cases).where(eq(cases.id, target.caseId));
+      if (caseData && caseData.status === "archived") {
+        throw new Error(`Case ${target.caseId} is archived. Decision targets cannot be modified.`);
+      }
+    }
+    
     const [locked] = await db.update(decisionTargets)
       .set({ lockedAt: new Date() })
       .where(eq(decisionTargets.id, id))
@@ -194,6 +256,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createDetermination(determination: InsertDetermination): Promise<Determination> {
+    // Defense-in-depth: Check if case is archived before creating determination
+    const [caseData] = await db.select({ status: cases.status }).from(cases).where(eq(cases.id, determination.caseId));
+    if (caseData && caseData.status === "archived") {
+      throw new Error(`Case ${determination.caseId} is archived. Determinations cannot be created for archived cases.`);
+    }
+    
     const [newDetermination] = await db.insert(determinations).values(determination).returning();
     return newDetermination;
   }
@@ -212,6 +280,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCasePrintout(printout: InsertCasePrintout): Promise<CasePrintout> {
+    // Defense-in-depth: Check if case is archived before creating printout
+    const [caseData] = await db.select({ status: cases.status }).from(cases).where(eq(cases.id, printout.caseId));
+    if (caseData && caseData.status === "archived") {
+      throw new Error(`Case ${printout.caseId} is archived. Printouts cannot be issued for archived cases.`);
+    }
+    
     const [newPrintout] = await db.insert(casePrintouts).values(printout).returning();
     return newPrintout;
   }

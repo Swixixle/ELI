@@ -12,6 +12,12 @@ export const users = pgTable("users", {
 export const CASE_PHASES = ["intake", "review", "decision", "closure"] as const;
 export type CasePhase = typeof CASE_PHASES[number];
 
+export const CASE_STATUSES = ["active", "archived"] as const;
+export type CaseStatus = typeof CASE_STATUSES[number];
+
+export const ARCHIVE_REASON_CODES = ["DUPLICATE", "ENTERED_IN_ERROR", "COMPLETED", "CANCELLED", "OTHER"] as const;
+export type ArchiveReasonCode = typeof ARCHIVE_REASON_CODES[number];
+
 export const cases = pgTable("cases", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
@@ -22,6 +28,10 @@ export const cases = pgTable("cases", {
   phase: varchar("phase", { length: 20 }).notNull().default("intake"),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   policyThresholdMin: integer("policy_threshold_min").notNull().default(3),
+  archivedAt: timestamp("archived_at"),
+  archivedBy: varchar("archived_by", { length: 255 }),
+  archiveReasonCode: varchar("archive_reason_code", { length: 30 }),
+  archiveReasonNote: text("archive_reason_note"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
