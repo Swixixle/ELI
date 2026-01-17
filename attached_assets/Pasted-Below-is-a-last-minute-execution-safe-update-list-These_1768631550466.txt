@@ -1,0 +1,169 @@
+Below is a last-minute, execution-safe update list. These are surgical changes only—nothing that alters scope, claims, or adoption posture. Treat this as a pre-demo / pre-audit hardening pass, not feature work.
+
+⸻
+
+LAST-MINUTE UPDATES — ELI IMAGING (SAFE TO APPLY)
+
+CATEGORY A — MUST-DO (LOW RISK, HIGH PAYOFF)
+
+1. Lock the Scope Integrity Statement Everywhere
+
+Action
+	•	Add the exact Scope Integrity sentence in one neutral location:
+	•	API docs header or
+	•	UI footer (non-interactive)
+
+Text (verbatim)
+
+“ELI asserts only that sufficient system evidence exists to confirm entry into the results environment at a specific time.”
+
+Why
+	•	This closes RRS-1 G1 and prevents interpretive drift during demo or review.
+
+⸻
+
+2. Make Error Semantics Explicit (No Friendly Messages)
+
+Action
+	•	Ensure mutation failures return only:
+	•	HTTP status (403 / 405 / 409)
+	•	Short machine-style reason code
+
+Example
+
+{
+  "error": "ARCHIVED_RESOURCE_IMMUTABLE",
+  "status": 409
+}
+
+Do NOT
+	•	Explain why
+	•	Suggest next steps
+	•	Use human-tone language
+
+Why
+	•	Reinforces “mechanical, not advisory” enforcement.
+
+⸻
+
+3. Surface Verification as a First-Class Endpoint
+
+Action
+	•	Ensure there is a clear verify endpoint:
+	•	Input: artifact ID
+	•	Output: hash, signature, verification result
+
+Why
+	•	Strengthens AGS-1 ART and REI-1 G4/G5 with zero narrative cost.
+
+⸻
+
+4. Freeze the Archive State Hard
+
+Action
+	•	Confirm:
+	•	No admin override
+	•	No “reopen”
+	•	No soft delete flags
+	•	No backdoor migrations touching archived rows
+
+Why
+	•	This is the single most scrutinized behavior under hostile review.
+
+⸻
+
+CATEGORY B — SHOULD-DO (ONLY IF TRIVIAL)
+
+5. Add Actor + Environment to Archive Metadata
+
+Action
+	•	Ensure archive records include:
+	•	archivedBy (system or role, not name)
+	•	environment (demo / staging / prod)
+
+Why
+	•	Closes RRS-1 G5 (Who/Where) cleanly.
+
+⸻
+
+6. Pin the Time Source Policy
+
+Action
+	•	Document (config or README):
+	•	Authoritative time source (e.g., NTP)
+	•	That the timestamp is included in the signed artifact
+
+Why
+	•	Strengthens C5 Time Integrity without code changes.
+
+⸻
+
+CATEGORY C — DO NOT TOUCH (ABSOLUTE)
+
+Do NOT:
+	•	Add tooltips explaining “why this matters”
+	•	Add confirmation dialogs (“Are you sure?”)
+	•	Add free-text fields
+	•	Add statuses like “reviewed,” “acknowledged,” or “seen”
+	•	Add metrics dashboards
+	•	Add success banners
+
+Any of the above reintroduces heroism or interpretation.
+
+⸻
+
+CATEGORY D — DEMO-SPECIFIC HARDENING
+
+7. Remove All Non-Essential UI Copy
+
+Action
+	•	Strip UI text down to:
+	•	Field labels
+	•	IDs
+	•	Timestamps
+	•	Hashes
+	•	Status codes
+
+Why
+	•	The uglier it looks, the safer it is.
+
+⸻
+
+8. Prepare One Intentional Failure Click
+
+Action
+	•	Script a demo step where you:
+	•	Attempt to mutate an archived case
+	•	Let it fail visibly (409 / 405)
+	•	Say nothing
+
+Why
+	•	Auditors trust refusal more than success.
+
+⸻
+
+FINAL GO / NO-GO CHECK (60 SECONDS)
+
+Answer YES to all:
+	•	Can I demo this without explaining why it exists?
+	•	Does the system refuse more than it allows?
+	•	Can nothing be changed once archived?
+	•	Would removing all narration still leave a working system?
+
+If YES → SHIP THE DEMO
+If any NO → DO NOT ADD FEATURES — REMOVE SURFACE
+
+⸻
+
+BOTTOM LINE
+
+At this stage:
+	•	Subtract, don’t add
+	•	Refusal > explanation
+	•	Mechanics > meaning
+
+If you want, I can do one of two things immediately:
+	1.	A 10-minute pre-demo checklist you run right before showing it, or
+	2.	A hostile auditor question list with the exact one-sentence answers you’re allowed to give.
+
+Say which.
