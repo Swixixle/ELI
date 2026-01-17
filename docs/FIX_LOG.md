@@ -85,3 +85,25 @@ Append-only record of system changes.
 
 **Verification:**
 - Read SYSTEM_STATE.md, confirm disclaimer and error semantics present
+
+---
+
+## Architecture Specification
+
+**Date:** 2026-01-17  
+**Commit:** (pending)
+
+**What Changed:**
+- Created docs/eli-imaging-architecture.md with implementation-ready specifications
+- Added 4 Mermaid sequence diagrams: Archive, Determination Signing, Printout Issuance, Verification
+- Added 3 JSON Schemas: DeterminationReceipt, CasePrintout, ArchiveEvent
+- Documented signing field specification and canonicalization rules
+- Documented WORM reference pattern
+
+**Files Touched:**
+- `docs/eli-imaging-architecture.md` (new)
+
+**Verification:**
+- Open docs/eli-imaging-architecture.md
+- Confirm Mermaid diagrams render correctly
+- Validate JSON schemas against existing code types
