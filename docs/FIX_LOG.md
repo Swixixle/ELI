@@ -210,3 +210,49 @@ Append-only record of system changes.
 - `server/routes.ts` (seal endpoint, retrieval endpoints)
 - `client/src/pages/PrintoutsList.tsx` (Seal button/modal, minimal list fields)
 - `client/src/pages/PrintoutView.tsx` (updated interface for new response format)
+
+---
+
+## Blank Evaluate Response Fix
+
+**Date:** 2026-01-17  
+**Commit:** `71fb3fb`
+
+**What Changed:**
+- Fixed `handleSend` and `handleIntentClick` in Home.tsx
+- Non-2xx responses now show "REQUEST_FAILED" machine-only key
+- Empty/undefined content now shows "RESPONSE_EMPTY" machine-only key
+- Users never see blank response bubbles
+
+**Files Touched:**
+- `client/src/pages/Home.tsx`
+
+**Verification:**
+1. Send an Evaluate query when API returns error
+2. Verify machine-only error key is displayed, not blank
+
+---
+
+## Decision Time Dead-End Elimination
+
+**Date:** 2026-01-17  
+**Commit:** `71fb3fb`
+
+**What Changed:**
+- Added inline Decision Time selector in CaseOverview Next Step panel
+- New `handleSetDecisionTime` in Home.tsx persists to backend via `PATCH /api/cases/:id`
+- Invalidates overview query to refetch from server after change
+- Added useEffect to hydrate `decisionTime` from `activeCase.decisionTime` on load
+- Both header popover and inline selector use same handler
+- Removed unused `useUpdateCase` import
+
+**Files Touched:**
+- `client/src/pages/Home.tsx`
+- `client/src/components/cases/CaseOverview.tsx`
+
+**Verification:**
+1. Create case and see "Set the decision time" next step
+2. Click "Set Decision Time" button in Next Step panel
+3. Select a date in the inline calendar popover
+4. Verify case overview updates and Next Step advances
+5. Reload page and verify decision time persisted
