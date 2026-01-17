@@ -13,6 +13,7 @@ import { CaseSelector } from "@/components/cases/CaseSelector";
 import { CaseTimeline, DocumentsConsidered } from "@/components/cases/CaseTimeline";
 import { DecisionReadinessPanel } from "@/components/cases/DecisionReadiness";
 import { CaseOverview } from "@/components/cases/CaseOverview";
+import { DecisionTargetRolodex } from "@/components/cases/DecisionTargetRolodex";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { Case } from "@shared/schema";
@@ -208,7 +209,6 @@ export default function Home() {
   const [expandedAuditMessages, setExpandedAuditMessages] = useState<Set<string>>(new Set());
   const [documentCount, setDocumentCount] = useState(0);
   const [showDecisionTargetDialog, setShowDecisionTargetDialog] = useState(false);
-  const [decisionTargetInput, setDecisionTargetInput] = useState("");
   const [viewMode, setViewMode] = useState<"builder" | "audit">("builder");
   const [showFreeText, setShowFreeText] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
@@ -255,21 +255,20 @@ export default function Home() {
     };
   };
 
-  const handleSetDecisionTarget = async () => {
-    if (!activeCase || !decisionTargetInput.trim() || isArchived) return;
+  const handleSetDecisionTarget = async (targetText: string) => {
+    if (!activeCase || !targetText.trim() || isArchived) return;
     
     try {
       const response = await fetch(`/api/cases/${activeCase.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decisionTarget: decisionTargetInput.trim() })
+        body: JSON.stringify({ decisionTarget: targetText.trim() })
       });
       
       if (response.ok) {
         const updated = await response.json();
         setActiveCase(updated);
         setShowDecisionTargetDialog(false);
-        setDecisionTargetInput("");
       }
     } catch (error) {
       console.error("Failed to set decision target:", error);
@@ -788,43 +787,12 @@ export default function Home() {
           />
         )}
 
-        {/* Decision Target Dialog */}
-        {showDecisionTargetDialog && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-background border rounded-xl shadow-xl max-w-lg w-full mx-4 p-6">
-              <h3 className="text-lg font-semibold mb-2">Define Decision Target</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                What decision is this case trying to support? This should be a specific, answerable question.
-              </p>
-              <textarea
-                value={decisionTargetInput}
-                onChange={(e) => setDecisionTargetInput(e.target.value)}
-                placeholder="Example: Was disciplinary action against Unit A procedurally permissible?"
-                className="w-full p-3 border rounded-lg text-sm resize-none h-24 mb-4"
-                data-testid="input-decision-target"
-              />
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => {
-                    setShowDecisionTargetDialog(false);
-                    setDecisionTargetInput("");
-                  }}
-                  className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSetDecisionTarget}
-                  disabled={!decisionTargetInput.trim()}
-                  className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg disabled:opacity-50"
-                  data-testid="button-save-decision-target"
-                >
-                  Set Decision Target
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Decision Target Rolodex */}
+        <DecisionTargetRolodex
+          isOpen={showDecisionTargetDialog}
+          onClose={() => setShowDecisionTargetDialog(false)}
+          onSelect={handleSetDecisionTarget}
+        />
 
         {/* Tab Content Area */}
         {activeCase && (
@@ -941,141 +909,203 @@ export default function Home() {
               {/* Question Bank Container with Internal Scroll - Builder Mode */}
               {viewMode === "builder" && (
                 <div className="flex-1 flex flex-col min-h-0">
-                  <div className="px-6 py-4 border-b bg-background">
-                    <h3 className="text-sm font-semibold text-foreground mb-2">What do you want to know?</h3>
-                    <input
-                      type="text"
-                      value={questionSearch}
-                      onChange={(e) => setQuestionSearch(e.target.value)}
-                      placeholder="Search questions..."
-                      className="w-full px-3 py-2 text-sm border rounded-lg bg-muted/30 focus:bg-background focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                      data-testid="input-question-search"
-                    />
-                  </div>
-                  
-                  <ScrollArea className="flex-1">
-                    <div className="px-6 py-4 space-y-4 pb-4">
-                      {QUESTION_BANK.filter(category => 
-                        questionSearch === "" || 
-                        category.label.toLowerCase().includes(questionSearch.toLowerCase()) ||
-                        category.questions.some(q => q.label.toLowerCase().includes(questionSearch.toLowerCase()))
-                      ).map((category) => (
-                        <div key={category.id} className="bg-card border rounded-lg p-4">
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
-                              {QUESTION_BANK_ICONS[category.icon]}
-                            </div>
-                            <h4 className="font-medium text-sm">{category.label}</h4>
-                          </div>
-                          <div className="space-y-1.5">
-                            {category.questions.filter(q => 
-                              questionSearch === "" || q.label.toLowerCase().includes(questionSearch.toLowerCase())
-                            ).map((q) => (
-                              <button
-                                key={q.id}
-                                onClick={() => setSelectedQuestion(selectedQuestion === q.query ? null : q.query)}
-                                disabled={isTyping}
-                                className={cn(
-                                  "w-full text-left px-3 py-2 text-sm rounded-lg transition-all disabled:opacity-50",
-                                  selectedQuestion === q.query
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted/30 hover:bg-muted border border-transparent hover:border-border"
-                                )}
-                                data-testid={`question-${q.id}`}
-                              >
-                                {q.label}
-                              </button>
-                            ))}
-                          </div>
+                  {!decisionReadiness.decisionTarget ? (
+                    <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                      <div className="max-w-sm space-y-4">
+                        <div className="w-12 h-12 mx-auto bg-amber-100 rounded-xl flex items-center justify-center">
+                          <AlertTriangle className="w-6 h-6 text-amber-600" />
                         </div>
-                      ))}
+                        <div className="space-y-2">
+                          <p className="text-sm text-foreground font-medium">
+                            A Decision Target has not been defined.
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            This system does not generate reminders, advice, or conclusions until a specific decision is declared.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setShowDecisionTargetDialog(true)}
+                          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                          data-testid="button-select-target-cta"
+                        >
+                          Select Decision Target
+                        </button>
+                      </div>
                     </div>
-                  </ScrollArea>
+                  ) : (
+                    <>
+                      <div className="px-6 py-4 border-b bg-background">
+                        <h3 className="text-sm font-semibold text-foreground mb-2">What do you want to know?</h3>
+                        <input
+                          type="text"
+                          value={questionSearch}
+                          onChange={(e) => setQuestionSearch(e.target.value)}
+                          placeholder="Search questions..."
+                          className="w-full px-3 py-2 text-sm border rounded-lg bg-muted/30 focus:bg-background focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                          data-testid="input-question-search"
+                        />
+                      </div>
+                      
+                      <ScrollArea className="flex-1">
+                        <div className="px-6 py-4 space-y-4 pb-4">
+                          {QUESTION_BANK.filter(category => 
+                            questionSearch === "" || 
+                            category.label.toLowerCase().includes(questionSearch.toLowerCase()) ||
+                            category.questions.some(q => q.label.toLowerCase().includes(questionSearch.toLowerCase()))
+                          ).map((category) => (
+                            <div key={category.id} className="bg-card border rounded-lg p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
+                                  {QUESTION_BANK_ICONS[category.icon]}
+                                </div>
+                                <h4 className="font-medium text-sm">{category.label}</h4>
+                              </div>
+                              <div className="space-y-1.5">
+                                {category.questions.filter(q => 
+                                  questionSearch === "" || q.label.toLowerCase().includes(questionSearch.toLowerCase())
+                                ).map((q) => (
+                                  <button
+                                    key={q.id}
+                                    onClick={() => setSelectedQuestion(selectedQuestion === q.query ? null : q.query)}
+                                    disabled={isTyping}
+                                    className={cn(
+                                      "w-full text-left px-3 py-2 text-sm rounded-lg transition-all disabled:opacity-50",
+                                      selectedQuestion === q.query
+                                        ? "bg-primary text-primary-foreground"
+                                        : "bg-muted/30 hover:bg-muted border border-transparent hover:border-border"
+                                    )}
+                                    data-testid={`question-${q.id}`}
+                                  >
+                                    {q.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </>
+                  )}
                 </div>
               )}
 
               {/* Audit Mode - Quick intents + free-form input */}
               {viewMode === "audit" && (
                 <div className="flex-1 flex flex-col min-h-0">
-                  <div className="px-6 py-4 border-b bg-background">
-                    <h3 className="text-sm font-semibold text-foreground mb-3">Quick Review</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {CANONICAL_INTENTS.slice(0, 6).map((intent) => (
-                        <button
-                          key={intent.id}
-                          onClick={() => handleIntentClick(intent.question)}
-                          disabled={isTyping}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted/50 hover:bg-muted border border-border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          data-testid={`intent-${intent.id}`}
-                        >
-                          {INTENT_ICONS[intent.id]}
-                          {intent.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <ScrollArea className="flex-1">
-                    <div className="px-6 py-4">
-                      <p className="text-xs text-muted-foreground mb-4">
-                        In Audit mode, you can ask any governance or procedural question. Use the quick intents above or type your own query below.
-                      </p>
-                      <div className="p-4 bg-muted/30 rounded-lg border border-dashed text-center">
-                        <div className="flex items-center justify-center gap-2 text-muted-foreground mb-2">
-                          <Shield className="w-4 h-4" />
-                          <span className="text-xs font-mono">CANON v4.0 • AUDIT MODE</span>
+                  {!decisionReadiness.decisionTarget ? (
+                    <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                      <div className="max-w-sm space-y-4">
+                        <div className="w-12 h-12 mx-auto bg-amber-100 rounded-xl flex items-center justify-center">
+                          <AlertTriangle className="w-6 h-6 text-amber-600" />
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          All queries are evaluated against outcome-blind procedural boundaries
-                        </p>
+                        <div className="space-y-2">
+                          <p className="text-sm text-foreground font-medium">
+                            A Decision Target has not been defined.
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            This system does not generate reminders, advice, or conclusions until a specific decision is declared.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setShowDecisionTargetDialog(true)}
+                          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                          data-testid="button-select-target-cta-audit"
+                        >
+                          Select Decision Target
+                        </button>
                       </div>
                     </div>
-                  </ScrollArea>
+                  ) : (
+                    <>
+                      <div className="px-6 py-4 border-b bg-background">
+                        <h3 className="text-sm font-semibold text-foreground mb-3">Quick Review</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {CANONICAL_INTENTS.slice(0, 6).map((intent) => (
+                            <button
+                              key={intent.id}
+                              onClick={() => handleIntentClick(intent.question)}
+                              disabled={isTyping}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted/50 hover:bg-muted border border-border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              data-testid={`intent-${intent.id}`}
+                            >
+                              {INTENT_ICONS[intent.id]}
+                              {intent.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <ScrollArea className="flex-1">
+                        <div className="px-6 py-4">
+                          <p className="text-xs text-muted-foreground mb-4">
+                            In Audit mode, you can ask any governance or procedural question. Use the quick intents above or type your own query below.
+                          </p>
+                          <div className="p-4 bg-muted/30 rounded-lg border border-dashed text-center">
+                            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-2">
+                              <Shield className="w-4 h-4" />
+                              <span className="text-xs font-mono">CANON v4.0 • AUDIT MODE</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              All queries are evaluated against outcome-blind procedural boundaries
+                            </p>
+                          </div>
+                        </div>
+                      </ScrollArea>
+                    </>
+                  )}
                 </div>
               )}
 
               {/* Pinned Ask Bar - Always Visible */}
               <div className="shrink-0 px-6 py-4 border-t bg-background shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)] z-10">
-                {selectedQuestion && viewMode === "builder" && (
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex-1 flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs">
-                      <span className="truncate">{selectedQuestion}</span>
-                      <button 
-                        onClick={() => setSelectedQuestion(null)}
-                        className="shrink-0 hover:bg-primary/20 rounded-full p-0.5"
+                {!decisionReadiness.decisionTarget ? (
+                  <div className="text-center text-sm text-muted-foreground">
+                    Select a Decision Target to ask questions
+                  </div>
+                ) : (
+                  <>
+                    {selectedQuestion && viewMode === "builder" && (
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex-1 flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs">
+                          <span className="truncate">{selectedQuestion}</span>
+                          <button 
+                            onClick={() => setSelectedQuestion(null)}
+                            className="shrink-0 hover:bg-primary/20 rounded-full p-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder={viewMode === "builder" && selectedQuestion ? "Add context or just click Ask..." : "Ask a governance question..."}
+                        className="flex-1 px-4 py-2.5 text-sm border rounded-lg bg-background focus:ring-2 focus:ring-primary/20 outline-none"
+                        data-testid="input-ask-question"
+                      />
+                      <button
+                        onClick={() => {
+                          if (viewMode === "builder" && selectedQuestion) {
+                            const fullQuery = inputValue.trim() ? `${selectedQuestion} ${inputValue}` : selectedQuestion;
+                            handleIntentClick(fullQuery);
+                            setSelectedQuestion(null);
+                          } else if (inputValue.trim()) {
+                            handleSend();
+                          }
+                        }}
+                        disabled={viewMode === "builder" ? (!selectedQuestion && !inputValue.trim()) : !inputValue.trim()}
+                        className="px-6 py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        data-testid="button-ask"
                       >
-                        <X className="w-3 h-3" />
+                        Ask
                       </button>
                     </div>
-                  </div>
+                  </>
                 )}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={viewMode === "builder" && selectedQuestion ? "Add context or just click Ask..." : "Ask a governance question..."}
-                    className="flex-1 px-4 py-2.5 text-sm border rounded-lg bg-background focus:ring-2 focus:ring-primary/20 outline-none"
-                    data-testid="input-ask-question"
-                  />
-                  <button
-                    onClick={() => {
-                      if (viewMode === "builder" && selectedQuestion) {
-                        const fullQuery = inputValue.trim() ? `${selectedQuestion} ${inputValue}` : selectedQuestion;
-                        handleIntentClick(fullQuery);
-                        setSelectedQuestion(null);
-                      } else if (inputValue.trim()) {
-                        handleSend();
-                      }
-                    }}
-                    disabled={viewMode === "builder" ? (!selectedQuestion && !inputValue.trim()) : !inputValue.trim()}
-                    className="px-6 py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    data-testid="button-ask"
-                  >
-                    Ask
-                  </button>
-                </div>
               </div>
 
               {/* Response Panel - Scrollable */}

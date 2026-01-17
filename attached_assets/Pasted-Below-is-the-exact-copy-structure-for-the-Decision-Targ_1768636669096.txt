@@ -1,0 +1,245 @@
+Below is the exact copy + structure for the Decision Target Rolodex, followed by verbatim implementation instructions you can paste directly to the Replit agent/architect. This design preserves your constraints: no interpretation, no “helpful” advisory behavior, no narrative fields—just a usable on-ramp.
+
+⸻
+
+A) Decision Target Rolodex — Exact UX Copy & Structure
+
+Placement
+
+Shown wherever “Decision Target” is currently set via free-text modal (“Define Decision Target”).
+
+Modal Title
+
+Select Decision Target
+
+Modal Subtitle (one sentence)
+
+Choose the decision this case is meant to support. This must be specific and answerable.
+
+Two Tabs (or two sections)
+	1.	Library (Recommended)
+	2.	Custom (Advanced)
+
+Default to Library.
+
+⸻
+
+1) Library (Recommended)
+
+Search placeholder
+
+Search targets…
+
+Category header text
+
+Use these category labels exactly:
+	•	Governance & Compliance
+	•	Legal & Risk
+	•	HR & Employment
+	•	Finance & Procurement
+	•	Product & Operations
+	•	Clinical & Quality (if you must include; otherwise omit)
+
+Each target item format
+
+Target Title (short)
+Target Text (full sentence)
+Tag chips (non-interpretive): binary, policy-anchored
+
+Example item display:
+
+Policy defensibility
+“Is this decision procedurally defensible under organizational policy based on the documented record?”
+[ binary ] [ policy-anchored ]
+
+Library footer note (fixed)
+
+If your decision is not listed, use Custom. Exploratory questions are intentionally unsupported.
+
+⸻
+
+2) Custom (Advanced)
+
+Intro text (fixed)
+
+Write a decision target as a single sentence that is answerable (Yes/No or Permitted/Not Permitted).
+
+Text area placeholder (fixed)
+
+Example: “Is disciplinary action against [party] procedurally defensible under [policy] based on the documented record?”
+
+Validation errors (fixed, machine tone)
+
+If empty:
+	•	DECISION_TARGET_REQUIRED
+
+If not binary (no “is/are/was/can/should/permitted/defensible” etc. heuristic):
+	•	DECISION_TARGET_NOT_DECIDABLE
+
+If contains “what/why/how” (heuristic):
+	•	DECISION_TARGET_EXPLORATORY_UNSUPPORTED
+
+Display a short help line under errors (fixed):
+Decision Targets define the decision. They are not questions to the system.
+
+Buttons
+	•	Set Decision Target (primary)
+	•	Cancel
+
+⸻
+
+Default Library Targets (Copy-Paste Exact)
+
+Governance & Compliance
+	1.	Policy defensibility
+“Is this decision procedurally defensible under organizational policy based on the documented record?”
+	2.	Compliance assertion
+“Is the organization defensible in asserting compliance at the time of action based on the documented record?”
+	3.	Process integrity
+“Were required procedural steps completed prior to the decision under the applicable governance standard?”
+
+Legal & Risk
+	4.	Defensibility against challenge
+“Is the organization defensible against foreseeable challenge based on the documented record at time of action?”
+	5.	Record sufficiency
+“Does the documented record support the decision taken under the applicable standard of review?”
+
+HR & Employment
+	6.	Disciplinary action
+“Is disciplinary action procedurally defensible under internal policy based on the documented record?”
+	7.	Termination process
+“Was termination carried out in compliance with internal policy and required process steps based on the documented record?”
+
+Finance & Procurement
+	8.	Expenditure controls
+“Is this expenditure compliant with internal controls and approval policy based on the documented record?”
+	9.	Vendor selection
+“Is vendor selection procedurally compliant with procurement policy based on the documented record?”
+
+Product & Operations
+	10.	Release approval
+“Is release approval procedurally justified based on completion of required checks as evidenced in the record?”
+	11.	Change management
+“Was this change executed in compliance with change management procedure based on the documented record?”
+
+(Keep this list short on purpose. You can extend later through controlled change.)
+
+⸻
+
+B) VERBATIM Instructions to Replit Agent/Architect
+
+Paste this exactly:
+
+⸻
+
+Implement a Decision Target “Rolodex” to prevent the system from feeling broken when the Decision Target is missing. This is a UI/UX gating improvement only; do not change backend rigor or introduce interpretive behavior.
+
+1) Replace blank Decision Target entry with Library-first selection
+
+Where the current “Define Decision Target” modal exists, replace it with a modal that defaults to a target library.
+
+Modal title (exact):
+
+Select Decision Target
+
+Subtitle (exact):
+
+Choose the decision this case is meant to support. This must be specific and answerable.
+
+Tabs/Sections (exact labels):
+	•	Library (Recommended)
+	•	Custom (Advanced)
+
+Default to Library.
+
+2) Library UI requirements
+	•	Provide search input with placeholder: “Search targets…”
+	•	Display categories with headers exactly:
+	•	Governance & Compliance
+	•	Legal & Risk
+	•	HR & Employment
+	•	Finance & Procurement
+	•	Product & Operations
+	•	Each library item shows:
+	•	short title
+	•	full target sentence (exact copy listed below)
+	•	chips: “binary” and “policy-anchored” (visual only; no logic)
+	•	Clicking an item sets the Decision Target text and enables “Set Decision Target”.
+	•	Footer note (exact):
+“If your decision is not listed, use Custom. Exploratory questions are intentionally unsupported.”
+
+3) Custom tab requirements (advanced)
+	•	Intro text (exact):
+“Write a decision target as a single sentence that is answerable (Yes/No or Permitted/Not Permitted).”
+	•	Text area placeholder (exact):
+“Example: ‘Is disciplinary action against [party] procedurally defensible under [policy] based on the documented record?’”
+	•	Validation: implement simple client-side heuristics and return machine keys only (no prose explanations):
+	•	If empty: DECISION_TARGET_REQUIRED
+	•	If contains exploratory tokens (what/why/how): DECISION_TARGET_EXPLORATORY_UNSUPPORTED
+	•	If not decidable (fails binary heuristic): DECISION_TARGET_NOT_DECIDABLE
+	•	Under validation errors, display help line (exact):
+“Decision Targets define the decision. They are not questions to the system.”
+
+4) Integration (no backend change required beyond using existing endpoint)
+	•	When user confirms selection, submit through the existing Decision Target set endpoint.
+	•	Do not change prerequisite logic.
+	•	Do not allow free-text fields elsewhere as a workaround.
+
+5) Chatbot behavior when Decision Target is missing (make the non-answer explicit)
+
+When no Decision Target is set, the chatbot panel must show this fixed system message (exact), and disable sending questions:
+
+“A Decision Target has not been defined.
+This system does not generate reminders, advice, or conclusions until a specific decision is declared.
+Select a Decision Target to proceed.”
+	•	Provide a single CTA button in the chatbot panel: “Select Decision Target”
+	•	Clicking CTA opens the modal above.
+	•	No other guidance text.
+
+6) Copy-paste the library targets exactly (do not paraphrase)
+
+Governance & Compliance
+	•	Policy defensibility: “Is this decision procedurally defensible under organizational policy based on the documented record?”
+	•	Compliance assertion: “Is the organization defensible in asserting compliance at the time of action based on the documented record?”
+	•	Process integrity: “Were required procedural steps completed prior to the decision under the applicable governance standard?”
+
+Legal & Risk
+	•	Defensibility against challenge: “Is the organization defensible against foreseeable challenge based on the documented record at time of action?”
+	•	Record sufficiency: “Does the documented record support the decision taken under the applicable standard of review?”
+
+HR & Employment
+	•	Disciplinary action: “Is disciplinary action procedurally defensible under internal policy based on the documented record?”
+	•	Termination process: “Was termination carried out in compliance with internal policy and required process steps based on the documented record?”
+
+Finance & Procurement
+	•	Expenditure controls: “Is this expenditure compliant with internal controls and approval policy based on the documented record?”
+	•	Vendor selection: “Is vendor selection procedurally compliant with procurement policy based on the documented record?”
+
+Product & Operations
+	•	Release approval: “Is release approval procedurally justified based on completion of required checks as evidenced in the record?”
+	•	Change management: “Was this change executed in compliance with change management procedure based on the documented record?”
+
+7) Prohibitions
+
+Do not add:
+	•	interpretive labels (“good”, “bad”, “sufficient”)
+	•	scores
+	•	recommendations
+	•	narratives
+	•	tooltips beyond the exact strings above
+	•	any “why it matters” text
+	•	dashboards
+
+8) Deliverables
+
+Return:
+	•	diff summary
+	•	screenshots of the new modal (Library and Custom)
+	•	screenshot of the chatbot missing-target state
+	•	confirmation that no backend prerequisite logic changed
+
+Stop after completing the above.
+
+⸻
+
+If you paste back the agent’s diff summary, I will do a strict semantic audit to ensure nothing interpretive leaked in.
