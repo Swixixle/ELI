@@ -1,0 +1,170 @@
+Yes — this tells me exactly what the real problem is.
+
+Your backend is internally consistent (strong lifecycle, immutability, archive semantics), but your client flow is not isomorphic to the lifecycle. In plain terms: the UI does not provide the user-visible “rails” that correspond to your enforced state machine, so users hit “legal” states with no navigable exits and no next action.
+
+Below is a concrete, implementation-oriented fix set that will remove the dead-ends and “chaos” without weakening your compliance constraints.
+
+⸻
+
+What your snapshot implies about UX requirements
+
+1) You have a terminal state (archived) with mutation guards
+
+That means the UI must always provide:
+	•	a clear end-of-case action (“Archive case”) while active
+	•	an obvious exit back to list/results
+	•	a read-only banner + exit when archived (because nothing else is allowed)
+
+Right now you likely have “terminal” backend behavior but “non-terminal” UI affordances (buttons still present, no guidance).
+
+2) Errors are machine-only
+
+You explicitly state: no explanatory text in error responses.
+
+Therefore the UI must include a local error dictionary that maps:
+{status, errorKey} → human action text.
+
+If you don’t, the user experiences “nothing happens.”
+
+3) Evaluation is prerequisite-gated (Canon v4.0)
+
+Your UI is showing 3/5 prerequisites met and “What’s Missing.” If “Run Evaluation” produces no visible effect, you have one of these anti-patterns:
+	•	The handler returns early when prereqs < 5 (or <4), but you still render the button.
+	•	The API returns a 400/409 with a machine key and the UI swallows it.
+
+Either way: the UI must not present a clickable no-op.
+
+⸻
+
+The minimum set of UX rails that fixes the chaos
+
+A. Add a Case “Chrome” that never disappears (top bar)
+
+On every in-case screen, always render a fixed header:
+	•	Case ID + status pill: Active / Archived
+	•	Breadcrumbs: Cases → Case → (Build/Evaluate/Audit)
+	•	Primary exit: “Back to Cases”
+	•	Secondary: “Close Case” (opens archive modal; only when Active)
+
+This single change removes “no way to go back / cleanly exit.”
+
+Rule: there is never a screen inside a case that lacks a “Back to Cases” control.
+
+B. Create a dedicated Case Home screen (the hub)
+
+Right now it sounds like you drop users into a sub-tab (Evaluate) without orientation.
+
+Add /cases/:id as a hub that answers:
+	•	What stage am I in?
+	•	What’s next?
+	•	What’s missing?
+
+Show a progress widget:
+	•	A–E prerequisites checklist with links to the exact place to satisfy each prerequisite.
+	•	A “Next best action” CTA.
+
+Example CTA logic:
+	•	If Decision Target missing → “Define decision target”
+	•	Else if Temporal Verification missing → “Add timestamped evidence”
+	•	Else if Independent Verification missing → “Add independent verification”
+	•	Else if Constraints missing → “Document constraints”
+	•	Else → “Run evaluation”
+
+C. Replace “tabs” with “wizard rails” or enforce tab semantics
+
+You can keep Overview/Build/Evaluate/Audit, but they must be consistent:
+	•	Tabs must be navigational, not “status labels.”
+	•	Each tab must have:
+	•	an entry screen
+	•	a visible next action
+	•	an exit to Case Home and Cases list
+
+If Build/Evaluate are sequential, make it visually a sequence:
+Define → Evidence → Verification → Constraints → Evaluate → Print/Verify → Archive
+
+D. Make “Run Evaluation” stateful and non-silent
+
+No more no-op.
+
+Button states:
+	1.	Disabled when blocked (with a reason)
+	2.	Enabled when permitted
+	3.	Running with spinner/progress
+	4.	Success navigates to Results screen
+	5.	Error shows user action mapping
+
+Because your tiers allow “permitted” at P3/P4/P5, decide what “Run Evaluation” means:
+	•	If “Run Evaluation” can run at P3+ (advisory/permitted), let it run and clearly label the output as P3/P4/P5.
+	•	If you require P5 for deterministic output, disable until P5 and say so explicitly.
+
+Either is fine — but pick one and encode it.
+
+E. Add an “Archive / Close Case” flow that is always reachable
+
+Your backend supports POST /api/cases/:id/archive with reasonCode enum.
+
+UI must present this as the clean exit:
+	•	“Close case” button
+	•	Modal with 4 choices:
+	•	Duplicate
+	•	Entered in error
+	•	Completed
+	•	Cancelled
+	•	Confirm -> archive -> navigate to Case Summary (read-only) + “Back to Cases”
+
+Also: once archived, the UI must:
+	•	remove mutation controls
+	•	show “Archived — read-only” banner
+	•	provide “Back to Cases” and “View printouts / verify”
+
+This eliminates “dead ends.”
+
+⸻
+
+Required client behavior given your machine-only errors
+
+Implement a local error map. Example structure:
+	•	400 REASON_CODE_REQUIRED → “Select an archive reason to close the case.”
+	•	404 CASE_NOT_FOUND → “This case no longer exists or you don’t have access. Return to cases.”
+	•	409 ARCHIVED_RESOURCE_IMMUTABLE → “This case is archived and cannot be edited.”
+	•	405 DELETE_NOT_ALLOWED → “Cases can’t be deleted; archive instead.”
+
+Rule: every fetch must either:
+	•	update UI state
+	•	navigate
+	•	or surface an error toast/banner
+
+Never silently catch.
+
+⸻
+
+Why you’re currently seeing “nothing happens” on Run Evaluation
+
+Based on the screenshot + your spec:
+	•	You are at P3 (3/5 met).
+	•	Missing includes constraints, independent verification, timestamped evidence.
+	•	Your “Run Evaluation” likely expects E + C + B satisfied (or expects P5), so the handler either:
+	•	blocks without UI messaging, or
+	•	calls an endpoint that rejects and returns a machine-only error that you aren’t mapping.
+
+So the fix is not “try again.” It’s: make prerequisite gating explicit and navigable.
+
+⸻
+
+Concrete acceptance criteria (so you know it’s fixed)
+
+A case flow is “not chaos” if all are true:
+	1.	From any in-case screen, user can reach Cases list in 1 click.
+	2.	From any in-case screen, user can reach Case Home in 1 click.
+	3.	There is always a visible “Next action” or a visible “You are done” message.
+	4.	No clickable control is a no-op. Disabled controls explain why.
+	5.	Archived cases show read-only banner and mutation controls are removed.
+	6.	All API errors surface as user-readable messages via client-side mapping.
+
+⸻
+
+Fastest next step (no debugging required)
+
+Implement Case Chrome + Case Home + Disable Run Evaluation with reason first. That alone will cut perceived brokenness dramatically even before you fix any API issues.
+
+If you paste (or describe) your client route structure for case screens (even just the list of pages/components), I can give you a precise IA map (routes + nav + CTA logic) that matches your lifecycle constraints exactly.

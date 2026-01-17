@@ -1,9 +1,11 @@
 import { useRoute, useLocation, Link } from "wouter";
 import { CaseLayout } from "./CaseLayout";
-import { useCaseOverview } from "@/lib/casesApi";
+import { useCaseOverview, useEvaluateCase } from "@/lib/casesApi";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CheckCircle, AlertTriangle, Play, ArrowRight, Shield, Lock } from "lucide-react";
+import { CheckCircle, AlertTriangle, Play, ArrowRight, Shield, Lock, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { mapApiError } from "@/lib/errorMapping";
 
 export default function CaseEvaluatePage() {
   const [, params] = useRoute("/cases/:caseId/evaluate");
@@ -49,6 +51,7 @@ export default function CaseEvaluatePage() {
 
 function BlockedEvaluationView({ caseId, lifecycle }: { caseId: string; lifecycle: any }) {
   const blockers = lifecycle?.what_is_missing || [];
+  const blockingPrereqs = lifecycle?.next_action?.blocking_prereqs || [];
   const nextAction = lifecycle?.next_action;
   
   return (
@@ -79,6 +82,23 @@ function BlockedEvaluationView({ caseId, lifecycle }: { caseId: string; lifecycl
         </ul>
       </div>
       
+      {/* Disabled Run Evaluation button with explanation */}
+      <div className="space-y-3">
+        <button
+          disabled
+          className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-muted text-muted-foreground rounded-xl font-semibold cursor-not-allowed opacity-60"
+          data-testid="button-run-evaluation-disabled"
+        >
+          <Lock className="w-5 h-5" />
+          Run Evaluation
+        </button>
+        <p className="text-sm text-center text-muted-foreground">
+          {blockingPrereqs.length > 0 
+            ? `Blocked by: ${blockingPrereqs.join(", ")}`
+            : "Complete missing prerequisites above to enable evaluation"}
+        </p>
+      </div>
+      
       {nextAction && (
         <div className="border-2 border-primary/30 rounded-xl p-5 bg-primary/5">
           <div className="flex items-center justify-between">
@@ -102,6 +122,21 @@ function BlockedEvaluationView({ caseId, lifecycle }: { caseId: string; lifecycl
 }
 
 function ReadyToEvaluateView({ caseId, lifecycle }: { caseId: string; lifecycle: any }) {
+  const [, navigate] = useLocation();
+  const evaluateMutation = useEvaluateCase();
+  const [error, setError] = useState<string | null>(null);
+  
+  const handleEvaluate = async () => {
+    setError(null);
+    try {
+      await evaluateMutation.mutateAsync(caseId);
+    } catch (err: any) {
+      const errorCode = err?.message || "EVALUATION_FAILED";
+      const mapped = mapApiError(errorCode);
+      setError(mapped.message);
+    }
+  };
+  
   return (
     <div className="space-y-6">
       <div className="text-center py-8">
@@ -125,12 +160,34 @@ function ReadyToEvaluateView({ caseId, lifecycle }: { caseId: string; lifecycle:
         </div>
       </div>
       
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+      
       <button
-        className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-lg"
+        onClick={handleEvaluate}
+        disabled={evaluateMutation.isPending}
+        className={cn(
+          "w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-semibold transition-all shadow-lg",
+          evaluateMutation.isPending 
+            ? "bg-muted text-muted-foreground cursor-wait"
+            : "bg-primary text-primary-foreground hover:bg-primary/90"
+        )}
         data-testid="button-run-evaluation"
       >
-        <Play className="w-5 h-5" />
-        Run Evaluation
+        {evaluateMutation.isPending ? (
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Running Evaluation...
+          </>
+        ) : (
+          <>
+            <Play className="w-5 h-5" />
+            Run Evaluation
+          </>
+        )}
       </button>
     </div>
   );
@@ -138,6 +195,19 @@ function ReadyToEvaluateView({ caseId, lifecycle }: { caseId: string; lifecycle:
 
 function EvaluationResultsView({ caseId, overview }: { caseId: string; overview: any }) {
   const [, navigate] = useLocation();
+  const evaluateMutation = useEvaluateCase();
+  const [error, setError] = useState<string | null>(null);
+  
+  const handleReEvaluate = async () => {
+    setError(null);
+    try {
+      await evaluateMutation.mutateAsync(caseId);
+    } catch (err: any) {
+      const errorCode = err?.message || "EVALUATION_FAILED";
+      const mapped = mapApiError(errorCode);
+      setError(mapped.message);
+    }
+  };
   
   return (
     <div className="space-y-6">
@@ -173,13 +243,35 @@ function EvaluationResultsView({ caseId, overview }: { caseId: string; overview:
         </div>
       </div>
       
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+      
       <div className="grid grid-cols-2 gap-4">
         <button
-          className="flex items-center justify-center gap-2 px-4 py-3 bg-muted text-foreground rounded-lg font-medium hover:bg-muted/80 transition-colors"
+          onClick={handleReEvaluate}
+          disabled={evaluateMutation.isPending}
+          className={cn(
+            "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors",
+            evaluateMutation.isPending
+              ? "bg-muted/50 text-muted-foreground cursor-wait"
+              : "bg-muted text-foreground hover:bg-muted/80"
+          )}
           data-testid="button-re-evaluate"
         >
-          <Play className="w-4 h-4" />
-          Re-evaluate
+          {evaluateMutation.isPending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Re-evaluating...
+            </>
+          ) : (
+            <>
+              <Play className="w-4 h-4" />
+              Re-evaluate
+            </>
+          )}
         </button>
         <button
           onClick={() => navigate(`/cases/${caseId}/audit`)}

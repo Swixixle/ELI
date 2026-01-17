@@ -183,3 +183,36 @@ export function useDeleteCaseDocument(caseId: string | null) {
     }
   });
 }
+
+interface EvaluationResult {
+  status: string;
+  canonVersion: string;
+  prerequisites: Record<string, boolean>;
+  prerequisitesMet: number;
+  prerequisitesTotal: number;
+  riskTier: string;
+  reviewPermission: string;
+  evaluatedAt: string;
+}
+
+async function evaluateCase(caseId: string): Promise<EvaluationResult> {
+  const res = await fetch(`/api/cases/${caseId}/evaluate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" }
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Evaluation failed");
+  }
+  return res.json();
+}
+
+export function useEvaluateCase() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (caseId: string) => evaluateCase(caseId),
+    onSuccess: (_data, caseId) => {
+      queryClient.invalidateQueries({ queryKey: ["cases", caseId, "overview"] });
+    }
+  });
+}
