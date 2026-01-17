@@ -457,11 +457,34 @@ export default function Home() {
         })
       });
       
+      if (!response.ok) {
+        const requestId = crypto.randomUUID();
+        console.error(`[${requestId}] Chat API error: ${response.status}`);
+        const errorMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "REQUEST_FAILED",
+          timestamp: Date.now(),
+          temporalContext: userMsg.temporalContext
+        };
+        setMessages(prev => [...prev, errorMsg]);
+        setIsTyping(false);
+        return;
+      }
+
       const data = await response.json();
       
       let responseData: Partial<Message> = {
         content: data.content || ""
       };
+      
+      if (!responseData.content || (typeof responseData.content === "string" && responseData.content.trim() === "")) {
+        if (data.refusalType) {
+          responseData.content = data.refusalType.toUpperCase();
+        } else {
+          responseData.content = "REQUEST_FAILED";
+        }
+      }
       
       if (data.citations && data.citations.length > 0) {
         responseData.citations = data.citations.map((c: any, idx: number) => ({
@@ -520,11 +543,12 @@ export default function Home() {
 
       setMessages(prev => [...prev, assistantMsg]);
     } catch (error) {
-      console.error("Chat error:", error);
+      const requestId = crypto.randomUUID();
+      console.error(`[${requestId}] Chat error:`, error);
       const errorMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "I encountered an error processing your request. Please try again.",
+        content: "REQUEST_FAILED",
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, errorMsg]);
@@ -567,12 +591,35 @@ export default function Home() {
         })
       });
       
+      if (!response.ok) {
+        const requestId = crypto.randomUUID();
+        console.error(`[${requestId}] Chat API error: ${response.status}`);
+        const errorMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "REQUEST_FAILED",
+          timestamp: Date.now(),
+          temporalContext: userMsg.temporalContext
+        };
+        setMessages(prev => [...prev, errorMsg]);
+        return;
+      }
+
       const data = await response.json();
+      
+      let content = data.content;
+      if (!content || (typeof content === "string" && content.trim() === "")) {
+        if (data.refusalType) {
+          content = data.refusalType.toUpperCase();
+        } else {
+          content = "REQUEST_FAILED";
+        }
+      }
       
       const assistantMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: data.content || "",
+        content,
         citations: data.citations?.map((c: any, idx: number) => ({
           id: `cite-${idx}`,
           sourceType: c.type === "canon" ? "private_canon" : "public_dataset",
@@ -588,7 +635,15 @@ export default function Home() {
 
       setMessages(prev => [...prev, assistantMsg]);
     } catch (error) {
-      console.error("Intent error:", error);
+      const requestId = crypto.randomUUID();
+      console.error(`[${requestId}] Intent error:`, error);
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "REQUEST_FAILED",
+        timestamp: Date.now()
+      };
+      setMessages(prev => [...prev, errorMsg]);
     } finally {
       setIsTyping(false);
     }

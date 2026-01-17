@@ -140,8 +140,7 @@ export default function PrintoutView() {
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
             <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <h2 className="text-lg font-semibold mb-2">Printout Not Found</h2>
-            <p className="text-muted-foreground mb-4">The requested judgment record could not be loaded.</p>
+            <h2 className="text-lg font-mono font-semibold mb-4">PRINTOUT_NOT_FOUND</h2>
             <button
               onClick={() => navigate("/")}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"

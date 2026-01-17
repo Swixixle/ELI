@@ -1,0 +1,114 @@
+Paste this verbatim to the Replit agent. It covers (1) the blank Evaluate responses and (2) the missing Seal flow, with tight scope and exact UI copy.
+
+⸻
+
+Two urgent issues in the demo: (1) Evaluate responses render blank, and (2) there is no discoverable “Seal” action to generate an evidentiary artifact (printout). Fix both with minimal changes, no refactors.
+
+⸻
+
+Issue 1 — Evaluate “Ask” renders blank (silent failure)
+
+Problem: In Evaluate, clicking a suggested question (e.g., “What can’t be determined right now?”) shows my question bubble, but the “ELI Imaging” response area renders blank (no text, no error, no refusal key). This is a silent failure.
+
+Context: Decision Target is set; case shows “Decision Permitted (3/5 prerequisites).” Not a missing-target issue. This is API → UI render failing or returning empty.
+
+Required Fix: eliminate silent failure
+	1.	Instrument “Ask” so it always results in ONE of:
+
+	•	rendered response text, OR
+	•	rendered machine-only error key (no prose), OR
+	•	rendered machine-only refusal key when intentionally constrained
+Never blank.
+
+	2.	UI fallback:
+
+	•	If API returns non-2xx OR empty/undefined message text → render machine-only key: REQUEST_FAILED
+	•	Log requestId for debugging (not necessarily shown).
+
+	3.	Validate end-to-end:
+
+	•	Confirm which endpoint Evaluate “Ask” calls.
+	•	Confirm server returns renderable content.
+	•	If server returns content but UI is blank → fix parsing/rendering.
+
+If intentionally constrained, return a visible machine key (not blank)
+
+Implement these stable machine-only keys (no explanatory prose):
+	•	DECISION_TARGET_REQUIRED
+	•	REVIEW_BLOCKED
+	•	EXPLORATORY_UNSUPPORTED
+	•	INSUFFICIENT_EVIDENCE
+
+UI must render the keys verbatim.
+
+Deliverables: diff summary + screenshot showing non-empty response or machine-key + example network response payload.
+
+⸻
+
+Issue 2 — “Seal” action missing / cannot generate artifact
+
+Problem: I cannot find any button to generate the sealed evidentiary artifact (printout). The demo must include a clear end-of-flow action to produce a retrievable artifact.
+
+Required Fix: Add a “Seal” button in the correct place
+	1.	Add a primary action button labeled Seal in the “Judgment Records / Printouts” area (right panel or card where “Printouts” is referenced). It must be discoverable without hunting.
+	2.	Clicking Seal opens a confirmation modal:
+
+	•	Title (exact): Seal Artifact
+	•	Body (exact):
+“This action creates a sealed evidentiary artifact reflecting the current system state.
+Once sealed, the artifact cannot be modified or removed.”
+	•	Buttons: Seal (primary), Cancel (secondary)
+
+No other copy, no tooltips, no icons.
+
+Backend wiring (minimal)
+	3.	On confirm, call the existing printout creation endpoint (or implement POST /api/cases/:id/seal as an alias that internally creates a printout). This must atomically:
+
+	•	compute hashes
+	•	apply signature if configured
+	•	persist the immutable printout
+	•	return the new printoutId + issuedAt + hashes + signature fields
+
+	4.	After success:
+
+	•	Navigate the user to the Printouts list and show the newly sealed artifact as the top entry with:
+	•	printoutId
+	•	issuedAt
+	•	verificationStatus (e.g., SIGNATURE_PRESENT / UNSIGNED)
+
+No summaries, no interpretations.
+
+Retrieval (must work in demo)
+	5.	Ensure the user can click the printout row and view a “raw artifact” panel with:
+
+	•	ids, issuedAt
+	•	contentHash, caseStateHash
+	•	signature fields + publicKeyId
+	•	verification endpoint link/action (if present)
+
+If retrieval fails, render machine-only key PRINT_OUT_NOT_FOUND or REQUEST_FAILED (never blank).
+
+⸻
+
+Non-scope / prohibitions
+
+Do NOT add:
+	•	interpretive labels (“good/sufficient/ready”)
+	•	scoring
+	•	dashboards
+	•	free-text notes
+	•	refactors unrelated to these two issues
+	•	explanatory prose beyond the exact modal text above
+
+⸻
+
+Deliverables for Issue 2
+	•	Diff summary
+	•	Screenshot showing Seal button location
+	•	Screenshot of Seal modal
+	•	Screenshot of a newly created printout listed with id + issuedAt
+	•	Example response payload from seal/printout creation endpoint
+
+Stop after these fixes.
+
+⸻
