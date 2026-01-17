@@ -1,0 +1,186 @@
+Below is a drop-in directive you can paste to agent:architect. It is written as an implementation-ready spec with UX + engineering acceptance criteria. No commentary—just instructions.
+
+⸻
+
+agent:architect — Fix Home Page and Decision Time Persistence
+
+Objective
+	1.	Make Decision Time actually persist and deterministically affect evaluation state.
+	2.	Make the home page user-friendly by removing false choices and moving explanatory “bot voice” out of center focal hierarchy.
+
+You are not allowed to “paper over” failures with copy. If a control exists, it must function. If it cannot function, it must be disabled with an explicit reason.
+
+⸻
+
+A) Decision Time Control — Must Persist, Must Drive Re-Evaluation
+
+Problem
+
+Selecting a date in Decision Context → Time briefly changes UI then reverts. This indicates the selected value is not committed to authoritative state (likely controlled/uncontrolled mismatch, silent validation rejection, or server write failure with optimistic reset). This is a core auditability break.
+
+Required Behavior
+
+A1. Single Source of Truth
+	•	decisionContext.decisionTime must be authoritative.
+	•	UI must be a controlled component reflecting that source.
+	•	No local-only time state that can override parent state on rerender.
+
+A2. Commit Semantics (No Silent Failure)
+
+When user selects a date/time:
+	1.	Validate
+	2.	Commit to state
+	3.	Persist (if applicable)
+	4.	Recompute any “knowledge bounded to decision time” claims
+	5.	Update the “What’s Missing” panel accordingly
+
+If the commit fails for any reason:
+	•	UI must NOT silently revert.
+	•	Show an inline error: “Couldn’t set Decision Time. . Retry.”
+
+A3. Past Date Policy Must Be Explicit
+
+Current tooltip says past date excludes subsequent knowledge (hindsight). Good, but policy must be enforced transparently:
+
+Allowed:
+	•	Setting past date is allowed if the system supports historical bounding.
+
+If disallowed:
+	•	Disable date selection for past dates OR block commit with explicit message:
+	•	“Historical decision times are not enabled in this build.”
+	•	Provide a link/tooltip for why.
+
+Do not allow selecting a date only to discard it.
+
+A4. “Now (Live)” and “Reset to Now”
+	•	“Now (Live)” is a mode, not just a label.
+	•	Provide two explicit modes:
+	•	LIVE (auto-updating to current)
+	•	FIXED (user-selected timestamp)
+
+Switching modes must be explicit and persistent.
+
+A5. Audit Trail
+
+Every successful change to decision time must generate an auditable record:
+	•	previous value
+	•	new value
+	•	user id/session
+	•	timestamp of change
+	•	reason (optional field)
+
+Engineering Implementation Notes
+	•	If React:
+	•	Use a controlled value={decisionTime} and onChange={commitDecisionTime}.
+	•	Ensure memoization doesn’t freeze props; remove derived state that overwrites on render.
+	•	If server persistence:
+	•	Use optimistic update only if you also handle rollback with visible error.
+	•	Prefer: set local state → call API → if fail, revert with toast + inline banner.
+	•	Validation should return structured errors; do not swallow exceptions.
+
+Acceptance Criteria
+	1.	Selecting a date updates the Decision Context label and remains after:
+	•	closing picker
+	•	navigating to another tab and back
+	•	full page refresh (if persistence is expected)
+	2.	“Decision time not anchored” disappears once set to FIXED.
+	3.	If commit fails, user sees an error and the UI does not pretend success.
+	4.	Setting a past time demonstrably affects “temporal verification” / evaluation output OR is explicitly blocked with reason.
+	5.	Audit record exists for each change.
+
+⸻
+
+B) Home Page — Remove False Choice, Fix Visual Hierarchy, Make Explanations Peripheral
+
+Problem
+
+Home page shows “No Case Loaded” as a warning-like state and presents 3 options:
+	•	Upload Documents
+	•	Review Sample Case
+	•	Open Existing Case
+
+In this demo environment, “Review Sample Case” and “Open Existing Case” are effectively the same (both load pre-existing materials). This is a false fork that confuses users. Additionally, the “bot explaining how it interacts” content is centered, stealing focus from action.
+
+Required UX Principles
+	1.	The home page must answer: “What do I do next?” in one glance.
+	2.	Explanatory system behavior belongs in:
+	•	a right-side panel
+	•	a collapsible “How this works”
+	•	or an onboarding overlay
+Not in center focal position.
+	3.	No “error tone” on initial landing.
+
+Required Layout and Content
+
+B1. Primary CTA: Single Clear Default
+
+Center primary action must be:
+
+Start a Case
+	•	Primary button: Start New Case
+	•	Secondary button: Open Case
+	•	Tertiary: View Sample Case (link-style, not equal-weight button)
+
+If demo constraints require only sample cases:
+	•	Replace “Open Case” with “Open Sample Case”
+	•	Do not show two buttons that do the same thing.
+
+B2. Replace “No Case Loaded” Warning Box
+
+Replace with neutral onboarding copy:
+
+Title: “Start a case to begin.”
+Body: “Upload materials or open a sample case.”
+
+No amber warning styling unless an actual user error occurred.
+
+B3. Move Bot Explanation Out of Center
+
+The “This system works on files, not ad-hoc queries” / “procedural governance” explanation should be moved to:
+	•	Right-side “How ELI works” panel (collapsed by default)
+	•	Or “Learn how this works” info icon near header
+
+This panel can contain:
+	•	“Works on files; every claim must cite Canon”
+	•	“Decision time boundaries enforced”
+	•	“Outcome-blind evaluation”
+But it must not dominate the entry screen.
+
+B4. If Keeping 3 Tiles, Make Them Meaningfully Different
+
+Only acceptable if each tile yields a distinct path:
+	1.	Upload Documents → file intake wizard
+	2.	Open Existing Case → case picker
+	3.	Tour a Sample Case → guided, narrated walkthrough (not identical to case picker)
+
+If you do not have a guided tour, do not present it as a separate tile.
+
+Acceptance Criteria
+	1.	In demo mode, there is no pair of options that lead to the same action.
+	2.	The center of the page contains an actionable primary CTA, not explanatory text.
+	3.	New users do not see warning/error styling upon arrival.
+	4.	“How the bot interacts” content is accessible but secondary (side panel/collapsible).
+	5.	A user can start within 1 click:
+	•	Start New Case (upload path)
+	•	Open Case (picker) OR Sample (if demo-only)
+
+⸻
+
+C) Deliverables
+	1.	Implement Decision Time persistence + validation + error handling + audit record.
+	2.	Rebuild Home Page to remove false choice and fix hierarchy.
+	3.	Provide before/after screenshots and a brief list of changed components.
+	4.	Add minimal unit/integration tests:
+	•	decisionTime commit persists
+	•	failure path shows error
+	•	home page routes are distinct
+
+⸻
+
+Non-Negotiables
+	•	No silent reversion of Decision Time.
+	•	No “fake choice” tiles.
+	•	No center-screen manifesto text on landing.
+	•	If a feature is not supported, disable it explicitly rather than pretending.
+
+⸻

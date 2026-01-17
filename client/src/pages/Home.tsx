@@ -196,12 +196,17 @@ const QUESTION_BANK_ICONS: Record<string, React.ReactNode> = {
   "Shield": <Shield className="w-4 h-4" />
 };
 
+type DecisionTimeMode = "live" | "fixed";
+
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [mode, setMode] = useState<"advisor" | "sales">("advisor");
   const [decisionTime, setDecisionTime] = useState<Date | undefined>(undefined);
+  const [decisionTimeMode, setDecisionTimeMode] = useState<DecisionTimeMode>("live");
+  const [decisionTimeError, setDecisionTimeError] = useState<string | null>(null);
+  const [decisionTimeSaving, setDecisionTimeSaving] = useState(false);
   const [showDemo, setShowDemo] = useState(true);
   const [showTryPanel, setShowTryPanel] = useState(false);
   const [activeCase, setActiveCase] = useState<Case | null>(null);
@@ -224,15 +229,20 @@ export default function Home() {
         .then(docs => setDocumentCount(docs.length))
         .catch(() => setDocumentCount(0));
       
-      // Hydrate decisionTime from server value when case is loaded
+      // Hydrate decisionTime and mode from server value when case is loaded
       if (activeCase.decisionTime) {
         setDecisionTime(new Date(activeCase.decisionTime));
+        setDecisionTimeMode("fixed");
       } else {
         setDecisionTime(undefined);
+        setDecisionTimeMode("live");
       }
+      setDecisionTimeError(null);
     } else {
       setDocumentCount(0);
       setDecisionTime(undefined);
+      setDecisionTimeMode("live");
+      setDecisionTimeError(null);
     }
   }, [activeCase]);
 
@@ -284,26 +294,53 @@ export default function Home() {
     }
   };
 
-  const handleSetDecisionTime = async (date: Date | undefined) => {
-    setDecisionTime(date);
-    
+  const handleSetDecisionTime = async (date: Date | undefined, newMode?: DecisionTimeMode) => {
     if (!activeCase || isArchived) return;
+    
+    const previousTime = decisionTime;
+    const previousMode = decisionTimeMode;
+    
+    // Optimistically update UI
+    setDecisionTime(date);
+    setDecisionTimeMode(newMode || (date ? "fixed" : "live"));
+    setDecisionTimeError(null);
+    setDecisionTimeSaving(true);
     
     try {
       const response = await fetch(`/api/cases/${activeCase.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decisionTime: date ? date.toISOString() : null })
+        body: JSON.stringify({ 
+          decisionTime: date ? date.toISOString() : null,
+          decisionTimeMode: newMode || (date ? "fixed" : "live")
+        })
       });
       
       if (response.ok) {
         const updated = await response.json();
         setActiveCase(updated);
         queryClient.invalidateQueries({ queryKey: ["cases", activeCase.id, "overview"] });
+        setDecisionTimeSaving(false);
+      } else {
+        // Revert on failure
+        setDecisionTime(previousTime);
+        setDecisionTimeMode(previousMode);
+        const errorData = await response.json().catch(() => ({}));
+        setDecisionTimeError(errorData.error || "Failed to save. Try again.");
+        setDecisionTimeSaving(false);
       }
     } catch (error) {
+      // Revert on network error
+      setDecisionTime(previousTime);
+      setDecisionTimeMode(previousMode);
+      setDecisionTimeError("Network error. Check connection and retry.");
+      setDecisionTimeSaving(false);
       console.error("Failed to set decision time:", error);
     }
+  };
+  
+  const handleSwitchToLiveMode = async () => {
+    await handleSetDecisionTime(undefined, "live");
   };
 
   const toggleAuditExpanded = (messageId: string) => {
@@ -720,44 +757,84 @@ export default function Home() {
           <div className="flex items-center gap-4">
              {/* Decision Time Selector */}
              <div className="flex flex-col items-end">
-                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Decision Context</span>
+                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Decision Time</span>
                 <Popover open={showDecisionTimePopover} onOpenChange={setShowDecisionTimePopover}>
                   <PopoverTrigger asChild>
-                    <button className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 text-xs font-mono border rounded-md transition-colors",
-                      decisionTime 
-                        ? "bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-900/20 dark:text-amber-100 dark:border-amber-800" 
-                        : "bg-background text-muted-foreground border-border hover:text-foreground"
-                    )}>
-                      <CalendarClock className="w-3 h-3" />
-                      {decisionTime ? format(decisionTime, "yyyy-MM-dd") : "Now (Live)"}
+                    <button 
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-1.5 text-xs font-mono border rounded-md transition-colors",
+                        decisionTimeError
+                          ? "bg-destructive/10 text-destructive border-destructive/50"
+                          : decisionTimeMode === "fixed"
+                            ? "bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-900/20 dark:text-amber-100 dark:border-amber-800" 
+                            : "bg-background text-muted-foreground border-border hover:text-foreground"
+                      )}
+                      disabled={decisionTimeSaving}
+                      data-testid="button-decision-time"
+                    >
+                      <CalendarClock className={cn("w-3 h-3", decisionTimeSaving && "animate-pulse")} />
+                      {decisionTimeSaving ? "Saving..." : decisionTimeMode === "fixed" && decisionTime ? format(decisionTime, "yyyy-MM-dd") : "Live"}
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
-                    <div className="p-3 border-b text-xs text-muted-foreground bg-muted/30">
-                      <strong>Temporal Lock:</strong> Setting a past date excludes all subsequent knowledge (hindsight).
+                  <PopoverContent className="w-72 p-0" align="end">
+                    {decisionTimeError && (
+                      <div className="p-3 bg-destructive/10 border-b border-destructive/20 text-xs text-destructive">
+                        <strong>Error:</strong> {decisionTimeError}
+                      </div>
+                    )}
+                    <div className="p-3 border-b">
+                      <div className="text-xs font-medium mb-2">Temporal Mode</div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleSwitchToLiveMode()}
+                          className={cn(
+                            "flex-1 px-3 py-2 text-xs rounded-md border transition-colors",
+                            decisionTimeMode === "live"
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background text-foreground border-border hover:border-primary/50"
+                          )}
+                          data-testid="button-mode-live"
+                        >
+                          Live (Now)
+                        </button>
+                        <button
+                          onClick={() => setDecisionTimeMode("fixed")}
+                          className={cn(
+                            "flex-1 px-3 py-2 text-xs rounded-md border transition-colors",
+                            decisionTimeMode === "fixed"
+                              ? "bg-amber-100 text-amber-900 border-amber-300"
+                              : "bg-background text-foreground border-border hover:border-amber-300"
+                          )}
+                          data-testid="button-mode-fixed"
+                        >
+                          Fixed Date
+                        </button>
+                      </div>
                     </div>
-                    <Calendar
-                      mode="single"
-                      selected={decisionTime}
-                      onSelect={(date) => {
-                        handleSetDecisionTime(date);
-                        setShowDecisionTimePopover(false);
-                      }}
-                      initialFocus
-                      className="p-2"
-                    />
-                    <div className="p-2 border-t">
-                      <button 
-                        onClick={() => {
-                          handleSetDecisionTime(undefined);
-                          setShowDecisionTimePopover(false);
-                        }}
-                        className="w-full text-xs text-muted-foreground hover:text-primary py-1"
-                      >
-                        Reset to Now (Live)
-                      </button>
-                    </div>
+                    {decisionTimeMode === "fixed" && (
+                      <>
+                        <div className="p-2 bg-muted/30 text-xs text-muted-foreground">
+                          Setting a past date excludes all subsequent knowledge (hindsight).
+                        </div>
+                        <Calendar
+                          mode="single"
+                          selected={decisionTime}
+                          onSelect={(date) => {
+                            if (date) {
+                              handleSetDecisionTime(date, "fixed");
+                              setShowDecisionTimePopover(false);
+                            }
+                          }}
+                          initialFocus
+                          className="p-2"
+                        />
+                      </>
+                    )}
+                    {decisionTimeMode === "live" && (
+                      <div className="p-4 text-xs text-muted-foreground text-center">
+                        Using current time. Knowledge boundaries update continuously.
+                      </div>
+                    )}
                   </PopoverContent>
                 </Popover>
              </div>
@@ -1322,76 +1399,57 @@ export default function Home() {
         <div className={cn("flex-1 overflow-y-auto px-8 py-6 space-y-6 scroll-smooth", activeCase && "hidden")}>
           {!activeCase && messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center space-y-8 animate-in fade-in duration-700">
-               {/* No Case Loaded Banner */}
-               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6 max-w-lg w-full">
-                 <div className="flex items-start gap-4">
-                   <div className="w-10 h-10 bg-amber-100 dark:bg-amber-800 rounded-lg flex items-center justify-center shrink-0">
-                     <FileText className="w-5 h-5 text-amber-700 dark:text-amber-200" />
-                   </div>
-                   <div>
-                     <h3 className="font-semibold text-amber-900 dark:text-amber-100 mb-1">No Case Loaded</h3>
-                     <p className="text-sm text-amber-800/80 dark:text-amber-200/80 leading-relaxed">
-                       To begin analysis, you must open or upload source materials. This system works on files, not ad-hoc queries.
-                     </p>
-                   </div>
-                 </div>
-               </div>
                
-               <div className="text-center space-y-2 max-w-md">
-                 <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">Start a Case</h1>
+               {/* Neutral Onboarding - No Warning Styling */}
+               <div className="text-center space-y-3 max-w-md">
+                 <h1 className="text-3xl font-display font-bold text-foreground tracking-tight">Start a Case</h1>
                  <p className="text-muted-foreground text-sm leading-relaxed">
-                   Choose how you want to begin your governance analysis.
+                   Upload materials or open an existing case to begin.
                  </p>
                </div>
                
-               {/* Case-Centric CTAs */}
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-2xl">
+               {/* Primary and Secondary CTAs - Consolidated */}
+               <div className="flex flex-col items-center gap-4 w-full max-w-sm">
+                 <button 
+                   onClick={() => setShowCaseSelector(true)}
+                   className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl"
+                   data-testid="cta-start-case"
+                 >
+                   <Briefcase className="w-5 h-5" />
+                   Open Case
+                 </button>
+                 
                  <a 
                    href="/canon"
-                   className="flex flex-col items-center gap-3 p-6 bg-card border-2 border-border rounded-xl hover:border-primary/50 hover:shadow-lg transition-all text-center group"
+                   className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-card border-2 border-border text-foreground rounded-xl font-medium hover:border-primary/50 hover:shadow-md transition-all"
                    data-testid="cta-upload-documents"
                  >
-                   <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                     <FileText className="w-6 h-6" />
-                   </div>
-                   <div>
-                     <div className="font-semibold text-foreground">Upload Documents</div>
-                     <div className="text-xs text-muted-foreground mt-1">Add source materials to Canon</div>
-                   </div>
+                   <Upload className="w-5 h-5" />
+                   Upload New Documents
                  </a>
-                 
-                 <button 
-                   onClick={runDemo}
-                   className="flex flex-col items-center gap-3 p-6 bg-card border-2 border-primary rounded-xl hover:shadow-lg transition-all text-center group"
-                   data-testid="cta-sample-case"
-                 >
-                   <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center">
-                     <Play className="w-6 h-6 fill-current" />
-                   </div>
-                   <div>
-                     <div className="font-semibold text-foreground">Review Sample Case</div>
-                     <div className="text-xs text-muted-foreground mt-1">Board-level governance dispute</div>
-                   </div>
-                 </button>
-                 
-                 <button
-                   onClick={() => setShowCaseSelector(true)}
-                   className="flex flex-col items-center gap-3 p-6 bg-card border-2 border-border rounded-xl hover:border-primary/50 hover:shadow-lg transition-all text-center group"
-                   data-testid="cta-open-case"
-                 >
-                   <div className="w-12 h-12 rounded-xl bg-muted text-muted-foreground flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                     <Briefcase className="w-6 h-6" />
-                   </div>
-                   <div>
-                     <div className="font-semibold text-foreground">Open Existing Case</div>
-                     <div className="text-xs text-muted-foreground mt-1">Continue prior analysis</div>
-                   </div>
-                 </button>
                </div>
 
-               <p className="text-xs text-muted-foreground max-w-md text-center">
-                 This system enforces decision-time boundaries and requires all claims to cite Canon or verified data sources.
-               </p>
+               {/* Demo Link - Tertiary, Link-style */}
+               <button
+                 onClick={runDemo}
+                 className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4"
+                 data-testid="cta-sample-case"
+               >
+                 Or try a sample case
+               </button>
+               
+               {/* How It Works - Collapsible Side Info */}
+               <details className="w-full max-w-md mt-4 text-left">
+                 <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground flex items-center gap-2">
+                   <Info className="w-3.5 h-3.5" />
+                   How ELI Imaging works
+                 </summary>
+                 <div className="mt-3 p-4 bg-muted/30 rounded-lg text-xs text-muted-foreground space-y-2">
+                   <p>• Works on uploaded files, not ad-hoc queries</p>
+                   <p>• Every claim must cite Canon or verified sources</p>
+                   <p>• Decision-time boundaries enforced (outcome-blind)</p>
+                 </div>
+               </details>
             </div>
           ) : (
             <>
