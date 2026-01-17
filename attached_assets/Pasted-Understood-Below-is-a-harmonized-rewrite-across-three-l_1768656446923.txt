@@ -1,0 +1,85 @@
+Understood. Below is a harmonized rewrite across three layers—Marketing / Technical / Legal—all saying the same thing, with no contradictions, no overclaims, and no drift in epistemic posture.
+
+You should be able to paste any or all of these directly into the agent or product without further translation.
+
+⸻
+
+1. MARKETING COPY
+
+(Clear, restrained, non-anthropomorphic, non-judgmental)
+
+ELI Imaging is a procedural imaging system for governance.
+It maps the epistemic and procedural conditions surrounding a decision to determine whether formal review is admissible.
+
+ELI does not evaluate decision quality, outcomes, or fault.
+It images whether a case is reviewable, not whether a decision was correct.
+
+Like an MRI, ELI reveals structure and limitation.
+Incomplete scans are reported as limited. Interpretation is left to human authorities.
+
+⸻
+
+2. TECHNICAL COPY
+
+(System-facing, implementation-aligned, audit-safe)
+
+ELI Imaging performs procedural acquisition and epistemic field mapping.
+The system evaluates whether a case satisfies defined prerequisites for review based on contemporaneously available, admissible information.
+
+The imaging process is:
+	•	outcome-blind
+	•	reversible
+	•	constrained by acquisition protocols
+
+If required inputs are missing or inadmissible, the system reports limited or non-imageable states.
+
+ELI Imaging does not render judgments, determine correctness, or assign fault.
+It produces a structured representation of review admissibility and epistemic load, separate from interpretation or action.
+
+⸻
+
+3. LEGAL / GOVERNANCE COPY
+
+(GC-ready, discovery-aware, defensibility-first)
+
+ELI Imaging is a procedural assessment tool that determines review admissibility, not decision correctness.
+The system evaluates whether sufficient, contemporaneously available information exists to permit formal review under defined procedural constraints.
+
+ELI does not:
+	•	assess the quality of decisions
+	•	opine on outcomes
+	•	determine fault or responsibility
+
+All outputs are constrained by documented acquisition protocols.
+Where epistemic conditions are insufficient, the system records a limited or non-admissible imaging state.
+
+ELI Imaging separates measurement from judgment by design.
+Any interpretation, determination, or action based on an imaging result is performed independently by human reviewers.
+
+⸻
+
+4. SINGLE CANONICAL PARAGRAPH (OPTIONAL — USE EVERYWHERE)
+
+If you want one paragraph that can safely appear in marketing, docs, and contracts without modification:
+
+ELI Imaging is a procedural imaging system that determines whether a decision environment is epistemically and procedurally admissible for review.
+It does not evaluate decision quality, outcomes, or fault. Outputs are constrained by acquisition protocols and reflect only what was contemporaneously knowable at the time of decision. Incomplete or inadmissible conditions are reported as limited. Measurement is intentionally separated from interpretation, which remains the responsibility of human reviewers.
+
+This paragraph is very hard to misinterpret and very hard to weaponize.
+
+⸻
+
+Final note (important)
+
+All three layers now:
+	•	use the same verbs (“image,” “determine admissibility,” “constrained”)
+	•	avoid evaluative language
+	•	reinforce outcome-blindness
+	•	preserve Parrot Box silence as a valid state
+	•	align with Imaging vs. Determination cleanly
+
+If you want, next I can:
+	•	tighten this further into contract clause language, or
+	•	do a hostile-reading pass (“how could this be misread, and how do we block that?”).
+
+But this is already safe to paste into the agent as-is.
