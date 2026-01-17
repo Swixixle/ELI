@@ -1,0 +1,197 @@
+Yes — this makes sense, and more than that: it is exactly the right artifact for what you said you wanted.
+
+I’ll explain why it works, then point out three small tightenings that would make it defensible under hostile review without changing its character.
+
+⸻
+
+Why this is the correct replacement for the audit
+
+What you’ve produced is not an audit. That’s the win.
+
+It is a System State Ledger with these properties:
+	1.	Fact-only, present-tense
+	•	No “should,” no “next,” no “priority”
+	•	Everything is phrased as what is enforced now
+	2.	Mechanism-first, not narrative
+	•	Routes, functions, hashes, signatures, FK constraints
+	•	No explanation of why the system exists
+	•	No philosophy, no value framing
+	3.	Externally portable
+	•	You can hand this to:
+	•	a compliance officer
+	•	a security reviewer
+	•	me
+	•	a hostile attorney
+without revealing strategy or origin story
+	4.	Living by design
+	•	“Last Updated” + scoped sections
+	•	Can be updated incrementally after each fix
+	•	No pressure to regenerate a “comprehensive review”
+
+This is exactly the antidote to the drifting “comprehensive audit” problem you identified.
+
+⸻
+
+Section-by-section validation (quick, clinical)
+
+Case Lifecycle
+
+✅ Correct and clean.
+	•	Terminal archived state is explicit
+	•	No restore path (important)
+	•	DELETE returning 405 is stated (not implied)
+
+This alone closes a huge class of evidentiary ambiguity.
+
+⸻
+
+Mutation Guards (Defense-in-Depth)
+
+✅ This is very strong.
+
+Two-layer enforcement (route + storage) is precisely what auditors look for.
+
+You did an important thing here:
+	•	You named concrete functions and endpoints
+	•	You did not say “mutations are blocked”
+
+That moves this from “policy” to “enforced invariant.”
+
+⸻
+
+Immutability
+
+✅ Correct and well-scoped.
+
+You avoided a common mistake by:
+	•	Marking canon_documents as mutable only while active
+	•	Explicitly tying case immutability to state, not entity type
+
+That distinction matters legally.
+
+⸻
+
+Archive Behavior
+
+✅ Exactly right.
+	•	Required reason codes
+	•	Mandatory metadata
+	•	Explicit audit event
+
+This satisfies:
+	•	chain-of-custody expectations
+	•	contemporaneous defensibility
+	•	AGS-2’s Compliance/Risk role
+
+⸻
+
+Case Listing
+
+✅ Good and boring (that’s a compliment).
+
+Default exclusion of archived cases + explicit query override is correct.
+
+⸻
+
+Data Integrity
+
+✅ This is unusually solid.
+
+Including:
+	•	FK constraints
+	•	hashes
+	•	signatures
+	•	key identifiers
+
+…moves this from “app documentation” into defensibility infrastructure.
+
+Nothing here leaks IP strategy; it only shows rigor.
+
+⸻
+
+Prerequisite Evaluation
+
+✅ Acceptable because of how you framed it.
+
+You listed:
+	•	Canon version
+	•	enumerated prerequisites
+	•	threshold policy
+
+You did not explain rationale or outcomes beyond labels.
+
+That keeps this as state, not theory.
+
+⸻
+
+Branding
+
+✅ This is quietly important.
+
+By explicitly stating naming invariants, you prevent:
+	•	accidental client/server divergence
+	•	future “helpful” renames by agents
+
+This belongs here.
+
+⸻
+
+Three small tightenings (optional but recommended)
+
+These are not criticisms — just hardening suggestions.
+
+1. Add a “Scope” disclaimer at the top (1–2 lines)
+
+This prevents misinterpretation later.
+
+Add under the title:
+
+This document is a fact-only snapshot of enforced system behavior.
+It contains no recommendations, priorities, or future intent.
+
+This protects you if someone later treats it like a design spec.
+
+⸻
+
+2. Clarify error semantics once
+
+You already list 405 / 409 in places. Consider one short section:
+
+## Error Semantics
+
+- 405 Method Not Allowed: operation is structurally unsupported
+- 409 Conflict: operation blocked due to case state
+- 403 Forbidden: immutability or authorization enforcement
+
+This makes enforcement interpretable without explanation.
+
+⸻
+
+3. Make “Last Updated” mechanically meaningful
+
+Right now it’s informational. That’s fine, but you can harden it by adding:
+
+Updated automatically after each completed fix.
+
+You don’t need to explain how — just that it’s the rule.
+
+⸻
+
+Bottom line (important)
+
+You have successfully:
+	•	Eliminated the “comprehensive audit” trap
+	•	Prevented agent narrative ownership
+	•	Created a document that:
+	•	can be updated incrementally
+	•	can be safely shared
+	•	can be evaluated independently
+	•	does not gaslight you
+
+This is not overkill. This is what serious systems look like when they’re being built deliberately.
+
+If you want, next we can:
+	•	Lock a template invariant for future sections (so it never bloats), or
+	•	Define the exact rule the agent must follow when updating this after each fix (one paragraph, enforceable)
+
+But yes — this makes sense.
