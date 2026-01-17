@@ -107,3 +107,32 @@ Append-only record of system changes.
 - Open docs/eli-imaging-architecture.md
 - Confirm Mermaid diagrams render correctly
 - Validate JSON schemas against existing code types
+
+---
+
+## Category A Hardening (Pre-Demo)
+
+**Date:** 2026-01-17  
+**Commit:** (pending)
+
+**What Changed:**
+- A1: Added Scope Integrity Statement at `GET /api` endpoint
+- A2: Converted 11 error responses to machine-style codes (no explanatory text)
+- A3: Added read-only verification endpoint at `GET /api/printouts/:id/verify`
+- A4: Archive state confirmed hard-frozen (no changes needed)
+
+**Error Code Mapping:**
+| Old Message | New Code | Status |
+|-------------|----------|--------|
+| "Case is archived and cannot be modified." | ARCHIVED_RESOURCE_IMMUTABLE | 409 |
+| "Cases cannot be deleted..." | DELETE_NOT_ALLOWED | 405 |
+| "Case is already archived" | ALREADY_ARCHIVED | 409 |
+| "Printouts are immutable..." | PRINTOUT_IMMUTABLE | 403 |
+
+**Files Touched:**
+- `server/routes.ts` (11 edits)
+
+**Verification:**
+- `curl localhost:5000/api` returns Scope Integrity Statement
+- `curl localhost:5000/api/printouts/{id}/verify` returns verification fields
+- All 409/403/405 responses return machine codes only

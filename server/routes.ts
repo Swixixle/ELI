@@ -34,6 +34,16 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  // === SYSTEM INFO ===
+  
+  // Scope Integrity Statement (A1)
+  app.get("/api", (req, res) => {
+    res.json({
+      system: "ELI Imaging",
+      assertion: "ELI asserts only that sufficient system evidence exists to confirm entry into the results environment at a specific time."
+    });
+  });
+
   // === CASE ROUTES ===
   
   // Get all cases (defaults to active only, use ?status=archived or ?status=all)
@@ -89,7 +99,7 @@ export async function registerRoutes(
         return;
       }
       if (existingCase.status === "archived") {
-        res.status(409).json({ error: "Case is archived and cannot be modified." });
+        res.status(409).json({ error: "ARCHIVED_RESOURCE_IMMUTABLE", status: 409 });
         return;
       }
       const updatedCase = await storage.updateCase(req.params.id, req.body);
@@ -102,9 +112,7 @@ export async function registerRoutes(
 
   // Delete case - DISABLED, use Archive instead
   app.delete("/api/cases/:id", async (req, res) => {
-    res.status(405).json({ 
-      error: "Cases cannot be deleted. Use POST /api/cases/:id/archive to archive a case." 
-    });
+    res.status(405).json({ error: "DELETE_NOT_ALLOWED", status: 405 });
   });
 
   // Archive case - soft delete with audit trail
@@ -135,7 +143,7 @@ export async function registerRoutes(
       }
       
       if (existingCase.status === "archived") {
-        res.status(409).json({ error: "Case is already archived" });
+        res.status(409).json({ error: "ALREADY_ARCHIVED", status: 409 });
         return;
       }
       
@@ -317,7 +325,7 @@ export async function registerRoutes(
         return;
       }
       if (existingCase.status === "archived") {
-        res.status(409).json({ error: "Case is archived and cannot be modified." });
+        res.status(409).json({ error: "ARCHIVED_RESOURCE_IMMUTABLE", status: 409 });
         return;
       }
       const { text, setBy } = req.body;
@@ -357,7 +365,7 @@ export async function registerRoutes(
         return;
       }
       if (existingCase.status === "archived") {
-        res.status(409).json({ error: "Case is archived and cannot be modified." });
+        res.status(409).json({ error: "ARCHIVED_RESOURCE_IMMUTABLE", status: 409 });
         return;
       }
       const { timestamp, mode } = req.body;
@@ -396,7 +404,7 @@ export async function registerRoutes(
         return;
       }
       if (existingCase.status === "archived") {
-        res.status(409).json({ error: "Case is archived and cannot be modified." });
+        res.status(409).json({ error: "ARCHIVED_RESOURCE_IMMUTABLE", status: 409 });
         return;
       }
       const eventData = {
@@ -453,7 +461,7 @@ export async function registerRoutes(
         return;
       }
       if (caseData.status === "archived") {
-        res.status(409).json({ error: "Case is archived and cannot be modified." });
+        res.status(409).json({ error: "ARCHIVED_RESOURCE_IMMUTABLE", status: 409 });
         return;
       }
 
@@ -597,7 +605,7 @@ export async function registerRoutes(
         return;
       }
       if (caseData.status === "archived") {
-        res.status(409).json({ error: "Case is archived and cannot be modified." });
+        res.status(409).json({ error: "ARCHIVED_RESOURCE_IMMUTABLE", status: 409 });
         return;
       }
 
@@ -744,27 +752,41 @@ export async function registerRoutes(
     }
   });
 
+  // Verification endpoint (A3) - read-only artifact verification
+  app.get("/api/printouts/:id/verify", async (req, res) => {
+    try {
+      const printout = await storage.getCasePrintout(req.params.id);
+      if (!printout) {
+        res.status(404).json({ error: "PRINTOUT_NOT_FOUND", status: 404 });
+        return;
+      }
+      res.json({
+        id: printout.id,
+        contentHash: printout.contentHash,
+        caseStateHash: printout.caseStateHash,
+        signatureB64: printout.signatureB64,
+        publicKeyId: printout.publicKeyId,
+        issuedAt: printout.issuedAt,
+        verificationStatus: printout.signatureB64 ? "SIGNATURE_PRESENT" : "UNSIGNED"
+      });
+    } catch (error) {
+      console.error("Error verifying printout:", error);
+      res.status(500).json({ error: "VERIFICATION_FAILED", status: 500 });
+    }
+  });
+
   // Explicitly reject DELETE on printouts (immutability enforcement)
   app.delete("/api/cases/:caseId/printouts/:printoutId", (req, res) => {
-    res.status(403).json({
-      error: "Printouts are immutable",
-      message: "Once issued, a printout cannot be deleted or modified. This ensures the integrity of the judgment record.",
-    });
+    res.status(403).json({ error: "PRINTOUT_IMMUTABLE", status: 403 });
   });
 
   // Explicitly reject PATCH/PUT on printouts (immutability enforcement)
   app.patch("/api/cases/:caseId/printouts/:printoutId", (req, res) => {
-    res.status(403).json({
-      error: "Printouts are immutable",
-      message: "Once issued, a printout cannot be deleted or modified. This ensures the integrity of the judgment record.",
-    });
+    res.status(403).json({ error: "PRINTOUT_IMMUTABLE", status: 403 });
   });
 
   app.put("/api/cases/:caseId/printouts/:printoutId", (req, res) => {
-    res.status(403).json({
-      error: "Printouts are immutable",
-      message: "Once issued, a printout cannot be deleted or modified. This ensures the integrity of the judgment record.",
-    });
+    res.status(403).json({ error: "PRINTOUT_IMMUTABLE", status: 403 });
   });
 
   // Get documents for a case
@@ -787,7 +809,7 @@ export async function registerRoutes(
         return;
       }
       if (caseData.status === "archived") {
-        res.status(409).json({ error: "Case is archived and cannot be modified." });
+        res.status(409).json({ error: "ARCHIVED_RESOURCE_IMMUTABLE", status: 409 });
         return;
       }
       
@@ -870,7 +892,7 @@ export async function registerRoutes(
         return;
       }
       if (caseData.status === "archived") {
-        res.status(409).json({ error: "Case is archived and cannot be modified." });
+        res.status(409).json({ error: "ARCHIVED_RESOURCE_IMMUTABLE", status: 409 });
         return;
       }
       
