@@ -67,3 +67,21 @@ Append-only record of system changes.
 
 **Verification:**
 - `npm run dev` starts without LSP errors
+
+---
+
+## Documentation Hardening
+
+**Date:** 2026-01-17  
+**Commit:** (pending)
+
+**What Changed:**
+- Added scope disclaimer to SYSTEM_STATE.md header
+- Added Error Semantics section (405/409/403 meanings)
+- Made "Last Updated" mechanically meaningful with update rule
+
+**Files Touched:**
+- `docs/SYSTEM_STATE.md`
+
+**Verification:**
+- Read SYSTEM_STATE.md, confirm disclaimer and error semantics present

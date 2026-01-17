@@ -1,6 +1,20 @@
 # ELI Imaging — System State
 
-**Last Updated:** 2026-01-17
+This document is a fact-only snapshot of enforced system behavior.  
+It contains no recommendations, priorities, or future intent.
+
+**Last Updated:** 2026-01-17  
+Updated automatically after each completed fix.
+
+---
+
+## Error Semantics
+
+| Code | Meaning |
+|------|---------|
+| 405 | Method Not Allowed — operation is structurally unsupported |
+| 409 | Conflict — operation blocked due to case state |
+| 403 | Forbidden — immutability or authorization enforcement |
 
 ---
 
