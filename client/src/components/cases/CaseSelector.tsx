@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCases, useCreateCase, useArchiveCase } from "@/lib/casesApi";
-import { Briefcase, Plus, Archive, Folder, ChevronRight, Loader2, Filter, AlertTriangle } from "lucide-react";
+import { Briefcase, Plus, Archive, Folder, ChevronRight, Loader2, Filter, AlertTriangle, Library } from "lucide-react";
 import type { Case } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 type CaseStatusFilter = "active" | "archived" | "all";
+type CaseOriginFilter = "all" | "SAMPLE_LIBRARY";
 type ArchiveReasonCode = "DUPLICATE" | "ENTERED_IN_ERROR" | "COMPLETED" | "CANCELLED";
 
 interface CaseSelectorProps {
@@ -17,9 +18,11 @@ interface CaseSelectorProps {
   onOpenChange: (open: boolean) => void;
   onSelectCase: (caseData: Case) => void;
   currentCaseId?: string | null;
+  initialTab?: "cases" | "samples";
 }
 
-export function CaseSelector({ open, onOpenChange, onSelectCase, currentCaseId }: CaseSelectorProps) {
+export function CaseSelector({ open, onOpenChange, onSelectCase, currentCaseId, initialTab = "cases" }: CaseSelectorProps) {
+  const [activeTab, setActiveTab] = useState<"cases" | "samples">(initialTab);
   const [showNewCase, setShowNewCase] = useState(false);
   const [newCaseName, setNewCaseName] = useState("");
   const [newCaseDescription, setNewCaseDescription] = useState("");
@@ -30,8 +33,12 @@ export function CaseSelector({ open, onOpenChange, onSelectCase, currentCaseId }
   const [archiveReasonCode, setArchiveReasonCode] = useState<ArchiveReasonCode | null>(null);
   
   const { data: cases, isLoading } = useCases(statusFilter);
+  const { data: sampleCases, isLoading: samplesLoading } = useCases("active", "SAMPLE_LIBRARY");
   const createCase = useCreateCase();
   const archiveCase = useArchiveCase();
+  
+  // Filter user cases to exclude sample library
+  const userCases = cases?.filter(c => (c as any).origin !== "SAMPLE_LIBRARY") || [];
 
   const handleCreateCase = async () => {
     if (!newCaseName.trim()) return;
@@ -116,105 +123,199 @@ export function CaseSelector({ open, onOpenChange, onSelectCase, currentCaseId }
             </div>
           ) : (
             <div className="py-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Filter className="w-4 h-4 text-muted-foreground" />
-                <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as CaseStatusFilter)}>
-                  <SelectTrigger className="w-[140px]" data-testid="select-case-status-filter">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active Cases</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
-                    <SelectItem value="all">All Cases</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : cases && cases.length > 0 ? (
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {cases.map((c) => {
-                    const isArchived = c.status === "archived";
-                    return (
-                      <button
-                        key={c.id}
-                        onClick={() => {
-                          onSelectCase(c);
-                          onOpenChange(false);
-                        }}
-                        className={cn(
-                          "w-full flex items-center justify-between p-3 rounded-lg border transition-colors text-left group",
-                          currentCaseId === c.id
-                            ? "border-primary bg-primary/5"
-                            : isArchived 
-                              ? "border-border bg-muted/30 opacity-70"
-                              : "border-border hover:border-primary/50 hover:bg-muted/30"
-                        )}
-                        data-testid={`button-case-${c.id}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={cn(
-                            "w-9 h-9 rounded-md flex items-center justify-center",
-                            currentCaseId === c.id 
-                              ? "bg-primary/20 text-primary" 
-                              : isArchived
-                                ? "bg-muted text-muted-foreground/50"
-                                : "bg-muted text-muted-foreground"
-                          )}>
-                            <Folder className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-sm flex items-center gap-2">
-                              {c.name}
-                              {isArchived && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
-                                  Archived
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {isArchived && c.archivedAt
-                                ? `Archived ${format(new Date(c.archivedAt), "MMM d, yyyy")}`
-                                : c.description || `Created ${format(new Date(c.createdAt), "MMM d, yyyy")}`
-                              }
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {!isArchived && (
-                            <button
-                              onClick={(e) => handleArchiveClick(e, c.id)}
-                              className="p-1.5 rounded-md text-muted-foreground hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="Archive case"
-                              data-testid={`button-archive-case-${c.id}`}
-                            >
-                              <Archive className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Folder className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">
-                    {statusFilter === "archived" 
-                      ? "No archived cases" 
-                      : statusFilter === "all"
-                        ? "No cases yet"
-                        : "No active cases"
-                    }
-                  </p>
-                  {statusFilter === "active" && (
-                    <p className="text-xs mt-1">Create your first case to get started</p>
+              {/* Tab Switcher */}
+              <div className="flex border-b mb-4">
+                <button
+                  onClick={() => setActiveTab("cases")}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+                    activeTab === "cases"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                   )}
-                </div>
+                  data-testid="tab-my-cases"
+                >
+                  <Folder className="w-4 h-4" />
+                  My Cases
+                </button>
+                <button
+                  onClick={() => setActiveTab("samples")}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+                    activeTab === "samples"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                  data-testid="tab-sample-library"
+                >
+                  <Library className="w-4 h-4" />
+                  Sample Library
+                </button>
+              </div>
+
+              {/* My Cases Tab */}
+              {activeTab === "cases" && (
+                <>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Filter className="w-4 h-4 text-muted-foreground" />
+                    <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as CaseStatusFilter)}>
+                      <SelectTrigger className="w-[140px]" data-testid="select-case-status-filter">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active Cases</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                        <SelectItem value="all">All Cases</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {isLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : userCases.length > 0 ? (
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {userCases.map((c) => {
+                        const isArchived = c.status === "archived";
+                        return (
+                          <button
+                            key={c.id}
+                            onClick={() => {
+                              onSelectCase(c);
+                              onOpenChange(false);
+                            }}
+                            className={cn(
+                              "w-full flex items-center justify-between p-3 rounded-lg border transition-colors text-left group",
+                              currentCaseId === c.id
+                                ? "border-primary bg-primary/5"
+                                : isArchived 
+                                  ? "border-border bg-muted/30 opacity-70"
+                                  : "border-border hover:border-primary/50 hover:bg-muted/30"
+                            )}
+                            data-testid={`button-case-${c.id}`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={cn(
+                                "w-9 h-9 rounded-md flex items-center justify-center",
+                                currentCaseId === c.id 
+                                  ? "bg-primary/20 text-primary" 
+                                  : isArchived
+                                    ? "bg-muted text-muted-foreground/50"
+                                    : "bg-muted text-muted-foreground"
+                              )}>
+                                <Folder className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-sm flex items-center gap-2">
+                                  {c.name}
+                                  {isArchived && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
+                                      Archived
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {isArchived && c.archivedAt
+                                    ? `Archived ${format(new Date(c.archivedAt), "MMM d, yyyy")}`
+                                    : c.description || `Created ${format(new Date(c.createdAt), "MMM d, yyyy")}`
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {!isArchived && (
+                                <button
+                                  onClick={(e) => handleArchiveClick(e, c.id)}
+                                  className="p-1.5 rounded-md text-muted-foreground hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  title="Archive case"
+                                  data-testid={`button-archive-case-${c.id}`}
+                                >
+                                  <Archive className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Folder className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">
+                        {statusFilter === "archived" 
+                          ? "No archived cases" 
+                          : statusFilter === "all"
+                            ? "No cases yet"
+                            : "No active cases"
+                        }
+                      </p>
+                      {statusFilter === "active" && (
+                        <p className="text-xs mt-1">Create your first case to get started</p>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Sample Library Tab */}
+              {activeTab === "samples" && (
+                <>
+                  {samplesLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : sampleCases && sampleCases.length > 0 ? (
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {sampleCases.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => {
+                            onSelectCase(c);
+                            onOpenChange(false);
+                          }}
+                          className={cn(
+                            "w-full flex items-center justify-between p-3 rounded-lg border transition-colors text-left group",
+                            currentCaseId === c.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50 hover:bg-muted/30"
+                          )}
+                          data-testid={`button-sample-case-${c.id}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "w-9 h-9 rounded-md flex items-center justify-center",
+                              currentCaseId === c.id 
+                                ? "bg-primary/20 text-primary" 
+                                : "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                            )}>
+                              <Library className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="font-medium text-sm flex items-center gap-2">
+                                {c.name}
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                  Sample
+                                </span>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {c.description || "Pre-configured sample case for learning"}
+                              </div>
+                            </div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Library className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">No sample cases available</p>
+                      <p className="text-xs mt-1">Sample cases help you learn how ELI Imaging works</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

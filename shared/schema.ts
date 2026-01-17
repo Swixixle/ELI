@@ -15,6 +15,12 @@ export type CasePhase = typeof CASE_PHASES[number];
 export const CASE_STATUSES = ["active", "archived"] as const;
 export type CaseStatus = typeof CASE_STATUSES[number];
 
+export const CASE_ORIGINS = ["UPLOADED_BY_USER", "SAMPLE_LIBRARY", "IMPORTED"] as const;
+export type CaseOrigin = typeof CASE_ORIGINS[number];
+
+export const DECISION_TIME_MODES = ["live", "fixed"] as const;
+export type DecisionTimeMode = typeof DECISION_TIME_MODES[number];
+
 export const ARCHIVE_REASON_CODES = ["DUPLICATE", "ENTERED_IN_ERROR", "COMPLETED", "CANCELLED"] as const;
 export type ArchiveReasonCode = typeof ARCHIVE_REASON_CODES[number];
 
@@ -22,9 +28,11 @@ export const cases = pgTable("cases", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description"),
+  origin: varchar("origin", { length: 30 }).notNull().default("UPLOADED_BY_USER"),
   decisionTarget: text("decision_target"),
   decisionTime: timestamp("decision_time"),
-  decisionTimeMode: varchar("decision_time_mode", { length: 20 }),
+  decisionTimeMode: varchar("decision_time_mode", { length: 20 }).default("live"),
+  currentDecisionContextId: varchar("current_decision_context_id"),
   phase: varchar("phase", { length: 20 }).notNull().default("intake"),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   policyThresholdMin: integer("policy_threshold_min").notNull().default(3),
@@ -34,6 +42,18 @@ export const cases = pgTable("cases", {
   archiveReasonNote: text("archive_reason_note"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Decision Contexts - audit-legitimate revisions of decision time settings
+export const decisionContexts = pgTable("decision_contexts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  caseId: varchar("case_id").notNull().references(() => cases.id),
+  mode: varchar("mode", { length: 20 }).notNull().default("live"),
+  decisionTime: timestamp("decision_time"),
+  previousContextId: varchar("previous_context_id"),
+  actor: varchar("actor", { length: 255 }),
+  reason: text("reason"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const canonDocuments = pgTable("canon_documents", {
@@ -79,6 +99,11 @@ export const insertCanonDocumentSchema = createInsertSchema(canonDocuments).omit
 });
 
 export const insertCanonChunkSchema = createInsertSchema(canonChunks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDecisionContextSchema = createInsertSchema(decisionContexts).omit({
   id: true,
   createdAt: true,
 });
@@ -166,6 +191,8 @@ export type CanonDocument = typeof canonDocuments.$inferSelect;
 export type InsertCanonDocument = z.infer<typeof insertCanonDocumentSchema>;
 export type CanonChunk = typeof canonChunks.$inferSelect;
 export type InsertCanonChunk = z.infer<typeof insertCanonChunkSchema>;
+export type DecisionContext = typeof decisionContexts.$inferSelect;
+export type InsertDecisionContext = z.infer<typeof insertDecisionContextSchema>;
 export type DecisionTarget = typeof decisionTargets.$inferSelect;
 export type InsertDecisionTarget = z.infer<typeof insertDecisionTargetSchema>;
 export type CaseEvent = typeof caseEvents.$inferSelect;

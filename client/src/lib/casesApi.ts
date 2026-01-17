@@ -2,9 +2,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Case, InsertCase, CanonDocument, CaseOverview } from "@shared/schema";
 
 type CaseStatusFilter = "active" | "archived" | "all";
+type CaseOriginFilter = "UPLOADED_BY_USER" | "SAMPLE_LIBRARY" | "IMPORTED";
 
-async function fetchCases(status: CaseStatusFilter = "active"): Promise<Case[]> {
-  const res = await fetch(`/api/cases?status=${status}`);
+async function fetchCases(status: CaseStatusFilter = "active", origin?: CaseOriginFilter): Promise<Case[]> {
+  const params = new URLSearchParams({ status });
+  if (origin) params.append("origin", origin);
+  const res = await fetch(`/api/cases?${params.toString()}`);
   if (!res.ok) throw new Error("Failed to fetch cases");
   return res.json();
 }
@@ -72,8 +75,11 @@ async function fetchCaseOverview(caseId: string): Promise<CaseOverview> {
   return res.json();
 }
 
-export function useCases(status: CaseStatusFilter = "active") {
-  return useQuery({ queryKey: ["cases", status], queryFn: () => fetchCases(status) });
+export function useCases(status: CaseStatusFilter = "active", origin?: CaseOriginFilter) {
+  return useQuery({ 
+    queryKey: ["cases", status, origin], 
+    queryFn: () => fetchCases(status, origin) 
+  });
 }
 
 export function useCase(id: string | null) {

@@ -211,6 +211,7 @@ export default function Home() {
   const [showTryPanel, setShowTryPanel] = useState(false);
   const [activeCase, setActiveCase] = useState<Case | null>(null);
   const [showCaseSelector, setShowCaseSelector] = useState(false);
+  const [caseSelectorInitialTab, setCaseSelectorInitialTab] = useState<"cases" | "samples">("cases");
   const [expandedAuditMessages, setExpandedAuditMessages] = useState<Set<string>>(new Set());
   const [documentCount, setDocumentCount] = useState(0);
   const [showDecisionTargetDialog, setShowDecisionTargetDialog] = useState(false);
@@ -728,7 +729,10 @@ export default function Home() {
               {activeCase ? (
                 <>
                   <button 
-                    onClick={() => setShowCaseSelector(true)}
+                    onClick={() => {
+                      setCaseSelectorInitialTab("cases");
+                      setShowCaseSelector(true);
+                    }}
                     className="flex items-center gap-2 hover:text-primary transition-colors"
                     data-testid="button-change-case"
                   >
@@ -945,7 +949,10 @@ export default function Home() {
         {showCaseSelector && (
           <CaseSelector
             open={showCaseSelector}
-            onOpenChange={setShowCaseSelector}
+            onOpenChange={(open) => {
+              setShowCaseSelector(open);
+              if (!open) setCaseSelectorInitialTab("cases");
+            }}
             onSelectCase={(c) => {
               setActiveCase(c);
               setShowDemo(false);
@@ -953,6 +960,7 @@ export default function Home() {
               setExpandedAuditMessages(new Set());
             }}
             currentCaseId={activeCase?.id}
+            initialTab={caseSelectorInitialTab}
           />
         )}
 
@@ -1411,7 +1419,10 @@ export default function Home() {
                {/* Primary and Secondary CTAs - Consolidated */}
                <div className="flex flex-col items-center gap-4 w-full max-w-sm">
                  <button 
-                   onClick={() => setShowCaseSelector(true)}
+                   onClick={() => {
+                     setCaseSelectorInitialTab("cases");
+                     setShowCaseSelector(true);
+                   }}
                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl"
                    data-testid="cta-start-case"
                  >
@@ -1429,13 +1440,16 @@ export default function Home() {
                  </a>
                </div>
 
-               {/* Demo Link - Tertiary, Link-style */}
+               {/* Sample Library Link - Tertiary, Link-style */}
                <button
-                 onClick={runDemo}
+                 onClick={() => {
+                   setCaseSelectorInitialTab("samples");
+                   setShowCaseSelector(true);
+                 }}
                  className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4"
                  data-testid="cta-sample-case"
                >
-                 Or try a sample case
+                 Or browse the sample library
                </button>
                
                {/* How It Works - Collapsible Side Info */}

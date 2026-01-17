@@ -1,0 +1,177 @@
+Understood. The right approach is: treat Replit as your “single-node production simulator” and enforce the same invariants you’ll need later (persistence, versioning, audit log, deterministic flows). You can absolutely support uploading sample cases without turning this into “toy mode,” as long as you implement it the same way production would—just with local equivalents.
+
+Below is the prototype spec I would implement so the system behaves like the real product while remaining deployable later with minimal rework.
+
+⸻
+
+1) Principle: Prototype = Real System, Single-Node
+
+You will keep:
+	•	Real persistence (database)
+	•	Real file storage semantics (object store equivalent)
+	•	Real audit log (append-only)
+	•	Real “case” workflow (intake → canon → evaluate)
+
+You will not keep:
+	•	Fake UI controls
+	•	Non-persistent state
+	•	Demo-only branching that alters behavior
+
+Everything is real; it just runs on one box.
+
+⸻
+
+2) Sample Cases: Treat Them as Normal Cases With a Different Origin
+
+You need sample cases, but they must not be “special.” They must enter through the same ingestion path, produce the same artifacts, and be auditable.
+
+Add a case_origin field:
+	•	UPLOADED_BY_USER
+	•	SAMPLE_LIBRARY
+	•	IMPORTED
+
+Sample case is just a case with case_origin=SAMPLE_LIBRARY.
+
+This solves your homepage issue too: “Review sample case” and “open case” are no longer the same thing; sample is a filtered library view.
+
+⸻
+
+3) Required Data Model (Minimal, Production-Shaped)
+
+Use Postgres if at all possible (even in Replit). If you can’t, use SQLite—but with the same schema and migrations.
+
+Tables (minimum)
+	•	cases
+	•	id, title, origin, created_at, updated_at
+	•	documents
+	•	id, case_id, filename, content_hash, storage_key, created_at
+	•	decision_contexts
+	•	id, case_id, mode (LIVE/FIXED), decision_time, created_at
+	•	evaluations
+	•	id, case_id, decision_context_id, canon_set_hash, output_json, created_at
+	•	case_events (append-only)
+	•	id, case_id, event_type, actor, payload_json, created_at
+
+This is the “real product skeleton.”
+
+⸻
+
+4) File Storage: Don’t “store uploads in memory” — Store Like Prod
+
+In the prototype you can store locally, but with object-store semantics.
+
+Prototype storage structure:
+	•	/storage/canon/<case_id>/<doc_id>/<original_filename>
+	•	Always compute content_hash (sha256) on upload
+	•	Use the hash in storage keying or metadata
+
+Later, you swap /storage for S3/R2 without changing logic.
+
+⸻
+
+5) Decision Time: Must Become an Audit-Legitimate Commit
+
+This is non-negotiable for your “real run through” posture.
+
+Required behavior:
+	•	Decision Time selection creates a new decision_context row (revision), never “just UI state.”
+	•	UI reads from DB, not local state.
+	•	When decision context changes:
+	•	write case_events: DECISION_TIME_SET
+	•	invalidate or fork evaluations (create a new evaluation keyed to this decision context)
+
+This prevents the “it reverts” failure category entirely.
+
+⸻
+
+6) Uploading Sample Cases: Two Mechanisms You Need
+
+You said you need to upload sample cases. Do this in a way that will map to production.
+
+Mechanism A — “Upload Sample Case Package” (Admin-only in UI)
+
+User uploads a single package (zip) containing:
+	•	case.json (metadata)
+	•	/canon/* (documents)
+
+System action:
+	•	Creates a case with origin SAMPLE_LIBRARY
+	•	Ingests canon documents through same pipeline
+	•	Emits audit events
+
+This gives you a scalable sample library without code deployments.
+
+Mechanism B — “Promote Existing Case to Sample”
+
+A real flow you’ll want later:
+	•	You build a case normally
+	•	When it’s good, you click “Publish to Sample Library”
+	•	That sets origin to SAMPLE_LIBRARY and optionally copies into a sample namespace
+
+This is very close to how real orgs curate demos.
+
+⸻
+
+7) Home Page: How It Should Work Under These Rules
+
+If you implement origin properly, the entry screen becomes obvious:
+
+Primary CTA:
+	•	New Case (upload documents)
+
+Secondary:
+	•	Open Case (case picker: recent + search)
+	•	Sample Library (filtered picker where origin=SAMPLE_LIBRARY)
+
+And the bot/system explanation moves to:
+	•	right “How this works” panel (collapsed)
+
+This resolves your complaint without sacrificing product truth.
+
+⸻
+
+8) Replit Constraints: What You Need to Configure
+
+To keep “real product” behavior inside Replit:
+
+Persistence
+	•	Use Postgres if possible (external managed DB is fine even for prototype)
+	•	If not, use SQLite but store it on a persistent volume path
+
+File persistence
+	•	Ensure the storage path is not ephemeral
+	•	Treat it like an object store: never rely on runtime memory
+
+Environment parity
+	•	.env structure that matches prod keys:
+	•	DB_URL
+	•	STORAGE_ROOT
+	•	FEATURE_FLAGS (sample mode, admin tools)
+
+⸻
+
+9) Acceptance Criteria for “Prototype = Real Run”
+
+If you meet these, you are doing it correctly:
+	1.	Uploading any case (sample or user) produces:
+	•	documents stored on disk with hashes
+	•	DB rows for documents
+	•	audit events
+	2.	Decision Time:
+	•	persists after refresh
+	•	changes create a new decision_context revision
+	•	evaluation output is keyed to that revision
+	3.	Sample case selection:
+	•	is a filtered view, not a different mechanism
+	4.	No UI controls silently revert or do nothing.
+
+⸻
+
+The One Hard Truth
+
+If you do the above, Replit becomes “just a host,” not “the prototype.”
+That’s what you want: the prototype is the system behavior and invariants, not the platform.
+
+⸻
+
+If you tell me what stack you’re using in Replit (Next.js? Express? FastAPI? SQLite currently?), I’ll translate the above into a concrete implementation plan (routes/endpoints + DB migrations + UI changes) with minimal churn.

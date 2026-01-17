@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, type Case, type InsertCase, type CaseEvent, type InsertCaseEvent, type DecisionTarget, type InsertDecisionTarget, type Determination, type InsertDetermination, type CasePrintout, type InsertCasePrintout, type ArchiveReasonCode, users, canonDocuments, canonChunks, cases, caseEvents, decisionTargets, determinations, casePrintouts } from "@shared/schema";
+import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, type Case, type InsertCase, type CaseEvent, type InsertCaseEvent, type DecisionTarget, type InsertDecisionTarget, type Determination, type InsertDetermination, type CasePrintout, type InsertCasePrintout, type ArchiveReasonCode, type DecisionContext, type InsertDecisionContext, type CaseOrigin, users, canonDocuments, canonChunks, cases, caseEvents, decisionTargets, determinations, casePrintouts, decisionContexts } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, or, sql, and, ne } from "drizzle-orm";
 
@@ -12,11 +12,15 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
-  getAllCases(status?: "active" | "archived" | "all"): Promise<Case[]>;
+  getAllCases(status?: "active" | "archived" | "all", origin?: CaseOrigin): Promise<Case[]>;
   getCase(id: string): Promise<Case | undefined>;
   createCase(caseData: InsertCase): Promise<Case>;
   updateCase(id: string, updates: Partial<InsertCase>): Promise<Case | undefined>;
   archiveCase(id: string, params: ArchiveCaseParams): Promise<Case | undefined>;
+  
+  createDecisionContext(context: InsertDecisionContext): Promise<DecisionContext>;
+  getDecisionContext(id: string): Promise<DecisionContext | undefined>;
+  getDecisionContextsForCase(caseId: string): Promise<DecisionContext[]>;
   
   getAllCanonDocuments(): Promise<CanonDocument[]>;
   getDocumentsByCase(caseId: string): Promise<CanonDocument[]>;
@@ -61,12 +65,25 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getAllCases(status: "active" | "archived" | "all" = "active"): Promise<Case[]> {
-    if (status === "all") {
+  async getAllCases(status: "active" | "archived" | "all" = "active", origin?: CaseOrigin): Promise<Case[]> {
+    const conditions = [];
+    if (status !== "all") {
+      conditions.push(eq(cases.status, status));
+    }
+    if (origin) {
+      conditions.push(eq(cases.origin, origin));
+    }
+    
+    if (conditions.length === 0) {
       return await db.select().from(cases).orderBy(desc(cases.updatedAt));
     }
+    if (conditions.length === 1) {
+      return await db.select().from(cases)
+        .where(conditions[0])
+        .orderBy(desc(cases.updatedAt));
+    }
     return await db.select().from(cases)
-      .where(eq(cases.status, status))
+      .where(and(...conditions))
       .orderBy(desc(cases.updatedAt));
   }
 
@@ -111,6 +128,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(cases.id, id))
       .returning();
     return archivedCase;
+  }
+
+  async createDecisionContext(context: InsertDecisionContext): Promise<DecisionContext> {
+    const [newContext] = await db.insert(decisionContexts).values(context).returning();
+    return newContext;
+  }
+
+  async getDecisionContext(id: string): Promise<DecisionContext | undefined> {
+    const [context] = await db.select().from(decisionContexts).where(eq(decisionContexts.id, id));
+    return context;
+  }
+
+  async getDecisionContextsForCase(caseId: string): Promise<DecisionContext[]> {
+    return await db.select().from(decisionContexts)
+      .where(eq(decisionContexts.caseId, caseId))
+      .orderBy(desc(decisionContexts.createdAt));
   }
 
   async getAllCanonDocuments(): Promise<CanonDocument[]> {

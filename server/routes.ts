@@ -1,11 +1,13 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCanonDocumentSchema, insertCaseSchema, insertCaseEventSchema, type CanonChunk } from "@shared/schema";
+import { insertCanonDocumentSchema, insertCaseSchema, insertCaseEventSchema, type CanonChunk, cases, caseEvents, decisionContexts } from "@shared/schema";
 import { z } from "zod";
 import { evaluateCanonConditions, type EvaluationContext } from "./canonEvaluator";
 import { computeCaseStateHash, signReceipt, hashSHA256 } from "./crypto";
 import { registerELIRoutes } from "./eli/routes";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 const chatRequestSchema = z.object({
   message: z.string().min(1),
@@ -46,12 +48,14 @@ export async function registerRoutes(
 
   // === CASE ROUTES ===
   
-  // Get all cases (defaults to active only, use ?status=archived or ?status=all)
+  // Get all cases (defaults to active only, use ?status=archived or ?status=all, ?origin=SAMPLE_LIBRARY)
   app.get("/api/cases", async (req, res) => {
     try {
       const status = req.query.status as "active" | "archived" | "all" | undefined;
+      const origin = req.query.origin as "UPLOADED_BY_USER" | "SAMPLE_LIBRARY" | "IMPORTED" | undefined;
       const validStatus = status === "archived" || status === "all" ? status : "active";
-      const allCases = await storage.getAllCases(validStatus);
+      const validOrigin = origin && ["UPLOADED_BY_USER", "SAMPLE_LIBRARY", "IMPORTED"].includes(origin) ? origin : undefined;
+      const allCases = await storage.getAllCases(validStatus, validOrigin);
       res.json(allCases);
     } catch (error) {
       console.error("Error fetching cases:", error);
@@ -105,12 +109,64 @@ export async function registerRoutes(
       
       // Convert decisionTime from ISO string to Date if present
       const updates = { ...req.body };
+      const hasDecisionTimeChange = updates.decisionTime !== undefined || updates.decisionTimeMode !== undefined;
+      
       if (updates.decisionTime !== undefined) {
         updates.decisionTime = updates.decisionTime ? new Date(updates.decisionTime) : null;
       }
       
-      const updatedCase = await storage.updateCase(req.params.id, updates);
-      res.json(updatedCase);
+      // Use Drizzle transaction for decision time changes to ensure atomicity
+      if (hasDecisionTimeChange) {
+        const updatedCase = await db.transaction(async (tx) => {
+          // Create decision context within transaction
+          const [newContext] = await tx.insert(decisionContexts).values({
+            caseId: req.params.id,
+            mode: updates.decisionTimeMode || existingCase.decisionTimeMode || "live",
+            decisionTime: updates.decisionTime || null,
+            previousContextId: existingCase.currentDecisionContextId || null,
+            actor: "user",
+            reason: null
+          }).returning();
+          
+          // Create case event within transaction
+          const eventMetadata = {
+            previousValue: existingCase.decisionTime?.toISOString() || null,
+            newValue: updates.decisionTime?.toISOString() || null,
+            previousMode: existingCase.decisionTimeMode,
+            newMode: updates.decisionTimeMode || (updates.decisionTime ? "fixed" : "live"),
+            contextId: newContext.id
+          };
+          
+          await tx.insert(caseEvents).values({
+            caseId: req.params.id,
+            eventType: "DECISION_TIME_SET",
+            description: updates.decisionTime 
+              ? `Decision time set to ${updates.decisionTime.toISOString()} (mode: ${updates.decisionTimeMode || "fixed"})`
+              : `Decision time reset to live mode`,
+            eventTime: new Date(),
+            metadata: eventMetadata
+          });
+          
+          // Update case within transaction
+          const [result] = await tx.update(cases)
+            .set({
+              decisionTime: updates.decisionTime,
+              decisionTimeMode: updates.decisionTimeMode || existingCase.decisionTimeMode,
+              currentDecisionContextId: newContext.id,
+              updatedAt: new Date()
+            })
+            .where(eq(cases.id, req.params.id))
+            .returning();
+          
+          return result;
+        });
+        
+        res.json(updatedCase);
+      } else {
+        // Non-decision-time updates use existing storage method
+        const updatedCase = await storage.updateCase(req.params.id, updates);
+        res.json(updatedCase);
+      }
     } catch (error) {
       console.error("Error updating case:", error);
       res.status(500).json({ error: "Failed to update case" });
