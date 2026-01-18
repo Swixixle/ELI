@@ -1,0 +1,127 @@
+Under the Thinking Contract you set, the correct move here is not “more brainstorming,” but targeted evidence extraction.
+
+You do not need opinions, plans, or design advice from the agent.
+You need verifiable artifacts that let you classify the system as PROCEED / PARK / DISCARD on governance completeness.
+
+Below is the exact ask, followed by why each item matters and what I will do with it.
+
+⸻
+
+What to ask the agent for (verbatim is acceptable)
+
+1. Authoritative route inventory
+
+“Return the complete, current route list exposed by GET /api, including method, path, and brief purpose.”
+
+Why
+	•	Confirms whether any mutation paths exist outside the declared guards.
+	•	Detects shadow routes that bypass archive or immutability enforcement.
+
+What I’ll evaluate
+	•	Structural completeness
+	•	Guard coverage
+	•	Hidden mutation risk
+
+⸻
+
+2. Archived-case mutation proof
+
+“Provide one example request + response for an attempted mutation on an archived case at the route layer, and one at the storage layer.”
+
+Why
+	•	Confirms defense-in-depth is actually enforced, not just specified.
+
+What I’ll evaluate
+	•	Consistency of failure modes
+	•	Error-key correctness
+	•	No side effects on state
+
+⸻
+
+3. Refusal / rejection taxonomy
+
+“List all non-200 responses the API can emit, including error keys, refusal classes, and triggering conditions.”
+
+Why
+	•	Distinguishes structural refusal from validation failure.
+	•	Reveals whether governance refusals are first-class or improvised.
+
+What I’ll evaluate
+	•	Whether refusal semantics are cleanly separated
+	•	Whether any free-text or ambiguous failure paths exist
+
+⸻
+
+4. Verification trust chain
+
+“Show how publicKeyId is generated, rotated, and resolved during /printouts/:id/verify.”
+
+Why
+	•	A signature without a verifiable trust chain is theater.
+	•	This is a hard governance gate.
+
+What I’ll evaluate
+	•	Key lifecycle integrity
+	•	Replay or substitution risk
+	•	Auditability
+
+⸻
+
+5. Case-state hash composition
+
+“Describe exactly which fields are included in caseStateHash, and confirm it cannot change post-archive.”
+
+Why
+	•	This determines whether printouts are meaningfully bound to history.
+
+What I’ll evaluate
+	•	Hash stability
+	•	Exclusion risk
+	•	Post-seal mutation vectors
+
+⸻
+
+6. Negative capability test
+
+“Demonstrate an attempted forbidden operation that fails by design (e.g., DELETE case, restore archived case).”
+
+Why
+	•	Systems fail by what they allow, not what they intend.
+
+What I’ll evaluate
+	•	Completeness of denial surface
+	•	Consistency with spec
+	•	Absence of fallback behavior
+
+⸻
+
+What you should NOT ask for
+
+Do not ask for:
+	•	Roadmaps
+	•	Future features
+	•	Rationale or explanations
+	•	“Is this good?” judgments
+	•	Design intent
+
+Those introduce narrative. You need evidence.
+
+⸻
+
+What I will deliver once you have this
+
+Once you paste the agent’s responses, I will:
+	1.	Map declared governance → actual enforcement
+	2.	Identify any remaining mutation or ambiguity vectors
+	3.	Classify the system as PROCEED / PARK / DISCARD
+	4.	If not PROCEED, name the single dominant failure mode (not a list)
+
+No fluff. No optimism. No rebuilding.
+
+⸻
+
+Bottom line
+
+Ask the agent for proof of enforcement, not description.
+
+When you have that, bring it back.
