@@ -1,0 +1,42 @@
+You now have audit-grade evidence for the two critical leakage surfaces: route serialization and HTTP boundary behavior. On the face of what you pasted, the agent did the right thing: found a real leak, fixed it by sanitizing the response shape, and added non-leakage + positive-path tests that explicitly assert “no raw score outside measurement.”
+
+What this means, structurally
+	•	Fail-closed gate: The refusal branch returns before any evaluation call. Good.
+	•	Single permitted path: evaluateCanonConditions() is reachable only when permitted. Good.
+	•	Envelope-at-output enforced: Measurement creation happens before serialization, and raw score fields are stripped from the response. Good.
+	•	HTTP boundary tests exist: You have at least one refusal test asserting non-leakage, and one positive-path asserting envelope presence plus “no raw score outside measurement.” Good.
+
+The only remaining concern
+
+Your positive-path test is written with a conditional:
+
+if (res.status === 200) { ... } else { ... expect refusal ... }
+
+That is acceptable as a smoke test, but it is not a strict guarantee that the positive path is stable in CI, because it allows the test to “pass” even if the gate refuses unexpectedly. For ratification, I’d normally want:
+	•	one deterministic fixture that always yields 200 under controlled timestamps/evidence, and
+	•	a hard assertion that 200 occurs.
+
+That said, the key governance question you set—“can a score leak outside the envelope?”—is addressed directly by the route sanitization + explicit assertions. This is the load-bearing risk for visualization.
+
+⸻
+
+Classification (Thinking Contract)
+
+PROCEED
+
+You have sufficient evidence to ratify the core constitutional guarantee:
+
+No evaluative measurement leaves the system without an envelope, and refusal halts without partial leakage.
+
+⸻
+
+What I would do next (immediately) with this ratification
+	1.	Write the ratification statement (short, specific, versioned)
+	•	Include the three artifacts as “ratification basis”: route excerpt hash/lines, HTTP refusal non-leak test, HTTP positive-path envelope/no-leak test.
+	2.	Tighten the positive-path test (recommended, not blocking)
+	•	Make it deterministic so CI can’t silently degrade the permitted path.
+	•	E.g., fixture data with document timestamps before DTA, fixed clock in test harness.
+	3.	Proceed to Visual Spec v1 (Medicine retrospective review)
+	•	Now you can safely build the Epistemic Terrain Sheet because the envelope can’t be bypassed at output.
+
+If you want, paste your desired ratification wording style (one sentence, one paragraph, or formal memo), and I’ll draft it in a way that’s defensible and minimal.

@@ -4,6 +4,36 @@ Append-only record of system changes.
 
 ---
 
+## RATIFICATION: Constitutional Gate Enforcement v1.0
+
+**Date:** 2026-01-19  
+**Status:** RATIFIED
+
+**Constitutional Guarantee:**
+
+> No evaluative measurement leaves the system without an envelope, and gate refusal halts execution without partial leakage.
+
+**Ratification Basis (Three Artifacts):**
+
+1. **Route Serialization** (`server/routes.ts:565-616`)
+   - Gate refusal returns before `evaluateCanonConditions()` is called
+   - `createEnvelopedMeasurement()` invoked before response serialization
+   - Raw score fields (`conditionsMet`, `conditionsTotal`) stripped from response
+   - Only `measurement.value` contains numeric score (inside envelope)
+
+2. **HTTP Refusal Non-Leak Test** (`domain/tests/http_gate_enforcement.spec.ts:70-92`)
+   - Asserts 10 fields are undefined on refusal: `checklist`, `summary`, `score`, `eli`, `procedural_status`, `prerequisitesMet`, `conditionsMet`, `measurement`, `canProceed`, `gapsEquation`
+
+3. **HTTP Positive-Path Envelope Test** (`domain/tests/http_gate_enforcement.spec.ts:234-269`)
+   - Deterministic: Hard assertion `expect(res.status).toBe(200)`
+   - Asserts `measurement.value` exists (number)
+   - Asserts `measurement.envelope` exists with required fields
+   - Asserts no raw score outside measurement: `conditionsMet`, `conditionsTotal`, `score`, `eli` all undefined
+
+**Test Coverage:** 88 tests passing (69 constitutional + 13 gate + 6 HTTP)
+
+---
+
 ## Fix #5: Constitutional S2 Constraint Enforcement
 
 **Date:** 2026-01-19
@@ -14,20 +44,22 @@ Append-only record of system changes.
 - Placeholder rejection: `isPlaceholderValue()` function added; "unknown", "unspecified", "n/a" values are inadmissible for S2 locking
 - Envelope enforcement (AXIOM M5): /evaluate returns measurement with full envelope via `createEnvelopedMeasurement()`
 - Axiom citation correction: A0 for default inadmissibility (not A1)
+- Response sanitization: Raw score fields stripped from response; only `measurement.value` contains numeric value
 
 **Files Touched:**
 - `server/constitutional/gates.ts` — Added `isPlaceholderValue()`, updated `toConstraintEvidence()` to reject placeholders
-- `server/routes.ts` — Removed constraint defaulting to "unknown"; now requires explicit constraint data
+- `server/routes.ts` — Removed constraint defaulting; added response sanitization to strip raw scores
 
 **Tests Added:**
 - 2 placeholder rejection tests in `domain/tests/gate_enforcement.spec.ts`
-- 1 S2 constraint requirement test in `domain/tests/http_gate_enforcement.spec.ts`
+- 6 HTTP integration tests in `domain/tests/http_gate_enforcement.spec.ts`
 
 **Verification:**
-- 88 tests passing (69 constitutional + 13 gate + 6 HTTP)
+- 88 tests passing
 - S2 cannot lock with placeholder "unknown" values
 - Missing constraints trigger S2 refusal at HTTP boundary
-- Envelopes present on permitted responses
+- Envelopes present on all permitted responses
+- No raw score exists outside measurement
 
 ---
 

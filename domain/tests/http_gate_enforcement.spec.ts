@@ -242,31 +242,27 @@ describe("HTTP Gate Enforcement", () => {
         }),
       });
 
-      if (res.status === 200) {
-        const data = await res.json();
-        
-        // Positive assertions: envelope exists with required fields
-        expect(data.constitutional.permitted).toBe(true);
-        expect(data.measurement).toBeDefined();
-        expect(data.measurement.value).toBeDefined();
-        expect(typeof data.measurement.value).toBe("number");
-        expect(data.measurement.envelope).toBeDefined();
-        expect(data.measurement.envelope.measurement_id).toBeDefined();
-        expect(data.measurement.envelope.measurement_type).toBe("epistemic_load_index");
-        expect(data.measurement.envelope.prohibited_uses).toBeDefined();
-        expect(data.measurement.envelope.authorized_uses).toBeDefined();
-        
-        // Critical: No raw score exists outside measurement (AXIOM M5)
-        expect(data.summary?.conditionsMet).toBeUndefined();
-        expect(data.summary?.conditionsTotal).toBeUndefined();
-        expect(data.score).toBeUndefined();
-        expect(data.eli).toBeUndefined();
-        expect(data.conditionsMet).toBeUndefined();
-      } else {
-        const data = await res.json();
-        console.log("Evaluation refused (expected for incomplete setup):", data);
-        expect(data.error).toBe("CONSTITUTIONAL_REFUSAL");
-      }
+      // DETERMINISTIC: This test MUST return 200. If gate refuses, test fails.
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      
+      // Positive assertions: envelope exists with required fields
+      expect(data.constitutional.permitted).toBe(true);
+      expect(data.measurement).toBeDefined();
+      expect(data.measurement.value).toBeDefined();
+      expect(typeof data.measurement.value).toBe("number");
+      expect(data.measurement.envelope).toBeDefined();
+      expect(data.measurement.envelope.measurement_id).toBeDefined();
+      expect(data.measurement.envelope.measurement_type).toBe("epistemic_load_index");
+      expect(data.measurement.envelope.prohibited_uses).toBeDefined();
+      expect(data.measurement.envelope.authorized_uses).toBeDefined();
+      
+      // Critical: No raw score exists outside measurement (AXIOM M5)
+      expect(data.summary?.conditionsMet).toBeUndefined();
+      expect(data.summary?.conditionsTotal).toBeUndefined();
+      expect(data.score).toBeUndefined();
+      expect(data.eli).toBeUndefined();
+      expect(data.conditionsMet).toBeUndefined();
     });
   });
 });

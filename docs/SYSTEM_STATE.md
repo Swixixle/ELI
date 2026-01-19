@@ -180,7 +180,12 @@ All case mutation events include:
 
 ---
 
-## Constitutional Gate Enforcement
+## Constitutional Gate Enforcement (RATIFIED v1.0)
+
+**Status:** RATIFIED 2026-01-19
+
+**Constitutional Guarantee:**
+> No evaluative measurement leaves the system without an envelope, and gate refusal halts execution without partial leakage.
 
 **Gate Function:** `passConstitutionalGate()` in `server/constitutional/gates.ts`
 
@@ -198,11 +203,12 @@ All case mutation events include:
 
 **Refusal Behavior:**
 - Returns 403 CONSTITUTIONAL_REFUSAL
-- No partial evaluation data is leaked
+- No partial evaluation data is leaked (10 fields verified undefined)
 - Includes refusal code, axiom citation, and hint
 
 **Envelope Enforcement (AXIOM M5):**
 - All permitted responses include MeasurementEnvelope
+- Raw score fields stripped from response (only `measurement.value` contains numeric)
 - Envelope contains: measurement_id, measurement_type, prohibited_uses, authorized_uses
 
 **Tests:** 88 passing (69 constitutional + 13 gate + 6 HTTP)
