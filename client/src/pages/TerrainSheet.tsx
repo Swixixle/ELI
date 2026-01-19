@@ -3,37 +3,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { EpistemicTerrainSheet } from "@/components/EpistemicTerrainSheet";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, AlertTriangle, ShieldX, Lock } from "lucide-react";
+import { ArrowLeft, Loader2, Lock, ShieldX } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ConstitutionalOutcomeRenderer } from "@/components/ConstitutionalOutcome";
+import { constitutionalFetchEvaluate, type ConstitutionalOutcome, type EvaluationData } from "@/lib/constitutionalFetch";
 import {
   createEpistemicTerrainSheet,
   validateTerrainSheetInput,
   type TerrainSheetInput,
-  type SanitizedSummaryReason,
   type MeasurementEnvelopeInput,
 } from "../../../shared/visualSpec";
-
-interface EvaluationResponse {
-  measurement?: {
-    value: number;
-    envelope: MeasurementEnvelopeInput;
-  };
-  summary?: {
-    status: string;
-    reason: SanitizedSummaryReason;
-  };
-  // Refusal fields (returned on 403 constitutional refusals)
-  error?: string;
-  code?: string;
-  axiom?: string;
-  governingAxiom?: string;
-  failed_gate?: string;
-  required_inputs?: string[];
-  message?: string;
-  hint?: string;
-  evaluationBlocked?: boolean;
-}
 
 interface AckCheckResponse {
   acknowledged: boolean;
@@ -69,44 +49,14 @@ export default function TerrainSheet() {
   const queryClient = useQueryClient();
   const [responseId] = useState(() => `resp_${Date.now()}`);
 
-  const { data, isLoading, error } = useQuery<EvaluationResponse>({
+  const { data: outcome, isLoading } = useQuery<ConstitutionalOutcome>({
     queryKey: ["terrain-sheet", caseId],
-    queryFn: async () => {
-      const res = await fetch(`/api/cases/${caseId}/evaluate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          constraints: {
-            timePressure: "moderate",
-            workload: "normal",
-            guidelineCoherence: "clear",
-            irreversibility: "moderate",
-          },
-        }),
-      });
-
-      const responseData = await res.json().catch(() => ({} as EvaluationResponse));
-
-      /**
-       * Treat constitutional refusals as DATA, not exceptions.
-       * Only throw for true server/client errors.
-       */
-      if (!res.ok) {
-        // If the API returns a structured constitutional refusal, render it.
-        if (res.status === 403 && (responseData.error || responseData.code || responseData.governingAxiom || responseData.axiom)) {
-          return responseData;
-        }
-
-        // Otherwise, this is a real error (500, network, malformed JSON, etc.)
-        throw new Error(responseData.message || responseData.error || `Request failed (${res.status})`);
-      }
-
-      return responseData;
-    },
+    queryFn: () => constitutionalFetchEvaluate(caseId!),
     enabled: !!caseId,
   });
 
-  const measurementId = data?.measurement?.envelope?.measurement_id;
+  const evaluationData = outcome?.kind === "permitted" ? outcome.data : null;
+  const measurementId = evaluationData?.measurement?.envelope?.measurement_id;
   const intendedUse = "constraint_visualization";
 
   const { data: ackCheck, isLoading: ackCheckLoading } = useQuery<AckCheckResponse>({
@@ -122,9 +72,9 @@ export default function TerrainSheet() {
 
   const createAck = useMutation({
     mutationFn: async () => {
-      if (!data?.measurement?.envelope) throw new Error("No envelope");
+      if (!evaluationData?.measurement?.envelope) throw new Error("No envelope");
       
-      const envelopeHash = computeEnvelopeHash(data.measurement.envelope);
+      const envelopeHash = computeEnvelopeHash(evaluationData.measurement.envelope);
       
       const res = await fetch("/api/acks", {
         method: "POST",
@@ -160,7 +110,7 @@ export default function TerrainSheet() {
     );
   }
 
-  if (error) {
+  if (!outcome) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <Link href="/">
@@ -171,116 +121,21 @@ export default function TerrainSheet() {
         </Link>
         <Card data-testid="system-error-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
-              System Error
-            </CardTitle>
+            <CardTitle className="text-destructive">No Response</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
-              {error instanceof Error ? error.message : "Unable to process request. Please try again."}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              This is a server or network error, not a governance refusal.
-            </p>
+            <p className="text-muted-foreground">Unable to fetch evaluation data.</p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // If backend returned a constitutional refusal, render it explicitly.
-  if (data?.error === "CONSTITUTIONAL_REFUSAL" || data?.code || data?.governingAxiom || data?.axiom || data?.evaluationBlocked) {
-    return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <Link href="/">
-          <Button variant="ghost" className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-        </Link>
-
-        <Card data-testid="constitutional-refusal-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <ShieldX className="h-5 w-5" />
-              Constitutional Refusal
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              {data.message || "Evaluation refused by constitutional gate."}
-            </p>
-
-            <div className="text-sm space-y-1 p-3 bg-muted rounded-lg">
-              {data.code && (
-                <div className="flex gap-2">
-                  <span className="font-medium text-muted-foreground">Code:</span>
-                  <code className="text-xs font-mono">{data.code}</code>
-                </div>
-              )}
-              {(data.governingAxiom || data.axiom) && (
-                <div className="flex gap-2">
-                  <span className="font-medium text-muted-foreground">Axiom:</span>
-                  <Badge variant="outline">{data.governingAxiom || data.axiom}</Badge>
-                </div>
-              )}
-              {data.failed_gate && (
-                <div className="flex gap-2">
-                  <span className="font-medium text-muted-foreground">Failed Gate:</span>
-                  <span>{data.failed_gate}</span>
-                </div>
-              )}
-            </div>
-
-            {data.hint && (
-              <div className="p-3 border border-amber-200 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
-                <p className="text-sm text-amber-800 dark:text-amber-200">
-                  <strong>Hint:</strong> {data.hint}
-                </p>
-              </div>
-            )}
-
-            {Array.isArray(data.required_inputs) && data.required_inputs.length > 0 && (
-              <div className="text-sm">
-                <strong className="text-muted-foreground">Required inputs:</strong>
-                <ul className="list-disc list-inside mt-1">
-                  {data.required_inputs.map((x, i) => <li key={i}>{x}</li>)}
-                </ul>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    );
+  if (outcome.kind !== "permitted") {
+    return <ConstitutionalOutcomeRenderer outcome={outcome} backHref="/" />;
   }
 
-  if (!data?.measurement?.envelope || !data?.summary) {
-    return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <Link href="/">
-          <Button variant="ghost" className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-        </Link>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <ShieldX className="h-5 w-5" />
-              Constitutional Violation: M5
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              No measurement envelope present. Rendering refused per AXIOM M5: measurements cannot exist without their envelope.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const data = outcome.data;
 
   if (!ackCheck?.acknowledged) {
     return (
@@ -314,7 +169,7 @@ export default function TerrainSheet() {
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Authorized Uses:</span>
                 <div className="flex gap-1 flex-wrap">
-                  {data.measurement.envelope.authorized_uses.map((use) => (
+                  {data.measurement!.envelope.authorized_uses.map((use) => (
                     <Badge key={use} variant="secondary" className="text-xs">
                       {use}
                     </Badge>
@@ -333,7 +188,7 @@ export default function TerrainSheet() {
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Prohibited Uses:</span>
               <div className="flex gap-1 flex-wrap">
-                {data.measurement.envelope.prohibited_uses.map((use) => (
+                {data.measurement!.envelope.prohibited_uses.map((use) => (
                   <Badge key={use} variant="destructive" className="text-xs">
                     {use.replace(/_/g, " ")}
                   </Badge>
@@ -372,9 +227,9 @@ export default function TerrainSheet() {
   }
 
   const terrainInput: TerrainSheetInput = {
-    envelope: data.measurement.envelope,
-    value: data.measurement.value,
-    summary: data.summary,
+    envelope: data.measurement!.envelope,
+    value: data.measurement!.value,
+    summary: data.summary!,
   };
 
   const validation = validateTerrainSheetInput(terrainInput);
@@ -452,7 +307,7 @@ export default function TerrainSheet() {
         </div>
         <EpistemicTerrainSheet
           data={terrainSheet}
-          sanitizedSummary={data.summary}
+          sanitizedSummary={data.summary!}
         />
       </div>
     </div>

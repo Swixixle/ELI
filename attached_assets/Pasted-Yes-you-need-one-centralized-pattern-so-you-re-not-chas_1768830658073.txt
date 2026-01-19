@@ -1,0 +1,92 @@
+Yes — you need one centralized pattern so you’re not chasing this in every page forever.
+
+Classification
+
+PROCEED — with a single “ConstitutionalFetch” wrapper + a single “OutcomeRenderer” component.
+That’s the least steps and scales to all current/future files.
+
+Copy/paste the below to your agent.
+
+⸻
+
+One-time fix (least steps): centralize response classification
+
+Step 1 — Create ONE shared fetch wrapper
+
+File: client/src/lib/constitutionalFetch.ts
+
+Purpose: every UI call to /evaluate (and later /acks, /determine) goes through a single function that classifies outcomes.
+
+Implementation contract:
+	•	403 + error === "CONSTITUTIONAL_REFUSAL" ⇒ return { kind: "refusal", refusal }
+	•	200 OK but missing envelope (when expected) ⇒ { kind: "m5", message }
+	•	500/network/malformed ⇒ { kind: "system_error", message }
+	•	200 OK + valid payload ⇒ { kind: "permitted", data }
+
+⸻
+
+Step 2 — Create ONE renderer component for outcomes
+
+File: client/src/components/ConstitutionalOutcome.tsx
+
+It takes the object from constitutionalFetch and renders:
+	•	Constitutional Refusal card
+	•	M5 violation card
+	•	System Error card
+	•	OR the permitted UI (render prop)
+
+So every page uses the same UI semantics.
+
+⸻
+
+Step 3 — Replace all direct /evaluate calls with the wrapper
+
+Minimal change per page:
+	•	replace fetch(...) with constitutionalFetchEvaluate(...)
+	•	replace scattered error banners with <ConstitutionalOutcome ... />
+
+This is a one-time sweep (search for /api/cases/ + /evaluate).
+
+⸻
+
+Why this is the minimum-step fix
+	•	You do not patch each page independently.
+	•	You create one authoritative classifier + one authoritative UI mapping.
+	•	Future pages automatically comply by using the wrapper.
+
+⸻
+
+Exact API contract your wrapper should assume
+
+A constitutional refusal payload looks like:
+
+{
+  "error": "CONSTITUTIONAL_REFUSAL",
+  "code": "...",
+  "axiom": "...",
+  "message": "...",
+  "evaluationBlocked": true,
+  "hint": "...",
+  "required_inputs": ["..."]
+}
+
+
+⸻
+
+Optional hardening (recommended)
+
+If a page expects an envelope, the wrapper should validate:
+	•	data.measurement?.envelope exists
+If missing, classify as m5 even if status is 200.
+
+⸻
+
+Decision
+
+Do this once and you’re done:
+	•	current Evaluate tab fixed
+	•	Terrain sheet fixed
+	•	future Visual pages fixed
+	•	no regression drift
+
+If you want, I can provide the exact TypeScript code for constitutionalFetchEvaluate() and the ConstitutionalOutcome component in one message for direct pasting.
