@@ -83,6 +83,7 @@ The frontend follows a page-based structure with these routes:
 - `/` - Home (main advisor chat interface with guided demo)
 - `/canon` - Case Canon Library (case-specific document management)
 - `/about` - How It Works (system explanation)
+- `/cases/:caseId/terrain` - Epistemic Terrain Sheet (Visual Spec v1 - envelope visualization)
 - `/cases/:caseId/printouts` - Judgment records list (issue new printouts)
 - `/cases/:caseId/printouts/:printoutId` - View immutable judgment record
 
