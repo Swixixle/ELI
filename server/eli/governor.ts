@@ -122,12 +122,13 @@ export async function evaluateClaim(input: GovernorInput): Promise<GovernorOutpu
   try {
     return JSON.parse(content) as GovernorOutput;
   } catch {
+    // CONSTITUTIONAL: Fail-closed per AXIOM A0 - system error results in refusal
     return {
       admissibility: "DISALLOWED",
       lane: "ADVISORY_ONLY",
-      determination: "Failed to evaluate claim due to processing error",
+      determination: "SYSTEM_REFUSAL: Processing error - no authoritative output permitted",
       requiredData: [],
-      proceduralFlags: ["SYSTEM_ERROR"],
+      proceduralFlags: ["SYSTEM_ERROR", "CONSTITUTIONAL_FAIL_CLOSED"],
       riskLevel: "unsafe",
     };
   }

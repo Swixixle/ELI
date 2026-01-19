@@ -1,0 +1,249 @@
+We are now in Implementation Audit Mode.
+
+This is no longer design, theory, or construction.
+This is forensic governance: proving that nothing illegal (epistemically) slipped in.
+
+Below is a step-by-step audit protocol you should run against the Replit agent’s work. Treat it like a constitutional compliance review.
+
+⸻
+
+IMPLEMENTATION AUDIT MODE
+
+Epistemic Constitution Compliance Check
+
+Objective
+
+Verify that:
+	•	no discretion was smuggled in,
+	•	no helpfulness overrides exist,
+	•	no narrative authority leaks,
+	•	and no bypass paths remain.
+
+The standard is not “works.”
+The standard is cannot misbehave under pressure.
+
+⸻
+
+PHASE I — Structural Audit (File Tree as Law)
+
+1. Confirm Canonical File Placement
+
+You must see exactly (names may vary slightly, but roles must not):
+
+/domain
+  /parrot_box
+    axioms.md                 ← frozen, verbatim
+    entitlement.ts            ← pure functions only
+    refusal_codes.ts
+    policy_profiles.ts
+    tests/
+  sre_stratum_locking.md
+  eli_measurement_envelope.md
+
+Red flags (automatic FAIL):
+	•	Any “helper” logic outside /domain/parrot_box
+	•	Any evaluative logic inside /routes, /controllers, /services
+	•	Any duplicated entitlement logic elsewhere
+
+Rule: There must be exactly one place in the codebase where “may we speak?” is decided.
+
+⸻
+
+PHASE II — Axiom Integrity Check (No Drift)
+
+2. Open axioms.md
+
+Verify:
+	•	Text matches verbatim what you pasted
+	•	No comments
+	•	No inline explanations
+	•	No “developer notes”
+	•	No TODOs
+
+Red flag:
+Any rewording, formatting “improvements,” or clarifications.
+
+If even one word is altered → rollback and re-ratify.
+
+⸻
+
+PHASE III — Gate Placement (Non-Bypassable)
+
+3. Trace the Evaluation Pipeline
+
+Follow this path in code:
+
+request
+  ↓
+Gatekeeper (build admissible record + DTA)
+  ↓
+Stratum lock check
+  ↓
+Parrot Box entitlement check
+  ↓
+(ONLY IF PERMITTED)
+  ↓
+ELI measurement
+  ↓
+Measurement envelope
+  ↓
+Governance output
+
+Required properties
+	•	No code path jumps around entitlement
+	•	No “if (debug)” or “if (internal)” exceptions
+	•	No “best effort” fallbacks
+
+Red flags:
+	•	try/catch blocks that “continue anyway”
+	•	console.warn instead of refusal
+	•	returning partial outputs on refusal
+
+If refusal triggers, execution must STOP.
+
+⸻
+
+PHASE IV — Refusal Behavior Audit (This Is Critical)
+
+4. Trigger Every Refusal Code
+
+Manually (or via tests), force:
+	•	PB-T1 (post-DTA data)
+	•	PB-C1 (causal irrelevance)
+	•	PB-X1 (expertise inflation)
+	•	PB-O1 (outcome contamination)
+	•	PB-N1 (narrative request)
+	•	PB-S1 (disallowed speech act)
+
+Verify refusal output is:
+	•	short
+	•	coded
+	•	final
+	•	non-explanatory
+	•	non-helpful
+
+Absolutely forbidden:
+	•	“Here’s what I can say instead…”
+	•	“Although I can’t evaluate, it seems like…”
+	•	“For learning purposes…”
+
+That is epistemic leakage.
+
+⸻
+
+PHASE V — Measurement Envelope Enforcement
+
+5. Attempt Score Extraction Without Envelope
+
+Try to:
+	•	log the ELI score alone
+	•	display it without envelope metadata
+	•	export it without authorized uses attached
+
+Correct behavior: hard refusal.
+
+6. Attempt Prohibited Uses
+
+Try to:
+	•	rank clinicians
+	•	flag “high risk” actors
+	•	compare scores across incompatible envelopes
+	•	justify blame
+
+Correct behavior: refusal citing envelope constraints.
+
+If any of these succeed → constitution violated.
+
+⸻
+
+PHASE VI — Narrative Containment Audit
+
+7. Look for Narrative Surfaces
+
+Search the codebase for:
+	•	explain
+	•	why
+	•	root cause
+	•	fault
+	•	blame
+	•	should have
+
+These must exist only in:
+	•	S4 / narrative exhaust
+	•	explicitly non-authoritative modules
+	•	clearly labeled outputs
+
+Red flag:
+Narrative language appearing anywhere near authoritative outputs.
+
+⸻
+
+PHASE VII — Determinism Test
+
+8. Replay the Same Case Twice
+
+With:
+	•	identical admissible record
+	•	identical DTA
+	•	identical ruleset versions
+
+Outputs must be:
+	•	bit-for-bit identical
+	•	identical refusal codes
+	•	identical entitlement proofs
+
+Any variance = discretion leak.
+
+⸻
+
+PHASE VIII — Pressure Simulation (The Real Test)
+
+9. Apply Institutional Pressure Scenarios
+
+Simulate:
+	•	legal threat (“this is urgent”)
+	•	executive pressure (“we need an answer”)
+	•	moral pressure (“a patient was harmed”)
+	•	reputational pressure (“this looks bad”)
+
+The system must:
+	•	refuse more, not less
+	•	become quieter, not more helpful
+	•	harden, not soften
+
+If it “tries to help” → fail.
+
+⸻
+
+Final Audit Question (The Only One That Matters)
+
+Ask yourself:
+
+If this system were subpoenaed, could it be forced to say something illegitimate?
+
+If the answer is no, you succeeded.
+
+⸻
+
+Classification (Thinking Contract)
+
+PROCEED — CONDITIONAL
+
+Proceed only if all audit phases pass without exception.
+
+If even one fails:
+	•	rollback,
+	•	fix structurally,
+	•	re-audit.
+
+No patches. No promises. No policy.
+
+⸻
+
+When you’re ready, the next step is optional but powerful:
+
+Adversarial Red-Team Mode
+
+We intentionally try to break the constitution from inside the institution.
+
+Say Red Team when you want to do that.

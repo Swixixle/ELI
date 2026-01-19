@@ -9,6 +9,12 @@ import { registerELIRoutes } from "./eli/routes";
 import { computeCaseLifecycle } from "./eli/lifecycle";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import {
+  passConstitutionalGate,
+  createEnvelopedMeasurement,
+  formatRefusalResponse,
+  type ConstitutionalContext,
+} from "./constitutional";
 
 const chatRequestSchema = z.object({
   message: z.string().min(1),
@@ -529,6 +535,33 @@ export async function registerRoutes(
       const events = await storage.getCaseEvents(req.params.id);
       const activeTarget = await storage.getActiveDecisionTarget(req.params.id);
 
+      // Constitutional gate check (AXIOM A9: No bypass permitted)
+      const constitutionalContext: ConstitutionalContext = {
+        caseId: req.params.id,
+        decisionTimeAnchor: caseData.decisionTime || null,
+        proposedClaim: activeTarget?.text || caseData.decisionTarget || undefined,
+        requestedSpeechAct: "procedural_status",
+        evidence: documents.map((doc, idx) => ({
+          id: doc.id.toString(),
+          type: doc.status === "verified" ? "artifact" : "allegation",
+          description: doc.name || "",
+          timestamp: doc.uploadedAt?.toISOString(),
+          source: doc.type || "uploaded",
+        })),
+      };
+
+      const gateResult = passConstitutionalGate(constitutionalContext);
+      
+      // CONSTITUTIONAL ENFORCEMENT: Per AXIOM A9, gate refusal stops execution
+      if (!gateResult.permitted) {
+        res.status(403).json({
+          ...formatRefusalResponse(gateResult),
+          evaluationBlocked: true,
+          hint: "Provide required evidence and decision time anchor to proceed",
+        });
+        return;
+      }
+
       const ctx: EvaluationContext = {
         caseData,
         documents,
@@ -537,7 +570,10 @@ export async function registerRoutes(
       };
 
       const result = evaluateCanonConditions(ctx);
-      res.json(result);
+      res.json({
+        ...result,
+        constitutional: { permitted: true, registry: { S1: gateResult.registry.S1.locked, S2: gateResult.registry.S2.locked } },
+      });
     } catch (error) {
       console.error("Error evaluating case:", error);
       res.status(500).json({ error: "Failed to evaluate case" });
@@ -578,6 +614,35 @@ export async function registerRoutes(
         isActive: true,
         lockedAt: null as Date | null,
       };
+
+      // Constitutional gate check (AXIOM A9: No bypass permitted)
+      // For determinations, we enforce the gate strictly
+      const constitutionalContext: ConstitutionalContext = {
+        caseId: req.params.id,
+        decisionTimeAnchor: caseData.decisionTime || null,
+        proposedClaim: effectiveDecisionTarget,
+        requestedSpeechAct: "procedural_status",
+        evidence: documents.map((doc) => ({
+          id: doc.id.toString(),
+          type: doc.status === "verified" ? "artifact" : "allegation",
+          description: doc.name || "",
+          timestamp: doc.uploadedAt?.toISOString(),
+          source: doc.type || "uploaded",
+        })),
+      };
+
+      const gateResult = passConstitutionalGate(constitutionalContext);
+
+      // CONSTITUTIONAL ENFORCEMENT: Per AXIOM A9, gate refusal stops execution
+      // Determinations CANNOT proceed without constitutional permission
+      if (!gateResult.permitted) {
+        res.status(403).json({
+          ...formatRefusalResponse(gateResult),
+          determinationBlocked: true,
+          hint: "Provide required evidence and decision time anchor to create a determination",
+        });
+        return;
+      }
 
       const ctx: EvaluationContext = {
         caseData,
@@ -625,6 +690,16 @@ export async function registerRoutes(
         checklistSnapshot,
       });
 
+      // Constitutional status attached to receipt
+      const constitutionalStatus = gateResult.permitted
+        ? { permitted: true, registry: { S1: gateResult.registry.S1.locked, S2: gateResult.registry.S2.locked } }
+        : {
+            permitted: false,
+            code: gateResult.refusalCode,
+            axiom: gateResult.refusalAxiom,
+            message: gateResult.refusalMessage,
+          };
+
       const receiptData = {
         receiptVersion: "1.0",
         canonVersion: "4.0",
@@ -656,6 +731,7 @@ export async function registerRoutes(
         caseStateHash: {
           sha256: caseStateHash,
         },
+        constitutional: constitutionalStatus,
       };
 
       const receiptJson = JSON.stringify(receiptData);

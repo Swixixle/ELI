@@ -92,10 +92,11 @@ export async function interpretUserInput(
   try {
     return JSON.parse(content) as InterpreterOutput;
   } catch {
+    // CONSTITUTIONAL: Fail-closed per AXIOM A0 - no evidence extracted on error
     return {
       evidenceCandidates: [],
       proposedClaim: "",
-      unknowns: ["Failed to parse user input"],
+      unknowns: ["SYSTEM_ERROR: Failed to parse user input - no evidence extracted"],
       clarifyingQuestions: ["Could you please rephrase your question?"],
       metadata: { decisionTimeT: null, laneRequest: null },
     };

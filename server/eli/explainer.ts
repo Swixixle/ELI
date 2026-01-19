@@ -13,6 +13,7 @@ export interface ExplainerOutput {
   whatCannotBeSaid: string;
   nextSteps: string[];
   terminology: Record<string, string>;
+  _meta?: { authoritative: boolean; type: string; source: string };
 }
 
 const EXPLAINER_SYSTEM_PROMPT = `You are the ELI Explainer. You translate Governor decisions into plain English.
@@ -60,14 +61,21 @@ export async function explainDetermination(
   const content = response.choices[0]?.message?.content || "{}";
 
   try {
-    return JSON.parse(content) as ExplainerOutput;
-  } catch {
+    const parsed = JSON.parse(content) as ExplainerOutput;
+    // Add non-authoritative label per Constitutional Audit requirement
     return {
-      summary: governorOutput.determination,
+      ...parsed,
+      _meta: { authoritative: false, type: "explanation", source: "explainer" },
+    };
+  } catch {
+    // CONSTITUTIONAL: Fail-closed - return minimal non-authoritative fallback
+    return {
+      summary: `[NON-AUTHORITATIVE] ${governorOutput.determination}`,
       whatCanBeSaid: governorOutput.admissiblePhrasing || "No admissible claims at this time.",
       whatCannotBeSaid: interpreterOutput.proposedClaim,
       nextSteps: governorOutput.requiredData.map((d) => `Provide: ${d}`),
       terminology: {},
+      _meta: { authoritative: false, type: "fallback", source: "explainer" },
     };
   }
 }
