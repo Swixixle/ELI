@@ -20,6 +20,29 @@ This checkpoint represents the complete **procedural imaging system** ready for:
 
 ---
 
+## Constitutional Governance (Three Pillars)
+
+ELI Imaging enforces three-pillar constitutional governance. These are frozen documents — immutable, versioned, no modification permitted:
+
+| Pillar | Document | Version | Tests | Purpose |
+|--------|----------|---------|-------|---------|
+| **Parrot Box** | `domain/parrot_box/axioms.md` | v1.0 | 19 | Speech entitlement — triad enforcement (temporal, causal, contextual) |
+| **SRE Stratum Locking** | `domain/sre_stratum_locking/sre_stratum_locking.md` | v1.0 | 22 | Temporal integrity — irreversible S1→S2→S3 locking with hash verification |
+| **ELI Measurement Envelope** | `domain/eli_measurement_envelope/eli_measurement_envelope.md` | v1.0 | 28 | Metric authority — envelope mandatory for all measurements |
+
+**Design Principle:** Fail-closed by default (AXIOM A0, S5, M5) — refusal is terminal, no fallback.
+
+**Key Constitutional Constraints:**
+- Scores cannot justify blame or rank individuals (AXIOM M2)
+- No outcome knowledge in measurements (AXIOM M1 — only S1/S2 strata)
+- Envelope stripping is impossible (AXIOM M5)
+- Lock sequence S1→S2→S3 is irreversible (AXIOM S5)
+- Speech requires temporal, causal, and contextual entitlement
+
+**Total Constitutional Tests:** 69 passing
+
+---
+
 ## Overview
 
 ELI Imaging is a **procedural imaging system** — like an MRI for governance decisions. It produces structured representations of a decision's procedural and epistemic state at a specific point in time, determining whether evaluation is procedurally possible, not whether decisions were correct.
