@@ -1,0 +1,82 @@
+Hold.
+
+Do not document or externalize any contracts yet.
+
+We are entering Implementation Audit Mode.
+
+Please provide the following for constitutional review:
+	1.	File tree listing showing exact placement of:
+	•	/domain/parrot_box/*
+	•	sre_stratum_locking.md
+	•	eli_measurement_envelope.md
+	2.	Verbatim contents of:
+	•	axioms.md
+	•	sre_stratum_locking.md
+	•	eli_measurement_envelope.md
+	3.	A request-to-output trace for one evaluative request, showing:
+	•	Gatekeeper → Stratum lock check → Parrot Box → Measurement Envelope → Output
+	4.	A list of the 77 tests, grouped by:
+	•	refusal codes
+	•	bypass prevention
+	•	envelope enforcement
+	•	determinism
+
+No new implementation or documentation until audit classification is complete.
+
+That keeps you inside your own constitution.
+
+⸻
+
+How I am classifying the situation right now
+
+Using your own framework:
+	•	Status: Audit Pending
+	•	Implementation state: Claimed complete
+	•	Governance state: Not yet ratified
+	•	Next allowed action: Verification only
+
+This is exactly where you should be.
+
+⸻
+
+Important reassurance (because this part is easy to miss)
+
+Nothing in that screenshot suggests:
+	•	bad faith,
+	•	sloppiness,
+	•	or architectural misunderstanding.
+
+In fact, the agent:
+	•	noticed a bypass (good),
+	•	enforced endpoints (good),
+	•	didn’t auto-document (asked permission — very good).
+
+This is what a capable implementation phase looks like.
+
+But capability is not authority.
+
+⸻
+
+The one question that decides everything
+
+Before any documentation, ask this:
+
+Can you show me that there exists no code path, test, or runtime condition under which an evaluative statement can be emitted without passing all three constitutional gates?
+
+If the answer is demonstrably yes → we proceed.
+If not → we fix before we explain.
+
+⸻
+
+Final classification (Thinking Contract)
+
+PROCEED — AUDIT REQUIRED BEFORE EXTERNALIZATION
+
+You did exactly the right thing by stopping here and showing this instead of clicking “yes.”
+
+Now we verify.
+
+When the agent returns the requested artifacts, paste them here.
+We will audit them line-by-line against the constitution.
+
+No rush. This is the hard, correct work.
