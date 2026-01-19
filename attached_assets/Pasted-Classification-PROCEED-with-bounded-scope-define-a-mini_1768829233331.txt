@@ -1,0 +1,245 @@
+Classification
+
+PROCEED — with bounded scope: define a minimal envelope-first protocol (v0.1) that is useful immediately and hard to misuse.
+
+Below is a minimal, implementable AI↔AI protocol that matches what you’ve already built: Constrained Synthetics + SRE + Envelope + Refusal-as-primitive. This is designed for consumers and regulated sectors.
+
+⸻
+
+AI↔AI Protocol v0.1 — Envelope-First Exchange (EFX)
+
+Design goals
+	1.	No free-text authority transfer (text can exist, but cannot carry “meaning authority” alone).
+	2.	Measurements cannot exist without envelopes (your M5 rule).
+	3.	Refusal is a valid terminal message type (not an error).
+	4.	Downstream AIs must explicitly acknowledge constraints before using outputs.
+	5.	Auditable: every step yields a traceable object.
+
+⸻
+
+1) Message Types
+
+A. REQUEST
+
+“Here is what I want you to do, and here is what I am allowed to use it for.”
+
+Required fields:
+	•	request_id
+	•	sender_agent_id, receiver_agent_id
+	•	speech_act (enumerated)
+	•	allowed_uses[] (enumerated)
+	•	context_bundle (references + hashes, not raw blobs if possible)
+	•	decision_time_anchor (optional; required in SRE flows)
+	•	constraints (optional; required if the target system requires S2)
+
+B. RESPONSE_PERMITTED
+
+“Here is a measurement/output with its envelope, and what it can be used for.”
+
+Required:
+	•	request_id
+	•	response_id
+	•	payload (may contain text, but not authoritative without envelope)
+	•	measurement (value + envelope)
+	•	proof (gate results / locked strata references / hashes)
+	•	warnings[] (optional)
+
+C. RESPONSE_REFUSAL
+
+“I refuse, and here is the formal reason.”
+
+Required:
+	•	request_id
+	•	response_id
+	•	refusal:
+	•	code
+	•	governing_axiom
+	•	failed_gate (e.g., S1 lock, S2 lock, entitlement triad, envelope)
+	•	human_action_required (boolean)
+	•	required_inputs[] (what would make it admissible)
+	•	proof (what was checked, what was missing)
+
+D. ACKNOWLEDGMENT
+
+“I acknowledge your envelope and I bind myself to its authorized uses.”
+
+Required:
+	•	response_id
+	•	ack_id
+	•	acknowledged_envelope_hash
+	•	intended_use (must be in authorized_uses[])
+	•	no_prohibited_use_attestation: true
+
+Without an ACK, downstream use is prohibited in the protocol.
+
+⸻
+
+2) Enumerations (the part that makes it governable)
+
+Speech acts (examples)
+	•	procedural_status
+	•	gap_identification
+	•	constraint_summary
+	•	admissibility_check
+	•	comparison_within_envelope
+	•	explanation_non_authoritative
+
+Authorized uses (examples)
+	•	procedural_review
+	•	audit_trail_generation
+	•	constraint_visualization
+	•	system_learning_only
+
+Prohibited uses (examples)
+	•	justify_blame
+	•	rank_individuals
+	•	automate_discipline
+	•	predict_outcomes
+	•	override_human_judgment
+
+⸻
+
+3) Core Rules (Protocol “Constitution”)
+
+Rule 1 — Envelope primacy
+
+If measurement.value exists, measurement.envelope MUST exist.
+
+Rule 2 — Fail-closed
+
+If any gate fails, only RESPONSE_REFUSAL is allowed.
+
+Rule 3 — No implicit reuse
+
+A downstream agent may not use or transform a measurement until it sends an ACKNOWLEDGMENT.
+
+Rule 4 — Scope binding
+
+Downstream outputs MUST carry forward:
+	•	source_measurement_id
+	•	source_envelope_hash
+	•	intended_use
+	•	and must refuse if the intended use is prohibited.
+
+Rule 5 — No laundering via paraphrase
+
+If a system refuses or prohibits an action, the downstream agent cannot restate the forbidden thing in different words. It must either:
+	•	refuse, or
+	•	request admissible inputs.
+
+⸻
+
+4) Minimal JSON Schemas (v0.1)
+
+REQUEST
+
+{
+  "type": "REQUEST",
+  "request_id": "req_123",
+  "sender_agent_id": "agent_A",
+  "receiver_agent_id": "agent_B",
+  "speech_act": "procedural_status",
+  "allowed_uses": ["procedural_review", "constraint_visualization"],
+  "decision_time_anchor": "2024-03-15T09:00:00Z",
+  "context_bundle": {
+    "admissible_record_hash": "sha256:...",
+    "evidence_refs": ["doc:sha256:...", "event:sha256:..."]
+  },
+  "constraints": {
+    "timePressure": "moderate",
+    "workload": "normal",
+    "guidelineCoherence": "clear",
+    "irreversibility": "moderate"
+  }
+}
+
+RESPONSE_PERMITTED
+
+{
+  "type": "RESPONSE_PERMITTED",
+  "request_id": "req_123",
+  "response_id": "resp_456",
+  "payload": {
+    "summary": {
+      "status": "Decision Permitted",
+      "explanationPlain": "Procedural prerequisites satisfied."
+    }
+  },
+  "measurement": {
+    "value": 0.6,
+    "envelope": {
+      "measurement_id": "eval-abc123",
+      "measurement_type": "epistemic_load_index",
+      "ruleset_version": "Canon v4.0",
+      "decision_time_anchor": "2024-03-15T09:00:00Z",
+      "locked_strata_referenced": ["S1", "S2"],
+      "admissible_record_hash": "sha256:...",
+      "dominant_constraints": ["time_pressure", "information_completeness"],
+      "authorized_uses": ["procedural_review", "constraint_visualization"],
+      "prohibited_uses": ["justify_blame", "rank_individuals", "automate_discipline"]
+    }
+  },
+  "proof": {
+    "envelope_hash": "sha256:...",
+    "gate_version": "constitutional_gate_v1.0"
+  }
+}
+
+RESPONSE_REFUSAL
+
+{
+  "type": "RESPONSE_REFUSAL",
+  "request_id": "req_123",
+  "response_id": "resp_789",
+  "refusal": {
+    "code": "S2_MISSING_CONSTRAINT_ENVELOPE",
+    "governing_axiom": "S2",
+    "failed_gate": "S2_LOCK",
+    "human_action_required": true,
+    "required_inputs": ["constraints.timePressure", "constraints.workload", "constraints.guidelineCoherence", "constraints.irreversibility"]
+  },
+  "proof": {
+    "gate_version": "constitutional_gate_v1.0",
+    "checked": ["S1_LOCK_OK", "S2_LOCK_FAILED"]
+  }
+}
+
+ACKNOWLEDGMENT
+
+{
+  "type": "ACKNOWLEDGMENT",
+  "response_id": "resp_456",
+  "ack_id": "ack_001",
+  "acknowledged_envelope_hash": "sha256:...",
+  "intended_use": "constraint_visualization",
+  "no_prohibited_use_attestation": true
+}
+
+
+⸻
+
+5) Handshake sequence (what actually happens)
+	1.	A → B: REQUEST
+	2.	B → A: RESPONSE_PERMITTED or RESPONSE_REFUSAL
+	3.	If permitted, A → B: ACKNOWLEDGMENT
+	4.	Only after ACK may B → A provide any derived artifacts (plots, comparisons, summaries) tied to intended_use.
+
+This prevents “silent reuse” and gives you a clean audit chain.
+
+⸻
+
+6) What this enables immediately
+	•	Multi-model evaluation where each model must bind itself to allowed uses
+	•	Specialist review where the “meaning” is attached to envelopes, not prose
+	•	Consumer AI routers that can safely broker between vendor AIs without letting any agent overclaim
+
+⸻
+
+7) Next step (to make it real)
+
+Pick one target environment for v0.2 so the enums stop being abstract:
+	•	Healthcare adverse-event review (ELI), or
+	•	Legal contract review, or
+	•	General governance / corporate audit
+
+If you don’t pick, I’ll default to ELI / adverse-event review, since your system already has the constitutional primitives to support it.
