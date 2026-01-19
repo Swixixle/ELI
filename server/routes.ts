@@ -593,9 +593,21 @@ export async function registerRoutes(
       // AXIOM M5 ENFORCEMENT: Strip raw score from response
       // Only enveloped measurement may contain numeric values
       const { summary, ...resultWithoutRawScore } = result;
+      
+      // Derive categorical reason from conditions (no metric text allowed)
+      const conditionsMet = summary.conditionsMet ?? 0;
+      let reason: "prerequisites_satisfied" | "prerequisites_partial" | "prerequisites_insufficient";
+      if (conditionsMet >= 5) {
+        reason = "prerequisites_satisfied";
+      } else if (conditionsMet >= 3) {
+        reason = "prerequisites_partial";
+      } else {
+        reason = "prerequisites_insufficient";
+      }
+      
       const sanitizedSummary = {
         status: summary.status,
-        explanationPlain: summary.explanationPlain,
+        reason,
         // conditionsMet and conditionsTotal are stripped - use measurement.value instead
       };
       

@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   createEpistemicTerrainSheet,
   validateTerrainSheetInput,
+  validateSanitizedSummary,
   type TerrainSheetInput,
   type SanitizedSummary,
+  type SanitizedSummaryReason,
   type MeasurementEnvelopeInput,
 } from "../../../shared/visualSpec";
 
@@ -17,7 +19,10 @@ interface EvaluationResponse {
     value: number;
     envelope: MeasurementEnvelopeInput;
   };
-  summary?: SanitizedSummary;
+  summary?: {
+    status: string;
+    reason: SanitizedSummaryReason;
+  };
   error?: string;
   message?: string;
 }

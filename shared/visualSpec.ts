@@ -11,6 +11,8 @@ export interface MeasurementEnvelopeInput {
     constraintDensity: string;
     dominantLimitingAxes: readonly string[];
     decisionSpaceCompression: number;
+    informationCompleteness?: number;
+    timePressure?: number;
   };
   authorized_uses: readonly string[];
   prohibited_uses: readonly string[];
@@ -37,8 +39,8 @@ export interface EnvelopeHeader {
 
 export interface EpistemicTerrainPlot {
   axes: {
-    x: { label: "Information Completeness"; range: [0, 1] };
-    y: { label: "Time Pressure"; range: [0, 1] };
+    x: { label: "Information Completeness"; range: [0, 1]; value: number };
+    y: { label: "Time Pressure"; range: [0, 1]; value: number };
   };
   constraintDensity: number;
   dominantLimitingAxes: readonly string[];
@@ -56,9 +58,16 @@ export interface RefusalEntry {
   noAuthorizedSubstitution: true;
 }
 
+export type SanitizedSummaryReason =
+  | "prerequisites_satisfied"
+  | "prerequisites_partial"
+  | "prerequisites_insufficient"
+  | "gate_refused"
+  | "envelope_invalid";
+
 export interface SanitizedSummary {
   status: string;
-  explanationPlain: string;
+  reason: SanitizedSummaryReason;
 }
 
 export interface TerrainSheetInput {
@@ -70,6 +79,42 @@ export interface TerrainSheetInput {
 export interface TerrainSheetValidation {
   valid: boolean;
   errors: string[];
+}
+
+const METRIC_PATTERNS = [
+  /\d+\s*(of|\/)\s*\d+/i,
+  /\d+(\.\d+)?%/,
+  /\d+(\.\d+)?\s*percent/i,
+  /score[:\s]+\d/i,
+  /\d+\s*points?/i,
+  /\d+\s*conditions?/i,
+  /\d+\s*prerequisites?/i,
+];
+
+export function validateSanitizedSummary(summary: SanitizedSummary): { valid: boolean; error?: string } {
+  if (!summary || !summary.status || !summary.reason) {
+    return { valid: false, error: "Missing required summary fields (status, reason)" };
+  }
+
+  const validReasons: SanitizedSummaryReason[] = [
+    "prerequisites_satisfied",
+    "prerequisites_partial",
+    "prerequisites_insufficient",
+    "gate_refused",
+    "envelope_invalid",
+  ];
+
+  if (!validReasons.includes(summary.reason)) {
+    return { valid: false, error: `Invalid reason: ${summary.reason}. Must be one of: ${validReasons.join(", ")}` };
+  }
+
+  for (const pattern of METRIC_PATTERNS) {
+    if (pattern.test(summary.status)) {
+      return { valid: false, error: `METRIC_LEAKAGE: status contains score proxy matching pattern ${pattern}` };
+    }
+  }
+
+  return { valid: true };
 }
 
 export function validateTerrainSheetInput(input: TerrainSheetInput): TerrainSheetValidation {
@@ -101,8 +146,10 @@ export function validateTerrainSheetInput(input: TerrainSheetInput): TerrainShee
   if (typeof input.value !== "number" || input.value < 0 || input.value > 1) {
     errors.push("Measurement value must be between 0 and 1");
   }
-  if (!input.summary || !input.summary.status) {
-    errors.push("Missing sanitized summary");
+
+  const summaryValidation = validateSanitizedSummary(input.summary);
+  if (!summaryValidation.valid) {
+    errors.push(summaryValidation.error!);
   }
 
   return { valid: errors.length === 0, errors };
@@ -129,10 +176,13 @@ export function createEpistemicTerrainSheet(input: TerrainSheetInput): Epistemic
     prohibitedUses: envelope.prohibited_uses,
   };
 
+  const xValue = deriveInformationCompleteness(envelope);
+  const yValue = deriveTimePressure(envelope);
+
   const terrain: EpistemicTerrainPlot = {
     axes: {
-      x: { label: "Information Completeness", range: [0, 1] },
-      y: { label: "Time Pressure", range: [0, 1] },
+      x: { label: "Information Completeness", range: [0, 1], value: xValue },
+      y: { label: "Time Pressure", range: [0, 1], value: yValue },
     },
     constraintDensity: parseConstraintDensity(envelope.epistemic_volume_descriptor?.constraintDensity),
     dominantLimitingAxes: envelope.epistemic_volume_descriptor?.dominantLimitingAxes ?? envelope.dominant_constraints ?? [],
@@ -149,6 +199,40 @@ export function createEpistemicTerrainSheet(input: TerrainSheetInput): Epistemic
   };
 
   return { header, terrain, exclusions };
+}
+
+function deriveInformationCompleteness(envelope: MeasurementEnvelopeInput): number {
+  if (envelope.epistemic_volume_descriptor?.informationCompleteness !== undefined) {
+    return clamp(envelope.epistemic_volume_descriptor.informationCompleteness, 0, 1);
+  }
+
+  const excludedCount = envelope.excluded_information_classes?.length ?? 0;
+  if (excludedCount === 0) return 0.9;
+  if (excludedCount <= 2) return 0.7;
+  if (excludedCount <= 4) return 0.5;
+  return 0.3;
+}
+
+function deriveTimePressure(envelope: MeasurementEnvelopeInput): number {
+  if (envelope.epistemic_volume_descriptor?.timePressure !== undefined) {
+    return clamp(envelope.epistemic_volume_descriptor.timePressure, 0, 1);
+  }
+
+  const dominantAxes = envelope.epistemic_volume_descriptor?.dominantLimitingAxes ?? envelope.dominant_constraints ?? [];
+  const hasTimePressure = dominantAxes.some((axis) =>
+    axis.toLowerCase().includes("time") || axis.toLowerCase().includes("pressure") || axis.toLowerCase().includes("urgency")
+  );
+
+  if (hasTimePressure) return 0.8;
+
+  const density = envelope.epistemic_volume_descriptor?.constraintDensity;
+  if (density === "high") return 0.7;
+  if (density === "medium") return 0.5;
+  return 0.3;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
 }
 
 function parseConstraintDensity(density: string | undefined): number {

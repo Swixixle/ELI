@@ -12,6 +12,7 @@ import {
 import type {
   EpistemicTerrainSheet as EpistemicTerrainSheetData,
   SanitizedSummary,
+  SanitizedSummaryReason,
 } from "../../../shared/visualSpec";
 
 interface EpistemicTerrainSheetProps {
@@ -106,21 +107,30 @@ export function EpistemicTerrainSheet({ data, sanitizedSummary }: EpistemicTerra
         <CardContent className="space-y-4">
           <div className="aspect-square max-w-md mx-auto relative border rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
             <div className="absolute bottom-0 left-0 right-0 text-center text-xs text-muted-foreground pb-2">
-              {terrain.axes.x.label}
+              {terrain.axes.x.label}: {(terrain.axes.x.value * 100).toFixed(0)}%
             </div>
             <div className="absolute top-1/2 left-2 -rotate-90 origin-left text-xs text-muted-foreground whitespace-nowrap">
-              {terrain.axes.y.label}
+              {terrain.axes.y.label}: {(terrain.axes.y.value * 100).toFixed(0)}%
             </div>
             
             <div className="absolute inset-8 flex items-center justify-center">
               <div 
-                className="rounded-full bg-primary/20 flex items-center justify-center"
+                className="rounded-full bg-primary/20 flex items-center justify-center relative"
                 style={{
                   width: `${Math.max(20, terrain.constraintDensity * 100)}%`,
                   height: `${Math.max(20, terrain.constraintDensity * 100)}%`,
                 }}
                 data-testid="constraint-density-indicator"
               >
+                <div 
+                  className="absolute w-3 h-3 bg-primary rounded-full border-2 border-background"
+                  style={{
+                    left: `${terrain.axes.x.value * 100}%`,
+                    bottom: `${terrain.axes.y.value * 100}%`,
+                    transform: 'translate(-50%, 50%)',
+                  }}
+                  data-testid="terrain-position-marker"
+                />
                 <div className="text-center">
                   <div className="text-2xl font-bold" data-testid="decision-space-compression">
                     {(terrain.decisionSpaceCompression * 100).toFixed(0)}%
@@ -154,9 +164,13 @@ export function EpistemicTerrainSheet({ data, sanitizedSummary }: EpistemicTerra
             >
               {sanitizedSummary.status}
             </Badge>
-            <p className="text-sm text-muted-foreground" data-testid="summary-explanation">
-              {sanitizedSummary.explanationPlain}
-            </p>
+            <Badge 
+              variant="outline"
+              className="ml-2 text-xs font-mono"
+              data-testid="summary-reason"
+            >
+              {sanitizedSummary.reason}
+            </Badge>
           </div>
         </CardContent>
       </Card>
