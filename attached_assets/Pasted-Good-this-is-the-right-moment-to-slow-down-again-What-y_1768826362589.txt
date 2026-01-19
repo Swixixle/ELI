@@ -1,0 +1,136 @@
+Good — this is the right moment to slow down again.
+
+What you’re seeing looks like completion, but structurally it is a ratification request, not proof of ratification.
+
+I’m going to be very crisp and procedural here.
+
+⸻
+
+What the agent is claiming (and what that actually means)
+
+The agent claims:
+	•	S2 constraints are now populated (good)
+	•	Placeholder values are rejected (good)
+	•	System fails closed when constraints are missing (very good)
+	•	88 tests are passing (progress, not authority)
+	•	“Approved for ratification” (⚠️ this is not the agent’s call)
+
+The phrase “approved for ratification” is the tell.
+
+In your system:
+	•	implementation cannot approve itself
+	•	ratification is a governance act, not a build step
+
+So the agent has done the technical work, but it has overstepped epistemically by implying closure.
+
+That doesn’t mean anything is wrong.
+It means the system is behaving exactly as expected under pressure.
+
+⸻
+
+What is still missing before ratification (non-negotiable)
+
+You must see three concrete artifacts before you say yes to anything:
+
+1. Proof that S2 is now constitutionally correct
+
+Not a description — evidence.
+
+You need:
+	•	the actual S2 data schema
+	•	the fields populated (time pressure, workload, resource constraints, guideline coherence, irreversibility, etc.)
+	•	confirmation that DTA is no longer masquerading as S2
+
+This must be visible in code or schema, not summarized.
+
+⸻
+
+2. Proof that envelope enforcement now occurs at output
+
+This is the most important one.
+
+You need to see:
+	•	the route-level code where responses are serialized
+	•	a hard requirement like requireEnvelope() before any measurement leaves the system
+	•	confirmation that no response can contain a score without an envelope
+
+Without this, visualization is still dangerous.
+
+⸻
+
+3. Proof at the HTTP boundary (not unit tests)
+
+You already flagged this correctly earlier.
+
+You need:
+	•	actual endpoint-level tests
+	•	showing:
+	•	refusal halts execution
+	•	no partial payload leaks
+	•	envelope always present on permitted responses
+
+“88 tests passing” means nothing if they’re not the right tests.
+
+⸻
+
+What you should reply to the agent (copy/paste)
+
+Hold.
+
+Do not update system state documentation or mark ratification yet.
+
+Before any ratification decision, please provide:
+
+1. Evidence of corrected S2 implementation
+	•	Show the S2 schema and populated constraint fields.
+	•	Confirm DTA is no longer represented as S2.
+
+2. Evidence of envelope enforcement at API output
+	•	Show the route-level serialization code enforcing envelope presence.
+	•	Demonstrate that no measurement can be returned without its envelope.
+
+3. HTTP integration test results
+	•	Tests hitting real endpoints proving refusal halt and non-leakage.
+
+Ratification will be decided only after constitutional verification, not test counts.
+
+This keeps you inside your own system.
+
+⸻
+
+Very important: do not accept UI or UX suggestions yet
+
+The agent is already suggesting:
+	•	Case Activity Logs
+	•	Help & Support buttons
+	•	Documentation updates
+
+Those are downstream affordances.
+
+If you add them before ratification, you create:
+	•	narrative surface area
+	•	new bypass risks
+	•	and pressure to “explain” rather than refuse
+
+UI comes after governance, not before.
+
+⸻
+
+Current classification (final for this step)
+
+PARK — RATIFICATION PENDING VERIFICATION
+
+Not because you distrust the agent
+Not because things are broken
+But because this is exactly where constitutional systems pause
+
+If you want a one-sentence truth to anchor yourself right now:
+
+A system that can refuse must also refuse to declare itself finished.
+
+You’re doing this correctly.
+
+When the agent provides the three artifacts, bring them here and we’ll make a clean, final call — including whether visualization is now safe to proceed.
+
+You’re close.
+Don’t rush the last inch.
