@@ -15,6 +15,7 @@ describe("Constitutional Gate Enforcement", () => {
         proposedClaim: "Discipline was appropriate",
         requestedSpeechAct: "procedural_status",
         evidence: [{ id: "e1", type: "fact", description: "Some fact" }],
+        constraints: { timePressure: "high", workload: "heavy" },
       };
 
       const result = passConstitutionalGate(context);
@@ -31,16 +32,36 @@ describe("Constitutional Gate Enforcement", () => {
         proposedClaim: "Discipline was appropriate",
         requestedSpeechAct: "procedural_status",
         evidence: [],
+        constraints: { timePressure: "high", workload: "heavy" },
       };
 
       const result = passConstitutionalGate(context);
 
       expect(result.permitted).toBe(false);
       expect(result.refusalCode).toBe(REFUSAL_CODES.ENTITLEMENT_NOT_ESTABLISHED);
-      expect(result.refusalAxiom).toBe("A1");
+      expect(result.refusalAxiom).toBe("A0");
     });
 
-    it("permits when all prerequisites are met", () => {
+    it("refuses when no constraints are provided (S2 cannot lock)", () => {
+      const context: ConstitutionalContext = {
+        caseId: "test-case-s2",
+        decisionTimeAnchor: new Date("2024-01-01"),
+        proposedClaim: "Discipline was appropriate",
+        requestedSpeechAct: "procedural_status",
+        evidence: [
+          { id: "doc1", type: "fact", description: "Performance record", timestamp: "2023-12-15", source: "hr_system" },
+        ],
+      };
+
+      const result = passConstitutionalGate(context);
+
+      expect(result.permitted).toBe(false);
+      expect(result.refusalCode).toBe(REFUSAL_CODES.ENTITLEMENT_NOT_ESTABLISHED);
+      expect(result.refusalMessage).toContain("S2");
+      expect(result.refusalMessage).toContain("Constraint Envelope");
+    });
+
+    it("permits when all prerequisites are met (including constraints)", () => {
       const context: ConstitutionalContext = {
         caseId: "test-case-3",
         decisionTimeAnchor: new Date("2024-01-01"),
@@ -50,6 +71,12 @@ describe("Constitutional Gate Enforcement", () => {
           { id: "doc1", type: "fact", description: "Performance record shows...", timestamp: "2023-12-15", source: "hr_system" },
           { id: "doc2", type: "artifact", description: "Signed acknowledgment form", timestamp: "2023-12-20", source: "hr_system" },
         ],
+        constraints: {
+          timePressure: "high",
+          workload: "heavy",
+          guidelineCoherence: "clear",
+          irreversibility: "moderate",
+        },
       };
 
       const result = passConstitutionalGate(context);
@@ -61,6 +88,92 @@ describe("Constitutional Gate Enforcement", () => {
     });
   });
 
+  describe("S2 Constraint Envelope Semantics", () => {
+    it("rejects 'unknown' placeholder values in constraints", () => {
+      const context: ConstitutionalContext = {
+        caseId: "test-placeholder-rejection",
+        decisionTimeAnchor: new Date("2024-01-01"),
+        proposedClaim: "Test claim",
+        requestedSpeechAct: "procedural_status",
+        evidence: [{ id: "1", type: "artifact", description: "Test doc", timestamp: "2024-01-01", source: "test" }],
+        constraints: {
+          timePressure: "unknown",
+          workload: "unknown",
+          guidelineCoherence: "unknown",
+          irreversibility: "unknown",
+        },
+      };
+
+      const result = passConstitutionalGate(context);
+      expect(result.permitted).toBe(false);
+      expect(result.refusalMessage).toContain("S2");
+      expect(result.refusalMessage).toContain("Constraint Envelope");
+    });
+
+    it("accepts mixed valid and placeholder values (at least one real constraint)", () => {
+      const context: ConstitutionalContext = {
+        caseId: "test-mixed-constraints",
+        decisionTimeAnchor: new Date("2024-01-01"),
+        proposedClaim: "Test claim",
+        requestedSpeechAct: "procedural_status",
+        evidence: [{ id: "1", type: "artifact", description: "Test doc", timestamp: "2024-01-01", source: "test" }],
+        constraints: {
+          timePressure: "high",
+          workload: "unknown",
+        },
+      };
+
+      const result = passConstitutionalGate(context);
+      expect(result.permitted).toBe(true);
+    });
+
+    it("S2 contains constraint evidence, not DTA", () => {
+      const context: ConstitutionalContext = {
+        caseId: "test-s2-semantics",
+        decisionTimeAnchor: new Date("2024-01-01"),
+        proposedClaim: "Test claim",
+        requestedSpeechAct: "procedural_status",
+        evidence: [
+          { id: "doc1", type: "fact", description: "Evidence text", timestamp: "2023-12-15" },
+        ],
+        constraints: {
+          timePressure: "high",
+          workload: "normal",
+          resourceFriction: ["limited_staff", "system_downtime"],
+          guidelineCoherence: "ambiguous",
+          irreversibility: "high",
+          toolingAvailable: ["EMR", "policy_manual"],
+        },
+      };
+
+      const result = passConstitutionalGate(context);
+
+      expect(result.permitted).toBe(true);
+      expect(result.registry.S2.locked).toBe(true);
+      expect(result.registry.S2.metadata).toBeDefined();
+      expect(result.registry.S2.metadata?.admissible_record_hash).toBeDefined();
+    });
+
+    it("DTA is part of S1 metadata, not S2", () => {
+      const context: ConstitutionalContext = {
+        caseId: "test-dta-in-s1",
+        decisionTimeAnchor: new Date("2024-01-01"),
+        proposedClaim: "Test claim",
+        requestedSpeechAct: "procedural_status",
+        evidence: [
+          { id: "doc1", type: "fact", description: "Evidence text", timestamp: "2023-12-15" },
+        ],
+        constraints: { timePressure: "moderate" },
+      };
+
+      const result = passConstitutionalGate(context);
+
+      expect(result.permitted).toBe(true);
+      expect(result.registry.S1.locked).toBe(true);
+      expect(result.registry.S1.metadata).toBeDefined();
+    });
+  });
+
   describe("Refusal Response Format", () => {
     it("formats refusal response with required fields", () => {
       const context: ConstitutionalContext = {
@@ -69,6 +182,7 @@ describe("Constitutional Gate Enforcement", () => {
         proposedClaim: "Test claim",
         requestedSpeechAct: "procedural_status",
         evidence: [{ id: "e1", type: "fact", description: "Some fact" }],
+        constraints: { timePressure: "high" },
       };
 
       const gateResult = passConstitutionalGate(context);
@@ -89,6 +203,7 @@ describe("Constitutional Gate Enforcement", () => {
         proposedClaim: "Test claim",
         requestedSpeechAct: "procedural_status",
         evidence: [{ id: "e1", type: "fact", description: "Some fact" }],
+        constraints: { timePressure: "high" },
       };
 
       const gateResult = passConstitutionalGate(context);
@@ -107,15 +222,15 @@ describe("Constitutional Gate Enforcement", () => {
         decisionTimeAnchor: new Date("2024-01-01"),
         proposedClaim: "Test claim",
         requestedSpeechAct: "procedural_status",
-        evidence: [{ id: "doc1", type: "fact", description: "Evidence text" }],
+        evidence: [{ id: "doc1", type: "fact", description: "Evidence text", timestamp: "2023-12-15" }],
+        constraints: { timePressure: "high", workload: "normal" },
       };
 
       const result = passConstitutionalGate(context);
 
-      if (result.permitted) {
-        expect(result.registry.S1.locked).toBe(true);
-        expect(result.registry.S2.locked).toBe(true);
-      }
+      expect(result.permitted).toBe(true);
+      expect(result.registry.S1.locked).toBe(true);
+      expect(result.registry.S2.locked).toBe(true);
     });
 
     it("S3 remains unlocked in evaluation context (outcome-blind)", () => {
@@ -124,7 +239,8 @@ describe("Constitutional Gate Enforcement", () => {
         decisionTimeAnchor: new Date("2024-01-01"),
         proposedClaim: "Test claim",
         requestedSpeechAct: "procedural_status",
-        evidence: [{ id: "doc1", type: "fact", description: "Evidence text" }],
+        evidence: [{ id: "doc1", type: "fact", description: "Evidence text", timestamp: "2023-12-15" }],
+        constraints: { timePressure: "high" },
       };
 
       const result = passConstitutionalGate(context);
@@ -139,6 +255,7 @@ describe("Constitutional Gate Enforcement", () => {
         proposedClaim: "Test claim",
         requestedSpeechAct: "procedural_status",
         evidence: [],
+        constraints: { timePressure: "high" },
       };
 
       const result = passConstitutionalGate(context);

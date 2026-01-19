@@ -1,0 +1,95 @@
+You now have a real audit. The agent did the most important thing: it admitted drift and a hard gap. That is exactly what you want in a governed build.
+
+Bottom line
+
+Do not ratify. Do not document. Do not proceed to Red Team.
+You have two drifts and one constitutional violation-level gap.
+
+My classification
+
+PARK — ratification blocked.
+
+Blocking items (must be fixed before anything else)
+	1.	S2 semantic drift (HARD DRIFT)
+	•	Constitution: S2 = Constraint Envelope (workload, time pressure, resource constraints, guideline coherence, irreversibility).
+	•	Implementation: S2 = DTA hash.
+	•	This is not cosmetic. It breaks the SRE model and invites future misuse (“constraints never existed, therefore the space was larger than claimed”).
+	2.	Envelope enforcement at API output layer (HARD GAP / CONSTITUTIONAL VIOLATION)
+	•	Constitution (M5): No interface may expose a measurement without its envelope.
+	•	Current: routes return evaluation results without envelope wrapping; createEnvelopedMeasurement() exists but is not called.
+	•	That means you can leak a score without its authority boundary. That is metric laundering by accident.
+	3.	HTTP integration tests not yet written (HARD GAP for enforcement proof)
+	•	Unit tests do not prove “no runtime path leaks.”
+	•	You need endpoint tests that prove the “hard stop” and “no partial leak” guarantees at the network boundary.
+
+Non-blocking but required cleanup (SOFT DRIFT)
+	4.	Axiom citation metadata incorrect
+	•	This is governance debt, not a functional exploit, but it matters under legal scrutiny.
+	•	Fix alongside the above.
+
+⸻
+
+What you should tell the agent (copy/paste)
+
+Proceed with fixes now.
+Ratification remains PARKED until the following are complete and re-audited:
+
+1) S2 must be corrected to match constitution.
+	•	DTA is an anchor, not a stratum.
+	•	Move DTA into S1 metadata or a separate non-stratum anchor.
+	•	Populate S2 with actual constraint evidence fields (time pressure, workload, resource friction, guideline coherence, irreversibility, tooling).
+	•	Ensure S2 is lockable, hashed, immutable, and referenced by envelope.
+
+2) Envelopes must be enforced at the API boundary (M5).
+	•	All permitted evaluation responses must include the full measurement envelope.
+	•	No response may include any measurement value unless envelope is present and attached.
+	•	Add a guard: requireEnvelope() at output serialization time.
+
+3) Add HTTP integration tests.
+	•	/evaluate and /determine must be tested end-to-end.
+	•	Tests must prove: refusal halts execution, no partial payload leak, envelope always present on permitted outputs.
+
+4) Correct axiom citations to match governing law.
+
+No documentation/external contracts until re-audit passes.
+
+⸻
+
+The key design decision you must make (and I’ll make a call)
+
+You have two options for S2:
+
+Option A (recommended): Keep S1/S2 as constitution defined
+	•	DTA becomes a Decision Time Anchor field inside S1 lock metadata (or global context), not a stratum.
+	•	S2 becomes the Constraint Envelope as intended.
+
+This preserves your architecture’s meaning and prevents future “S2 is just a timestamp” collapse.
+
+Choose Option A.
+
+⸻
+
+Why the hashes are not enough (important)
+
+Hashes only help if you also possess the original ratified text to compare against. Right now, you (and I) still haven’t independently confirmed the MD contents match what you pasted.
+
+But that’s secondary until the enforcement gaps are fixed. Once fixed, we do a final “verbatim check” by pasting the files or comparing hashes to your local canonical text.
+
+⸻
+
+What “done” looks like
+
+You will be ready to move from PARK → PROCEED when:
+	•	S2 contains constraint fields (not DTA)
+	•	every measurement in responses is envelope-wrapped
+	•	HTTP tests pass proving no leak paths
+	•	axiom citations match or are removed as “legal citations” and treated as internal tags
+
+Then you re-run the audit and we ratify.
+
+If you want, after the agent implements the fixes, paste:
+	•	the updated file tree,
+	•	the route response schema,
+	•	and the relevant diff for S2 + envelope output enforcement.
+
+I will classify again.

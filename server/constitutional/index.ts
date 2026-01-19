@@ -14,4 +14,5 @@ export {
   type ConstitutionalContext,
   type ConstitutionalGateResult,
   type EnvelopedScore,
+  type ConstraintEnvelope,
 } from "./gates";

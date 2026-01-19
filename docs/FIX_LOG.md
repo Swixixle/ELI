@@ -4,6 +4,33 @@ Append-only record of system changes.
 
 ---
 
+## Fix #5: Constitutional S2 Constraint Enforcement
+
+**Date:** 2026-01-19
+
+**What Changed:**
+- S2 semantic correction: DTA moved to S1 metadata; S2 now contains constraint envelope fields
+- Route-layer bypass closed: Constraints pass through from client; undefined triggers S2 refusal
+- Placeholder rejection: `isPlaceholderValue()` function added; "unknown", "unspecified", "n/a" values are inadmissible for S2 locking
+- Envelope enforcement (AXIOM M5): /evaluate returns measurement with full envelope via `createEnvelopedMeasurement()`
+- Axiom citation correction: A0 for default inadmissibility (not A1)
+
+**Files Touched:**
+- `server/constitutional/gates.ts` — Added `isPlaceholderValue()`, updated `toConstraintEvidence()` to reject placeholders
+- `server/routes.ts` — Removed constraint defaulting to "unknown"; now requires explicit constraint data
+
+**Tests Added:**
+- 2 placeholder rejection tests in `domain/tests/gate_enforcement.spec.ts`
+- 1 S2 constraint requirement test in `domain/tests/http_gate_enforcement.spec.ts`
+
+**Verification:**
+- 88 tests passing (69 constitutional + 13 gate + 6 HTTP)
+- S2 cannot lock with placeholder "unknown" values
+- Missing constraints trigger S2 refusal at HTTP boundary
+- Envelopes present on permitted responses
+
+---
+
 ## Fix #4: Case Archival (Soft Delete)
 
 **Date:** 2026-01-17  

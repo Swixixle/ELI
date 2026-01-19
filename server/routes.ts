@@ -536,6 +536,10 @@ export async function registerRoutes(
       const activeTarget = await storage.getActiveDecisionTarget(req.params.id);
 
       // Constitutional gate check (AXIOM A9: No bypass permitted)
+      // AXIOM S3: S2 requires real constraint evidence, not placeholders
+      // Fail closed if no constraints provided
+      const clientConstraints = req.body?.constraints;
+      
       const constitutionalContext: ConstitutionalContext = {
         caseId: req.params.id,
         decisionTimeAnchor: caseData.decisionTime || null,
@@ -548,6 +552,14 @@ export async function registerRoutes(
           timestamp: doc.uploadedAt?.toISOString(),
           source: doc.type || "uploaded",
         })),
+        constraints: clientConstraints ? {
+          timePressure: clientConstraints.timePressure,
+          workload: clientConstraints.workload,
+          guidelineCoherence: clientConstraints.guidelineCoherence,
+          irreversibility: clientConstraints.irreversibility,
+          resourceFriction: clientConstraints.resourceFriction,
+          toolingAvailable: clientConstraints.toolingAvailable,
+        } : undefined,
       };
 
       const gateResult = passConstitutionalGate(constitutionalContext);
@@ -557,7 +569,7 @@ export async function registerRoutes(
         res.status(403).json({
           ...formatRefusalResponse(gateResult),
           evaluationBlocked: true,
-          hint: "Provide required evidence and decision time anchor to proceed",
+          hint: "Provide required evidence, decision time anchor, and constraint envelope to proceed",
         });
         return;
       }
@@ -570,9 +582,24 @@ export async function registerRoutes(
       };
 
       const result = evaluateCanonConditions(ctx);
+      
+      // AXIOM M5: Create enveloped measurement for any scores
+      const envelopedMeasurement = createEnvelopedMeasurement(
+        result.summary.conditionsMet / 5,
+        constitutionalContext,
+        gateResult.registry
+      );
+      
       res.json({
         ...result,
-        constitutional: { permitted: true, registry: { S1: gateResult.registry.S1.locked, S2: gateResult.registry.S2.locked } },
+        constitutional: { 
+          permitted: true, 
+          registry: { 
+            S1: gateResult.registry.S1.locked, 
+            S2: gateResult.registry.S2.locked 
+          } 
+        },
+        measurement: envelopedMeasurement,
       });
     } catch (error) {
       console.error("Error evaluating case:", error);
@@ -616,7 +643,9 @@ export async function registerRoutes(
       };
 
       // Constitutional gate check (AXIOM A9: No bypass permitted)
-      // For determinations, we enforce the gate strictly
+      // AXIOM S3: S2 requires real constraint evidence, not placeholders
+      const clientConstraints = req.body?.constraints;
+      
       const constitutionalContext: ConstitutionalContext = {
         caseId: req.params.id,
         decisionTimeAnchor: caseData.decisionTime || null,
@@ -629,6 +658,14 @@ export async function registerRoutes(
           timestamp: doc.uploadedAt?.toISOString(),
           source: doc.type || "uploaded",
         })),
+        constraints: clientConstraints ? {
+          timePressure: clientConstraints.timePressure,
+          workload: clientConstraints.workload,
+          guidelineCoherence: clientConstraints.guidelineCoherence,
+          irreversibility: clientConstraints.irreversibility,
+          resourceFriction: clientConstraints.resourceFriction,
+          toolingAvailable: clientConstraints.toolingAvailable,
+        } : undefined,
       };
 
       const gateResult = passConstitutionalGate(constitutionalContext);
@@ -639,7 +676,7 @@ export async function registerRoutes(
         res.status(403).json({
           ...formatRefusalResponse(gateResult),
           determinationBlocked: true,
-          hint: "Provide required evidence and decision time anchor to create a determination",
+          hint: "Provide required evidence, decision time anchor, and constraint envelope to create a determination",
         });
         return;
       }

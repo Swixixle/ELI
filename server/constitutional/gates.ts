@@ -49,6 +49,19 @@ import {
 
 import { createHash } from "crypto";
 
+/**
+ * Constraint Envelope fields (Section 2.2 of SRE)
+ * S2 — Constraint Envelope: Time pressure, resource limits, guideline coherence, tooling, workload, irreversibility
+ */
+export interface ConstraintEnvelope {
+  timePressure?: "high" | "moderate" | "low" | "unknown";
+  workload?: "heavy" | "normal" | "light" | "unknown";
+  resourceFriction?: string[];
+  guidelineCoherence?: "clear" | "ambiguous" | "conflicting" | "absent";
+  irreversibility?: "high" | "moderate" | "low";
+  toolingAvailable?: string[];
+}
+
 export interface ConstitutionalContext {
   caseId: string;
   decisionTimeAnchor: Date | null;
@@ -61,6 +74,7 @@ export interface ConstitutionalContext {
     timestamp?: string;
     source?: string;
   }>;
+  constraints?: ConstraintEnvelope;
 }
 
 export interface ConstitutionalGateResult {
@@ -121,6 +135,88 @@ function toStratumEvidence(
 }
 
 /**
+ * Check if a constraint value is a placeholder (inadmissible for S2 locking)
+ * Per AXIOM S3: Constraint evidence must be genuine, not placeholders
+ */
+function isPlaceholderValue(value: string | undefined): boolean {
+  if (!value) return true;
+  const placeholders = ["unknown", "unspecified", "n/a", "na", "none", ""];
+  return placeholders.includes(value.toLowerCase().trim());
+}
+
+/**
+ * Convert constraint envelope to S2 evidence
+ * Per Section 2.2: S2 = Constraint Envelope (time pressure, workload, resource limits, etc.)
+ * Per AXIOM S3: Placeholder values are inadmissible for S2 locking
+ */
+function toConstraintEvidence(
+  constraints: ConstraintEnvelope | undefined,
+  dta: Date | null
+): StratumEvidence[] {
+  if (!constraints) {
+    return [];
+  }
+  
+  const evidence: StratumEvidence[] = [];
+  
+  if (constraints.timePressure && !isPlaceholderValue(constraints.timePressure)) {
+    evidence.push({
+      id: "constraint-time-pressure",
+      stratum_id: "S2",
+      content_hash: createHash("sha256").update(`time_pressure:${constraints.timePressure}`).digest("hex"),
+      timestamp: dta,
+    });
+  }
+  
+  if (constraints.workload && !isPlaceholderValue(constraints.workload)) {
+    evidence.push({
+      id: "constraint-workload",
+      stratum_id: "S2",
+      content_hash: createHash("sha256").update(`workload:${constraints.workload}`).digest("hex"),
+      timestamp: dta,
+    });
+  }
+  
+  if (constraints.guidelineCoherence && !isPlaceholderValue(constraints.guidelineCoherence)) {
+    evidence.push({
+      id: "constraint-guideline-coherence",
+      stratum_id: "S2",
+      content_hash: createHash("sha256").update(`guideline_coherence:${constraints.guidelineCoherence}`).digest("hex"),
+      timestamp: dta,
+    });
+  }
+  
+  if (constraints.irreversibility && !isPlaceholderValue(constraints.irreversibility)) {
+    evidence.push({
+      id: "constraint-irreversibility",
+      stratum_id: "S2",
+      content_hash: createHash("sha256").update(`irreversibility:${constraints.irreversibility}`).digest("hex"),
+      timestamp: dta,
+    });
+  }
+  
+  if (constraints.resourceFriction && constraints.resourceFriction.length > 0) {
+    evidence.push({
+      id: "constraint-resource-friction",
+      stratum_id: "S2",
+      content_hash: createHash("sha256").update(`resource_friction:${constraints.resourceFriction.join(",")}`).digest("hex"),
+      timestamp: dta,
+    });
+  }
+  
+  if (constraints.toolingAvailable && constraints.toolingAvailable.length > 0) {
+    evidence.push({
+      id: "constraint-tooling",
+      stratum_id: "S2",
+      content_hash: createHash("sha256").update(`tooling:${constraints.toolingAvailable.join(",")}`).digest("hex"),
+      timestamp: dta,
+    });
+  }
+  
+  return evidence;
+}
+
+/**
  * Main constitutional gate - all evaluative requests must pass through here
  * 
  * Per AXIOM A9: No route may bypass this gate.
@@ -130,21 +226,43 @@ export function passConstitutionalGate(
 ): ConstitutionalGateResult {
   let registry = createEmptyRegistry();
   
-  // Phase 1: Build and lock S1 (Pre-Decision Context)
+  // Phase 1: Build and lock S1 (Decision Substrate)
+  // Per Section 2.2: S1 = What was knowable at the moment of decision
+  // DTA is an anchor WITHIN S1, not a separate stratum
+  
+  // AXIOM A2: DTA must be defined before any evaluation
+  if (!context.decisionTimeAnchor) {
+    return {
+      permitted: false,
+      registry,
+      refusalCode: REFUSAL_CODES.DTA_NOT_DEFINED,
+      refusalMessage: "Decision time anchor is required to establish S1 (Decision Substrate).",
+      refusalAxiom: "A2",
+    };
+  }
+  
   const s1Evidence = toStratumEvidence(context.evidence, "S1");
   if (s1Evidence.length === 0) {
     return {
       permitted: false,
       registry,
       refusalCode: REFUSAL_CODES.ENTITLEMENT_NOT_ESTABLISHED,
-      refusalMessage: "No admissible evidence provided. S1 stratum cannot be locked.",
-      refusalAxiom: "A1",
+      refusalMessage: "No admissible evidence provided. S1 (Decision Substrate) cannot be locked.",
+      refusalAxiom: "A0",
     };
   }
   
+  // Add DTA as part of S1 evidence (the anchor for the decision substrate)
+  const dtaEvidence: StratumEvidence = {
+    id: "decision-time-anchor",
+    stratum_id: "S1",
+    content_hash: createHash("sha256").update(context.decisionTimeAnchor.toISOString()).digest("hex"),
+    timestamp: context.decisionTimeAnchor,
+  };
+  
   const s1Request: LockRequest = {
     stratum_id: "S1",
-    evidence: s1Evidence,
+    evidence: [dtaEvidence, ...s1Evidence],
     authority: "gatekeeper_substrate",
   };
   
@@ -160,23 +278,18 @@ export function passConstitutionalGate(
   }
   registry = s1Lock.registry;
   
-  // Phase 2: Lock S2 (Decision Time Anchor)
-  if (!context.decisionTimeAnchor) {
+  // Phase 2: Lock S2 (Constraint Envelope)
+  // Per Section 2.2: S2 = Time pressure, resource limits, guideline coherence, tooling, workload, irreversibility
+  const s2Evidence = toConstraintEvidence(context.constraints, context.decisionTimeAnchor);
+  if (s2Evidence.length === 0) {
     return {
       permitted: false,
       registry,
-      refusalCode: REFUSAL_CODES.DTA_NOT_DEFINED,
-      refusalMessage: "Decision time anchor is required. S2 stratum cannot be locked.",
-      refusalAxiom: "A2",
+      refusalCode: REFUSAL_CODES.ENTITLEMENT_NOT_ESTABLISHED,
+      refusalMessage: "No constraint evidence provided. S2 (Constraint Envelope) cannot be locked. Specify time pressure, workload, or other operational constraints.",
+      refusalAxiom: "S3",
     };
   }
-  
-  const s2Evidence: StratumEvidence[] = [{
-    id: "dta",
-    stratum_id: "S2",
-    content_hash: createHash("sha256").update(context.decisionTimeAnchor.toISOString()).digest("hex"),
-    timestamp: context.decisionTimeAnchor,
-  }];
   
   const s2Request: LockRequest = {
     stratum_id: "S2",

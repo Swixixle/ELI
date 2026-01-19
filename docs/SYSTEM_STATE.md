@@ -3,7 +3,7 @@
 This document is a fact-only snapshot of enforced system behavior.  
 It contains no recommendations, priorities, or future intent.
 
-**Last Updated:** 2026-01-17  
+**Last Updated:** 2026-01-19  
 Updated automatically after each completed fix.
 
 ---
@@ -177,6 +177,35 @@ All case mutation events include:
 - P3: 3 prerequisites met / permitted
 - P4: 4 prerequisites met / permitted
 - P5: 5 prerequisites met / permitted
+
+---
+
+## Constitutional Gate Enforcement
+
+**Gate Function:** `passConstitutionalGate()` in `server/constitutional/gates.ts`
+
+**Endpoints Protected:**
+- `POST /api/cases/:id/evaluate`
+- `POST /api/cases/:id/determine`
+
+**S1 (Decision Substrate) Requirements:**
+- Decision Time Anchor (DTA) must be defined
+- At least one artifact/fact evidence must be present
+
+**S2 (Constraint Envelope) Requirements:**
+- At least one non-placeholder constraint must be provided
+- Placeholder values (`unknown`, `unspecified`, `n/a`, `none`) are inadmissible
+
+**Refusal Behavior:**
+- Returns 403 CONSTITUTIONAL_REFUSAL
+- No partial evaluation data is leaked
+- Includes refusal code, axiom citation, and hint
+
+**Envelope Enforcement (AXIOM M5):**
+- All permitted responses include MeasurementEnvelope
+- Envelope contains: measurement_id, measurement_type, prohibited_uses, authorized_uses
+
+**Tests:** 88 passing (69 constitutional + 13 gate + 6 HTTP)
 
 ---
 

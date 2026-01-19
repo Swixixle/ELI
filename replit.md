@@ -39,7 +39,7 @@ ELI Imaging enforces three-pillar constitutional governance. These are frozen do
 - Lock sequence S1→S2→S3 is irreversible (AXIOM S5)
 - Speech requires temporal, causal, and contextual entitlement
 
-**Total Constitutional Tests:** 69 passing
+**Total Constitutional Tests:** 88 passing (69 constitutional + 13 gate enforcement + 6 HTTP integration)
 
 ---
 
