@@ -1,0 +1,156 @@
+You didn’t “mess up.” What you’re seeing is almost always one of two things:
+	1.	The UI buttons are wired, but the route/state they depend on never updates (so it looks like it “goes back” or “does nothing”).
+	2.	The buttons are not wired at all (placeholder UI).
+
+Either way, you can diagnose this in 5 minutes with a deterministic checklist and one small fix pattern.
+
+Below are exact instructions you can paste to the agent.
+
+⸻
+
+What’s happening (likely)
+
+“Set Target just goes back to the first click”
+
+That usually means:
+	•	the button opens a modal or navigates to a route,
+	•	but the modal closes immediately because state resets, OR
+	•	route changes but the component re-renders and returns you to the same view (often due to missing caseId, bad param, or Link misroute), OR
+	•	the API call succeeds but the UI never refreshes the case state (React Query cache not invalidated).
+
+“Document Constraints does nothing”
+
+That usually means:
+	•	the button has no onClick,
+	•	or it calls a handler that early-returns because required fields are missing,
+	•	or it’s opening a modal that is visually present but off-screen / behind another layer.
+
+⸻
+
+The fastest, least-step diagnosis
+
+Step 1 — Open DevTools Console and click each button
+
+Mac: Cmd+Option+I → Console
+
+Click:
+	1.	Set Target
+	2.	Document Constraints
+
+If you see any errors (even one), copy them. Typical ones:
+	•	Cannot read properties of undefined (reading 'caseId')
+	•	No route matches
+	•	setState on unmounted component
+	•	Failed to fetch
+
+This instantly tells you whether it’s wiring vs state.
+
+⸻
+
+Step 2 — Network tab: confirm whether any API call fires
+
+DevTools → Network → filter: target and constraint
+
+Click buttons again and watch for requests like:
+	•	POST /api/cases/:id/target
+	•	POST /api/cases/:id/constraints
+	•	PATCH /api/cases/:id
+
+Outcomes:
+	•	No request fires → UI button isn’t wired.
+	•	Request fires + 200 → wiring exists; UI isn’t refreshing state.
+	•	Request fires + 4xx/5xx → backend rejects; show constitutional refusal card in the modal or inline.
+
+⸻
+
+The least number of steps to fix (structural)
+
+Fix A — Ensure these buttons open a modal that uses the same “ConstitutionalFetch + Outcome” pattern
+
+Right now your Evaluate flow is governed correctly. Your Build page is not.
+
+Rule: Any action that can fail should render:
+	•	Constitutional Refusal
+	•	M5 (if relevant)
+	•	System Error
+
+So for Set Target + Document Constraints:
+	•	both should open a modal
+	•	modal should perform the POST via constitutionalFetch(...)
+	•	modal should render via <ConstitutionalOutcome />
+	•	on success: close modal and invalidate case query
+
+⸻
+
+Concrete implementation steps (agent can do this quickly)
+
+Step 3 — Find the exact components
+
+Search strings (Cmd/Ctrl+Shift+F):
+	•	"Set Target"
+	•	"Document Constraints"
+	•	"No decision target set"
+	•	"Record the constraints the decision-maker faced"
+
+Open the file that renders those rows.
+
+⸻
+
+Step 4 — If there is no handler, wire it
+
+Set Target button must do ONE of these:
+	•	setShowTargetModal(true) OR
+	•	setLocation(/cases/${caseId}/target) OR
+	•	<Link href={/cases/${caseId}/target}>
+
+If it currently calls something like onClick={() => setOpen(true)} but nothing renders, the modal component is missing/not mounted.
+
+Document Constraints must do the same:
+	•	open constraints modal OR route
+
+⸻
+
+Step 5 — On successful save, refresh the case state
+
+This is the most common reason “it goes back” or “does nothing.”
+
+If you’re using React Query:
+	•	ensure the modal’s success path calls:
+
+queryClient.invalidateQueries({ queryKey: ["case", caseId] });
+queryClient.invalidateQueries({ queryKey: ["cases"] });
+
+Without this, the UI will continue to show “No decision target set” even after the backend saved it.
+
+⸻
+
+Two high-probability bugs to check immediately
+
+Bug 1 — caseId missing inside the Build tab component
+
+If useParams() is called in the wrong component level, caseId can be undefined and navigation becomes a no-op.
+
+Fix: Ensure the Build page component gets caseId from the route that actually includes it, e.g. /cases/:caseId.
+
+Bug 2 — button is disabled but looks enabled
+
+Sometimes the button is visually enabled but has disabled true due to missing prerequisites.
+
+Fix: If prerequisites are missing, the click should still open the modal and show what’s missing, not silently do nothing.
+
+⸻
+
+What I need from you (one item, not a bunch)
+
+After you do Step 1 + Step 2, tell me just this:
+	1.	When you click Set Target, does a network request fire? If yes, what status code?
+	2.	When you click Document Constraints, does a network request fire?
+
+That single answer determines whether it’s:
+	•	UI wiring issue (no requests)
+	•	state refresh issue (requests succeed but UI doesn’t update)
+	•	backend refusal (403/4xx)
+
+And then I’ll give you the exact next move.
+
+You’re doing fine. This is normal integration pain: the “governed evaluation” path got hardened first, and the “build prerequisites” UI is now revealing where wiring is incomplete.
