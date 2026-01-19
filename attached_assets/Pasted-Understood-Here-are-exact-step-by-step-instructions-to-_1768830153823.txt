@@ -1,0 +1,203 @@
+Understood. Here are exact, step-by-step instructions to diagnose and fix what you’re seeing, with no guessing and minimal code changes. Follow in order.
+
+⸻
+
+Goal
+
+Replace “unexpected error” with a first-class constitutional refusal display, and make “Run Evaluation” deterministic by surfacing the real backend response (403/refusal code/etc.).
+
+⸻
+
+Step 1 — Capture the real backend response (no code changes)
+
+1A) Open the browser DevTools
+	•	In the tab showing your app, press:
+	•	Mac: Cmd + Option + I
+	•	Windows: Ctrl + Shift + I
+
+1B) Go to Network
+	•	Click the Network tab
+	•	Check Preserve log
+	•	Filter by: evaluate
+
+1C) Click Run Evaluation
+	•	Click your Run Evaluation button once
+	•	In Network, click the request:
+	•	POST /api/cases/<caseId>/evaluate
+
+1D) Record these 5 fields
+
+In the request details, copy:
+	1.	Status code (e.g., 403 / 500)
+	2.	Response body JSON (Preview tab)
+	3.	Response headers (especially content-type)
+	4.	Request payload (what constraints were sent)
+	5.	Console errors (Console tab, copy top error)
+
+Do not skip this. This tells you whether the backend refused correctly or the server crashed.
+
+⸻
+
+Step 2 — Fix the client so refusals display correctly (small change)
+
+Right now your useQuery throws on any !res.ok, which forces your “Constitutional Refusal” error card, but it’s generic and may be masking structured refusal data.
+
+2A) Edit the queryFn in /cases/:caseId/terrain route component
+
+Replace this:
+
+const responseData = await res.json();
+
+if (!res.ok) {
+  throw new Error(responseData.message || responseData.error || "Evaluation failed");
+}
+
+return responseData;
+
+With this exact logic:
+
+const responseData = await res.json().catch(() => ({} as any));
+
+/**
+ * Treat constitutional refusals as DATA, not exceptions.
+ * Only throw for true server/client errors.
+ */
+if (!res.ok) {
+  // If the API returns a structured constitutional refusal, render it.
+  if (res.status === 403 && (responseData.error || responseData.code || responseData.governingAxiom)) {
+    return responseData;
+  }
+
+  // Otherwise, this is a real error (500, network, malformed JSON, etc.)
+  throw new Error(responseData.message || responseData.error || `Request failed (${res.status})`);
+}
+
+return responseData;
+
+This one change ensures:
+	•	403 refusals get returned as data
+	•	only genuine errors throw
+
+⸻
+
+Step 3 — Render refusal payloads explicitly (UI fix)
+
+Right now, if the server returns 403 with refusal JSON, your component likely hits the “missing envelope” branch and shows M5 violation, which may be incorrect.
+
+3A) Expand EvaluationResponse interface
+
+Add optional refusal fields:
+
+interface EvaluationResponse {
+  measurement?: {
+    value: number;
+    envelope: MeasurementEnvelopeInput;
+  };
+  summary?: SanitizedSummary;
+
+  // Refusal fields
+  error?: string;
+  code?: string;
+  governingAxiom?: string;
+  failed_gate?: string;
+  required_inputs?: string[];
+  message?: string;
+}
+
+3B) Add a refusal render block BEFORE the M5 block
+
+Insert this before:
+
+if (!data?.measurement?.envelope || !data?.summary) { ... }
+
+Add:
+
+// If backend returned a constitutional refusal, render it explicitly.
+if (data?.error === "CONSTITUTIONAL_REFUSAL" || data?.code || data?.governingAxiom) {
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <Link href="/">
+        <Button variant="ghost" className="mb-4">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+      </Link>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <ShieldX className="h-5 w-5" />
+            Constitutional Refusal
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="space-y-2">
+          <p className="text-muted-foreground">
+            {data.message || "Evaluation refused by constitutional gate."}
+          </p>
+
+          <div className="text-sm">
+            {data.code && <div><strong>Code:</strong> {data.code}</div>}
+            {data.governingAxiom && <div><strong>Axiom:</strong> {data.governingAxiom}</div>}
+            {data.failed_gate && <div><strong>Failed Gate:</strong> {data.failed_gate}</div>}
+          </div>
+
+          {Array.isArray(data.required_inputs) && data.required_inputs.length > 0 && (
+            <div className="text-sm">
+              <strong>Required inputs:</strong>
+              <ul className="list-disc list-inside">
+                {data.required_inputs.map((x, i) => <li key={i}>{x}</li>)}
+              </ul>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+Now you won’t mislabel a refusal as “M5 missing envelope.”
+
+⸻
+
+Step 4 — Make “Run Evaluation” deterministic (stop hidden mismatch)
+
+Your terrain route is calling /evaluate with hardcoded constraints. That’s fine for a demo, but your “Cases” UI likely uses different constraints or none. That’s why you see “Ready for evaluation” but then fail.
+
+4A) Ensure the same constraints are sent from the case UI and terrain route
+
+Wherever “Run Evaluation” is triggered in the case page, confirm it sends:
+
+{
+  "constraints": {
+    "timePressure": "...",
+    "workload": "...",
+    "guidelineCoherence": "...",
+    "irreversibility": "..."
+  }
+}
+
+If the case UI sends {} or missing fields, S2 will refuse.
+
+Action: search in codebase for Run Evaluation button handler and ensure the body includes constraints.
+
+⸻
+
+Step 5 — Confirm it works (two tests)
+
+5A) Refusal test
+
+Send no constraints → should show Constitutional Refusal card with code/axiom, not “unexpected error.”
+
+5B) Permitted test
+
+Send valid constraints + admissible evidence → should render terrain sheet.
+
+⸻
+
+If you want the fastest confirmation
+
+Do Step 1 and tell me the status code + JSON response body from the Network tab.
+But you can proceed without me using the steps above.
+
+These instructions will fix the UI so you see the real truth of the system instead of “unexpected error.”

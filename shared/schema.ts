@@ -183,6 +183,37 @@ export const insertCasePrintoutSchema = createInsertSchema(casePrintouts).omit({
   issuedAt: true,
 });
 
+// Envelope Acknowledgments - EFX Protocol v0.1
+// Prevents silent reuse by requiring explicit downstream binding
+export const INTENDED_USES = [
+  "procedural_review",
+  "gap_identification",
+  "constraint_visualization",
+  "audit_trail_generation",
+  "system_learning_only",
+] as const;
+export type IntendedUse = typeof INTENDED_USES[number];
+
+export const envelopeAcknowledgments = pgTable("envelope_acknowledgments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  responseId: varchar("response_id").notNull(),
+  measurementId: varchar("measurement_id").notNull(),
+  caseId: varchar("case_id").notNull().references(() => cases.id),
+  acknowledgedEnvelopeHash: varchar("acknowledged_envelope_hash", { length: 128 }).notNull(),
+  intendedUse: varchar("intended_use", { length: 50 }).notNull(),
+  noProhibitedUseAttestation: boolean("no_prohibited_use_attestation").notNull().default(true),
+  acknowledgerAgentId: varchar("acknowledger_agent_id", { length: 100 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertEnvelopeAcknowledgmentSchema = createInsertSchema(envelopeAcknowledgments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type EnvelopeAcknowledgment = typeof envelopeAcknowledgments.$inferSelect;
+export type InsertEnvelopeAcknowledgment = z.infer<typeof insertEnvelopeAcknowledgmentSchema>;
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Case = typeof cases.$inferSelect;

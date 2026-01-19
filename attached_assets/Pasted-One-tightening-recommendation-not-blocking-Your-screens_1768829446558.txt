@@ -1,0 +1,69 @@
+One tightening recommendation (not blocking)
+
+Your screenshot description says “70% / 80%.” That is fine as an axis value, but ensure the UI labels it as axis value (constraint state), not “score” or “readiness.” Avoid language like “70% complete” unless you explicitly mean information completeness axis, not outcome.
+
+If you want to harden this further, extend METRIC_PATTERNS to also scan any UI-rendered strings that originate from summary/status. Right now it scans summary.status only, which is good, but future drift often reintroduces free text elsewhere.
+
+⸻
+
+EFX Protocol v0.1 — next step: ACKNOWLEDGMENT (make it real)
+
+You are correct: you already have REQUEST / PERMITTED / REFUSAL semantics. The missing piece is explicit downstream binding.
+
+Minimal ACK design (v0.1)
+
+What it does
+	•	Prevents silent reuse/laundering by forcing the consuming agent to state intended use
+	•	Creates an audit artifact that downstream transforms are allowed only after ACK
+
+Add one endpoint (server)
+
+POST /api/acks
+
+Request body
+	•	response_id
+	•	acknowledged_envelope_hash
+	•	intended_use (must be in envelope.authorized_uses)
+	•	no_prohibited_use_attestation: true
+
+Server behavior
+	•	verify envelope_hash matches
+	•	verify intended_use ∈ authorized_uses
+	•	store ACK linked to caseId + measurementId
+	•	return ACK_ACCEPTED with ack_id
+
+Add one client rule (hard)
+
+No downstream agent action that transforms/visualizes/compares measurements is allowed unless:
+	•	ACK exists for that measurement_id + intended_use
+
+This is your “protocol seatbelt.”
+
+⸻
+
+Target environment
+
+Defaulting to ELI/adverse-event review is correct. It’s where envelope governance actually matters and where AI↔AI needs constraint-bearing messages rather than prose.
+
+⸻
+
+What to show “others” without losing IP
+
+At this point, you can safely share:
+	•	shared/visualSpec.ts (this is schema-level, not leverage)
+	•	the EFX protocol spec (message types + invariants)
+	•	screenshots of refusal rendering and permitted rendering
+	•	the “ratification basis” guarantees
+
+Do not share:
+	•	gate orchestration details beyond invariants
+	•	internal heuristic derivations (keep those coarse like you did)
+	•	full evaluation logic
+
+⸻
+
+If you want one concrete next move, tell the agent:
+
+Implement ACKNOWLEDGMENT endpoint + storage, then update /cases/:caseId/terrain to require an ACK before rendering (otherwise show “ACK required to proceed” refusal card). Add HTTP integration tests for: (1) cannot render without ACK, (2) ACK rejected if intended_use not authorized, (3) render permitted after ACK.
+
+That single change turns EFX from a paper protocol into a live governed exchange.

@@ -1292,6 +1292,149 @@ export async function registerRoutes(
     }
   });
 
+  // === EFX PROTOCOL v0.1 - ENVELOPE ACKNOWLEDGMENT ROUTES ===
+
+  // Create envelope acknowledgment (binds downstream agent to intended use)
+  app.post("/api/acks", async (req, res) => {
+    try {
+      const { 
+        response_id, 
+        measurement_id, 
+        case_id,
+        acknowledged_envelope_hash, 
+        intended_use, 
+        no_prohibited_use_attestation,
+        acknowledger_agent_id
+      } = req.body;
+
+      // Validate required fields
+      if (!response_id || !measurement_id || !case_id || !acknowledged_envelope_hash || !intended_use) {
+        res.status(400).json({
+          error: "MISSING_REQUIRED_FIELDS",
+          required: ["response_id", "measurement_id", "case_id", "acknowledged_envelope_hash", "intended_use"]
+        });
+        return;
+      }
+
+      if (no_prohibited_use_attestation !== true) {
+        res.status(400).json({
+          error: "PROHIBITED_USE_ATTESTATION_REQUIRED",
+          message: "no_prohibited_use_attestation must be true"
+        });
+        return;
+      }
+
+      // Validate intended_use is in allowed list
+      const ALLOWED_USES = ["procedural_review", "gap_identification", "constraint_visualization", "audit_trail_generation", "system_learning_only"];
+      if (!ALLOWED_USES.includes(intended_use)) {
+        res.status(400).json({
+          error: "INVALID_INTENDED_USE",
+          allowed_uses: ALLOWED_USES,
+          provided: intended_use
+        });
+        return;
+      }
+
+      // Verify case exists
+      const caseData = await storage.getCase(case_id);
+      if (!caseData) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+
+      // Check if ACK already exists for this measurement + intended_use
+      const existingAck = await storage.getAcknowledgmentByMeasurement(measurement_id, intended_use);
+      if (existingAck) {
+        res.status(200).json({
+          status: "ACK_EXISTS",
+          ack_id: existingAck.id,
+          message: "Acknowledgment already exists for this measurement and intended use"
+        });
+        return;
+      }
+
+      // Create the acknowledgment
+      const ack = await storage.createEnvelopeAcknowledgment({
+        responseId: response_id,
+        measurementId: measurement_id,
+        caseId: case_id,
+        acknowledgedEnvelopeHash: acknowledged_envelope_hash,
+        intendedUse: intended_use,
+        noProhibitedUseAttestation: true,
+        acknowledgerAgentId: acknowledger_agent_id || null
+      });
+
+      res.status(201).json({
+        status: "ACK_ACCEPTED",
+        ack_id: ack.id,
+        response_id: ack.responseId,
+        measurement_id: ack.measurementId,
+        intended_use: ack.intendedUse,
+        created_at: ack.createdAt
+      });
+    } catch (error) {
+      console.error("Error creating envelope acknowledgment:", error);
+      res.status(500).json({ error: "Failed to create acknowledgment" });
+    }
+  });
+
+  // Get acknowledgments for a case
+  app.get("/api/cases/:id/acks", async (req, res) => {
+    try {
+      const caseId = req.params.id;
+      const caseData = await storage.getCase(caseId);
+      if (!caseData) {
+        res.status(404).json({ error: "Case not found" });
+        return;
+      }
+
+      const acks = await storage.getAcknowledgmentsForCase(caseId);
+      res.json(acks);
+    } catch (error) {
+      console.error("Error fetching acknowledgments:", error);
+      res.status(500).json({ error: "Failed to fetch acknowledgments" });
+    }
+  });
+
+  // Check if ACK exists for terrain visualization
+  app.get("/api/cases/:id/acks/check", async (req, res) => {
+    try {
+      const caseId = req.params.id;
+      const { measurement_id, intended_use } = req.query;
+
+      if (!measurement_id || !intended_use) {
+        res.status(400).json({
+          error: "MISSING_QUERY_PARAMS",
+          required: ["measurement_id", "intended_use"]
+        });
+        return;
+      }
+
+      const ack = await storage.getAcknowledgmentByMeasurement(
+        measurement_id as string,
+        intended_use as string
+      );
+
+      if (ack) {
+        res.json({
+          acknowledged: true,
+          ack_id: ack.id,
+          intended_use: ack.intendedUse,
+          created_at: ack.createdAt
+        });
+      } else {
+        res.json({
+          acknowledged: false,
+          required_intended_use: intended_use,
+          message: "ACK required before proceeding"
+        });
+      }
+    } catch (error) {
+      console.error("Error checking acknowledgment:", error);
+      res.status(500).json({ error: "Failed to check acknowledgment" });
+    }
+  });
+
   // === DOCUMENT ROUTES ===
 
   // Get all canon documents (DEPRECATED - use GET /api/cases/:id/documents)

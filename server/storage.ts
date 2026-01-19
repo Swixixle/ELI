@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, type Case, type InsertCase, type CaseEvent, type InsertCaseEvent, type DecisionTarget, type InsertDecisionTarget, type Determination, type InsertDetermination, type CasePrintout, type InsertCasePrintout, type ArchiveReasonCode, type DecisionContext, type InsertDecisionContext, type CaseOrigin, users, canonDocuments, canonChunks, cases, caseEvents, decisionTargets, determinations, casePrintouts, decisionContexts } from "@shared/schema";
+import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, type Case, type InsertCase, type CaseEvent, type InsertCaseEvent, type DecisionTarget, type InsertDecisionTarget, type Determination, type InsertDetermination, type CasePrintout, type InsertCasePrintout, type ArchiveReasonCode, type DecisionContext, type InsertDecisionContext, type CaseOrigin, type EnvelopeAcknowledgment, type InsertEnvelopeAcknowledgment, users, canonDocuments, canonChunks, cases, caseEvents, decisionTargets, determinations, casePrintouts, decisionContexts, envelopeAcknowledgments } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, or, sql, and, ne } from "drizzle-orm";
 
@@ -47,6 +47,11 @@ export interface IStorage {
   getCasePrintouts(caseId: string): Promise<CasePrintout[]>;
   getCasePrintout(id: string): Promise<CasePrintout | undefined>;
   getNextPrintoutNumber(caseId: string): Promise<number>;
+  
+  // EFX Protocol v0.1 - Envelope Acknowledgments
+  createEnvelopeAcknowledgment(ack: InsertEnvelopeAcknowledgment): Promise<EnvelopeAcknowledgment>;
+  getAcknowledgmentByMeasurement(measurementId: string, intendedUse: string): Promise<EnvelopeAcknowledgment | undefined>;
+  getAcknowledgmentsForCase(caseId: string): Promise<EnvelopeAcknowledgment[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -337,6 +342,27 @@ export class DatabaseStorage implements IStorage {
       .from(casePrintouts)
       .where(eq(casePrintouts.caseId, caseId));
     return (result?.maxNum ?? 0) + 1;
+  }
+
+  // EFX Protocol v0.1 - Envelope Acknowledgments
+  async createEnvelopeAcknowledgment(ack: InsertEnvelopeAcknowledgment): Promise<EnvelopeAcknowledgment> {
+    const [newAck] = await db.insert(envelopeAcknowledgments).values(ack).returning();
+    return newAck;
+  }
+
+  async getAcknowledgmentByMeasurement(measurementId: string, intendedUse: string): Promise<EnvelopeAcknowledgment | undefined> {
+    const [ack] = await db.select().from(envelopeAcknowledgments)
+      .where(and(
+        eq(envelopeAcknowledgments.measurementId, measurementId),
+        eq(envelopeAcknowledgments.intendedUse, intendedUse)
+      ));
+    return ack;
+  }
+
+  async getAcknowledgmentsForCase(caseId: string): Promise<EnvelopeAcknowledgment[]> {
+    return await db.select().from(envelopeAcknowledgments)
+      .where(eq(envelopeAcknowledgments.caseId, caseId))
+      .orderBy(desc(envelopeAcknowledgments.createdAt));
   }
 }
 
