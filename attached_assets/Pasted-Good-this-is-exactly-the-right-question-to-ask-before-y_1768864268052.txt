@@ -1,0 +1,176 @@
+Good — this is exactly the right question to ask before you leak anything.
+
+Below are exact, copy-paste instructions you can give the agent so I can review your app safely, without exposing your IP or internals.
+
+This is written for a first-timer and optimized for least steps.
+
+⸻
+
+WHAT YOU ASK THE AGENT (COPY / PASTE)
+
+IP-SAFE REVIEW REQUEST
+
+I need you to prepare a redacted, review-safe snapshot of the app so another architect can evaluate correctness and viability without access to proprietary logic.
+
+Please do NOT include:
+	•	full repositories
+	•	enforcement logic
+	•	thresholds or weights
+	•	heuristics implementations
+	•	database schemas
+	•	private environment variables
+
+Only provide the artifacts listed below.
+
+⸻
+
+REQUIRED ARTIFACTS (ONLY THESE)
+
+1️⃣ Public Interface Contract (SAFE)
+
+Provide only the API contract used by the frontend.
+	•	File: shared/contracts/shield_v0_1.ts (or equivalent)
+	•	Include:
+	•	request shape
+	•	permitted response shape
+	•	refusal response shape
+	•	Do not include function bodies.
+
+✅ This is safe. Contracts are not your secret sauce.
+
+⸻
+
+2️⃣ Example Responses (Sanitized)
+
+Provide 3 example JSON payloads, manually written or logged:
+	1.	Permitted (Green or Yellow)
+	2.	Constrained (Orange)
+	3.	Refused (403)
+
+Rules:
+	•	Replace real IDs with placeholders
+	•	No internal hashes
+	•	No raw scores beyond what the UI already shows
+
+✅ This shows behavior without internals.
+
+⸻
+
+3️⃣ UI Screenshots or JSX Skeletons
+
+Provide either:
+	•	screenshots of the running UI OR
+	•	JSX/TSX skeletons without logic
+
+Example acceptable:
+
+<IntegrityBar state="orange" />
+<TerrainSheet data={...} />
+
+Example NOT acceptable:
+
+if (decisionSpaceCompression > 0.72) { ... }
+
+✅ Visual structure is safe. Logic is not.
+
+⸻
+
+4️⃣ One-Page Architecture Diagram (Text is fine)
+
+Provide a box-and-arrow description, not code.
+
+Example:
+
+User Input
+  ↓
+Analyze Endpoint
+  ↓
+Gate (S1/S2)
+  ↓
+Pattern Detection
+  ↓
+Envelope + Terrain
+  ↓
+Integrity Bar + UI
+
+No internal branching. No algorithms.
+
+⸻
+
+5️⃣ Feature List + Non-Goals
+
+Provide:
+	•	Bullet list of implemented features
+	•	Explicit non-goals (what is NOT built)
+
+This prevents scope hallucination.
+
+⸻
+
+WHAT THE AGENT MUST NOT DO
+
+Tell the agent explicitly:
+
+Do not summarize, improve, refactor, or “optimize.”
+Do not claim ratification or completeness.
+Do not introduce new features.
+Do not expose proprietary internals.
+
+⸻
+
+WHY THIS IS SAFE
+
+You are exposing:
+	•	interfaces
+	•	outputs
+	•	behavior
+	•	UX affordances
+
+You are NOT exposing:
+	•	how decisions are made
+	•	how thresholds work
+	•	how enforcement is implemented
+
+That is exactly how companies do external architectural review.
+
+⸻
+
+WHAT I WILL DO WITH IT
+
+When you paste the artifacts here, I will:
+	•	verify architectural coherence
+	•	check for IP-leak risks
+	•	identify missing blockers
+	•	confirm whether this is deployable
+	•	flag anything that could blow up later
+
+I will not:
+	•	rewrite your system
+	•	claim ownership
+	•	ask for more internals unless necessary
+
+⸻
+
+QUICK REASSURANCE (IMPORTANT)
+
+You are doing very well for a first-timer.
+
+The confusion and frustration you’re feeling is normal when:
+	•	you cross from “idea” to “system”
+	•	you start enforcing constraints instead of hacking UI
+	•	you deal with real governance logic
+
+That’s not incompetence.
+That’s the hard part.
+
+⸻
+
+Your next move
+
+Paste the copy/paste block above to the agent.
+
+When they return the artifacts, paste them here and say:
+
+“Review-safe snapshot attached.”
+
+We’ll take it from there.
