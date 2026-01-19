@@ -1,0 +1,75 @@
+Good — this is finally audit-shaped. I’m going to classify what you have now, and what is still not yet proven.
+
+What looks constitutionally aligned
+
+PASS (provisionally)
+	•	Single gate entry point: “All evaluative routes call passConstitutionalGate() before any evaluation logic.” That is the correct structural posture.
+	•	Hard stop on refusal: explicit return on permitted === false (403 + halt). That is non-bypassable at the route level if true in code.
+	•	Fail-closed posture: you report catch blocks returning fail-closed responses (not “best effort”). That is directionally correct.
+	•	Test coverage breadth: refusal paths + envelope stripping + lock integrity + determinism tests are the right buckets.
+
+Where I see drift / ambiguity
+
+SOFT DRIFT (fixable, but must be corrected or proven harmless)
+	1.	S2 definition drift
+In the trace, you describe “Phase 2: Lock S2 (Decision Time Anchor)” and “If DTA null → refuse.”
+In the constitution, DTA is not a stratum; it’s an anchor used by S1/S2. S2 is the Constraint Envelope.
+This is either:
+	•	just naming/sloppy description in the report (fine), or
+	•	a real implementation drift (not fine).
+Action: confirm S2 contains constraints (workload, resource limits, guideline coherence, etc.) and is not just “DTA present.”
+	2.	Axiom mapping looks off in places
+Example: “If no evidence → REFUSE (A1).” A1 is “Entitlement precedes truth,” not “no evidence.” That should typically be A0/A4 depending on implementation.
+This may be harmless labeling, but mislabeling becomes governance debt under scrutiny.
+Action: ensure refusal reasons cite the correct governing axiom(s), or treat axiom references as internal metadata rather than “legal citations.”
+	3.	Outcome/explainer surfaces exist in codebase
+You mention governor.ts, interpreter.ts, explainer.ts. Those names are not automatically wrong, but they are high-risk for narrative leakage.
+Action: confirm these modules are either:
+	•	non-authoritative exhaust (S4) with strict firewalling, or
+	•	entirely removed from authoritative paths.
+	4.	Envelope enforcement location
+You say “Envelope compliance checked at measurement creation time.” The constitution requires no interface/export/API may expose measurement without envelope.
+Checking at creation time is good, but you also need output-time enforcement.
+Action: confirm responses cannot return a score unless envelope is present and attached.
+
+HARD GAP (not a “problem,” but blocks ratification)
+
+You did not actually provide the verbatim constitutional documents in your message here, only line counts and a claim.
+
+Under your own rules, you cannot “audit compliance” without verifying the constitution text is:
+	•	verbatim,
+	•	frozen,
+	•	unmodified.
+
+Action required: obtain one of the following (any is acceptable):
+	•	Paste full contents of each .md, or
+	•	Provide content hashes (e.g., sha256) plus the source text you ratified so we can compare, or
+	•	Show git diff/commit proving no modification after paste.
+
+Remaining gap acknowledged by agent
+	•	“HTTP-level integration tests not yet written.”
+That is a legitimate gap because route-level bypass is often where drift sneaks in.
+Action: add endpoint-level tests for /evaluate and /determine (and any other evaluation-adjacent routes) verifying:
+	•	refusal halts execution,
+	•	no partial payload leaks,
+	•	envelope is always present on permitted outputs.
+
+What you should do right now
+
+Tell the agent: do NOT document the refusal payload contract yet
+
+Documentation is externalization. Externalization requires ratification.
+
+Ask for three concrete artifacts
+	1.	The exact contents of:
+	•	domain/parrot_box/axioms.md
+	•	domain/sre_stratum_locking/sre_stratum_locking.md
+	•	domain/eli_measurement_envelope/eli_measurement_envelope.md
+	2.	The implementation of passConstitutionalGate() (the actual code).
+	3.	An HTTP integration test plan or PR that hits the real endpoints and asserts halt + non-leak.
+
+Classification (Thinking Contract)
+
+PARK — not because the build is bad, but because ratification is not yet possible without (a) verbatim constitution verification and (b) HTTP-level enforcement proof.
+
+When you paste the three documents (or their hashes + originals) and the passConstitutionalGate() code, I will reclassify decisively.
