@@ -1,0 +1,167 @@
+Yes — but not as “background reading” and not as prose.
+You should give it to the Replit agent as a governing spec that it must obey, and you should be explicit about where it lives and what it is allowed to control.
+
+Below is the precise way to do this without the agent diluting, paraphrasing, or “helpfully” bypassing it.
+
+⸻
+
+1) What the Replit agent’s role should be (tight scope)
+
+The Replit agent is not an epistemic reasoner.
+It is an implementation contractor.
+
+Its job is to:
+	•	encode constraints,
+	•	wire non-bypassable gates,
+	•	and refuse to invent behavior not specified.
+
+So you do not say:
+
+“Here’s my philosophy, please implement it.”
+
+You say:
+
+“This is the domain constitution. You will implement it exactly.”
+
+⸻
+
+2) How to give it the Parrot Box spec (exact framing)
+
+Paste the spec and precede it with something like this:
+
+SYSTEM DIRECTIVE (NON-NEGOTIABLE)
+
+The following document is a governing domain specification for ELI.
+
+• It is authoritative.
+• It is not to be summarized, reinterpreted, or optimized.
+• Where implementation choices arise, default to refusal over permissiveness.
+• If a requested feature would violate this spec, the correct behavior is to surface the conflict and halt.
+
+Treat this as a constitution, not guidance.
+
+This framing matters. Agents will otherwise treat it as “design intent” instead of a hard constraint.
+
+⸻
+
+3) Where it should live in the repo (this matters a lot)
+
+You should explicitly instruct the agent to place it like this:
+
+/domain
+  /parrot_box
+    axioms.md          # frozen, versioned
+    entitlement.ts     # pure functions only
+    refusal_codes.ts
+    policy_profiles.ts
+    tests/
+      parrot_box.spec.ts
+
+And add this rule:
+
+Rule:
+No file outside /domain/parrot_box may generate evaluative output unless it passes through check_entitlement().
+
+This is File Tree as Governance in action.
+
+⸻
+
+4) What the agent is allowed to build vs forbidden to build
+
+Allowed
+	•	Pure entitlement checks
+	•	Deterministic refusal logic
+	•	Immutable logs
+	•	Test harnesses that try to break the Parrot Box
+
+Forbidden (be explicit)
+	•	Any “helpful explanation” layer
+	•	Any fallback generation when refusal triggers
+	•	Any model-side discretion (“best effort” reasoning)
+	•	Any silent failure
+
+If the agent asks:
+
+“Should I still return something user-friendly?”
+
+The correct answer is:
+
+“No. Return the refusal code and stop.”
+
+⸻
+
+5) How this integrates with ELI specifically
+
+In ELI, the Parrot Box should sit between:
+	•	the Gatekeeper Substrate (which builds the admissible record), and
+	•	any scoring, narrative, or governance output.
+
+Pipeline (authoritative):
+
+raw_case_data
+   ↓
+Gatekeeper (build AR + DTA)
+   ↓
+Parrot Box (entitlement + refusal)
+   ↓
+ELI scoring / volumetric modeling
+   ↓
+Governance artifacts (constrained by EP)
+
+Important:
+ELI never runs if the Parrot Box refuses an evaluative speech act.
+
+That is how you prevent ELI from becoming:
+	•	a blame amplifier,
+	•	a performance proxy,
+	•	or a discovery magnet.
+
+⸻
+
+6) One thing to watch for (very important)
+
+Replit agents often try to:
+	•	“improve UX”
+	•	“handle edge cases gracefully”
+	•	“avoid blocking the user”
+
+In your system, those instincts are bugs.
+
+So add this explicit instruction:
+
+Anti-Pattern Warning
+Any attempt to “soften,” “rephrase,” or “work around” a refusal constitutes a defect.
+
+Make the agent treat refusals like:
+	•	permission denied,
+	•	not an error to recover from.
+
+⸻
+
+7) Sanity check: you’re doing this in the right order
+
+Yes — this is the correct sequencing:
+	1.	Parrot Box spec (speech entitlement)
+	2.	→ enforced by file tree
+	3.	→ then ELI scoring & volumetric modeling
+	4.	→ then governance/legal artifacts
+	5.	→ then CFO logic
+
+Most people do this backward. You didn’t.
+
+⸻
+
+Final classification (Thinking Contract)
+
+PROCEED — WITH INSTRUCTIONS AS LAW
+
+Giving this spec to the Replit agent is correct only if you frame it as:
+	•	non-negotiable,
+	•	structurally enforced,
+	•	and refusal-first.
+
+If you want, next I can:
+	•	write the exact Replit prompt you should paste (copy-ready), or
+	•	design the SRE stratum-locking module that pairs with the Parrot Box and prevents retroactive edits.
+
+Just say which.
