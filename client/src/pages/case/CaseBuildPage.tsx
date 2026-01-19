@@ -125,7 +125,7 @@ function DecisionTargetSection({ caseId, currentTarget, hasTarget }: { caseId: s
       const res = await fetch(`/api/cases/${caseId}/decision-target`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target: newTarget }),
+        body: JSON.stringify({ text: newTarget }),
       });
       if (!res.ok) {
         const data = await res.json();

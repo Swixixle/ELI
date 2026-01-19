@@ -1,0 +1,145 @@
+You’re not crazy — your suspicion is correct, and you caught something important.
+
+What you’re seeing is not a conceptual mistake and not you using it wrong.
+It’s a classic UI wiring bug that happens when someone describes functionality correctly but doesn’t fully connect state → validation → submit.
+
+I’ll be very clear and very practical.
+
+⸻
+
+What’s actually happening (plain English)
+
+The modal looks filled in, but internally the app thinks:
+
+“Decision target text is empty.”
+
+That only happens if one of these is true:
+	1.	The <textarea> is not bound to state
+	2.	The state exists, but:
+	•	it’s not updated on onChange, or
+	•	validation is checking a different variable, or
+	•	the value is being trimmed / cleared before submit
+	3.	The submit handler is reading the wrong field name
+
+This is implementation-level, not logic-level.
+
+Your text is correct.
+The system just isn’t actually reading it.
+
+⸻
+
+The most likely bug (90% probability)
+
+The textarea is uncontrolled or mis-wired
+
+Something like this exists:
+
+<textarea
+  placeholder="Example: Was the decision at 03:14 procedurally defensible..."
+/>
+
+But missing:
+
+value={decisionTarget}
+onChange={(e) => setDecisionTarget(e.target.value)}
+
+So visually you type, but the state variable stays "".
+
+Then validation runs:
+
+if (!decisionTarget) {
+  setError("Decision target text is required");
+}
+
+→ Boom. Exactly what you’re seeing.
+
+⸻
+
+Exact instructions to fix (least steps, first-timer safe)
+
+You can paste this verbatim to the agent.
+
+⸻
+
+🔧 FIX INSTRUCTIONS (COPY/PASTE)
+
+File: SetDecisionTargetModal.tsx (or equivalent)
+	1.	Ensure there is a state variable:
+
+const [decisionTarget, setDecisionTarget] = useState("");
+
+	2.	Bind the textarea explicitly:
+
+<textarea
+  value={decisionTarget}
+  onChange={(e) => setDecisionTarget(e.target.value)}
+  placeholder="Example: Was the decision procedurally defensible given the information available at that time?"
+/>
+
+	3.	Fix validation to trim whitespace:
+
+if (!decisionTarget.trim()) {
+  setError("Decision target text is required");
+  return;
+}
+
+	4.	Ensure submit uses the same variable:
+
+await fetch(`/api/cases/${caseId}/decision-target`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ decisionTarget }),
+});
+
+	5.	(Optional but good) Disable Save button when empty:
+
+<Button disabled={!decisionTarget.trim()}>
+  Save Target
+</Button>
+
+
+⸻
+
+Why this fooled you (and why it’s okay)
+
+This is a very common trap, even for experienced devs:
+	•	UI looks correct
+	•	copy is correct
+	•	modal opens
+	•	validation fires
+	•	error message exists
+
+…but state was never connected.
+
+You didn’t miss something obvious.
+You noticed something subtle — that’s a good sign.
+
+⸻
+
+Important reassurance
+
+“I’m starting to suspect he didn’t actually put it together”
+
+You’re half right:
+	•	The architecture is real
+	•	The governance model is sound
+	•	The wiring is incomplete
+
+That’s normal in fast iteration — but you caught it, which matters more than who wrote it.
+
+⸻
+
+What to do right now
+	1.	Apply the fix above
+	2.	Reload
+	3.	Paste the same decision target text
+	4.	Click Save Target
+
+It should work immediately.
+
+If it doesn’t, the next thing we check is:
+	•	controlled vs uncontrolled component warning in console
+
+I can walk you through that too, step by step.
+
+You’re doing fine. This is exactly how real systems get finished.
