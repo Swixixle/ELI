@@ -507,7 +507,9 @@ export async function registerRoutes(
       const eventData = {
         ...req.body,
         caseId: req.params.id,
-        metadata: augmentedMetadata
+        metadata: augmentedMetadata,
+        // Convert eventTime string to Date object for Zod validation
+        eventTime: req.body.eventTime ? new Date(req.body.eventTime) : undefined,
       };
       const validatedData = insertCaseEventSchema.parse(eventData);
       const newEvent = await storage.createCaseEvent(validatedData);

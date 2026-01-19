@@ -426,18 +426,33 @@ function ConstraintsSection({ caseId, hasConstraints }: { caseId: string; hasCon
 
   const saveConstraints = useMutation({
     mutationFn: async () => {
+      const eventBody = {
+        eventType: "constraints_documented",
+        eventTime: new Date().toISOString(),
+        description: `Constraints documented: Time pressure (${constraints.timePressure}), Workload (${constraints.workload}), Guidelines (${constraints.guidelineCoherence}), Irreversibility (${constraints.irreversibility})${constraints.notes ? `. Notes: ${constraints.notes}` : ""}`,
+        metadata: {
+          timePressure: constraints.timePressure,
+          workload: constraints.workload,
+          guidelineCoherence: constraints.guidelineCoherence,
+          irreversibility: constraints.irreversibility,
+          notes: constraints.notes || null,
+        },
+      };
+      console.log("[constraints] Sending:", eventBody);
+      
       const res = await fetch(`/api/cases/${caseId}/events`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "constraints_documented",
-          description: `Constraints documented: Time pressure (${constraints.timePressure}), Workload (${constraints.workload}), Guidelines (${constraints.guidelineCoherence}), Irreversibility (${constraints.irreversibility})${constraints.notes ? `. Notes: ${constraints.notes}` : ""}`,
-          timestamp: new Date().toISOString(),
-        }),
+        body: JSON.stringify(eventBody),
       });
+      
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to save constraints");
+        console.error("[constraints] Server error:", data);
+        const errorMsg = data.details 
+          ? data.details.map((d: any) => `${d.path.join('.')}: ${d.message}`).join(', ')
+          : data.error || "Failed to save constraints";
+        throw new Error(errorMsg);
       }
       return res.json();
     },
