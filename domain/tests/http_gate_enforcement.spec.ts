@@ -265,4 +265,128 @@ describe("HTTP Gate Enforcement", () => {
       expect(data.conditionsMet).toBeUndefined();
     });
   });
+
+  describe("E_contextual_constraints prerequisite (constraints_documented event)", () => {
+    let constraintTestCaseId: string;
+
+    beforeAll(async () => {
+      const caseRes = await fetch(`${API_BASE}/api/cases`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Constraint Event Test Case",
+          description: "Tests that constraints_documented event satisfies E_contextual_constraints",
+        }),
+      });
+      const caseData = await caseRes.json();
+      constraintTestCaseId = caseData.id;
+
+      // Set decision time far in future so evidence is temporally valid
+      await fetch(`${API_BASE}/api/cases/${constraintTestCaseId}/decision-time`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ timestamp: "2030-01-01T12:00:00Z" }),
+      });
+
+      await fetch(`${API_BASE}/api/cases/${constraintTestCaseId}/decision-target`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "Was the decision procedurally defensible?" }),
+      });
+
+      // Add required document
+      await fetch(`${API_BASE}/api/cases/${constraintTestCaseId}/documents`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Policy Document",
+          content: "Applicable policy content",
+          type: "policy",
+          size: "100",
+          version: "1.0",
+          status: "verified",
+        }),
+      });
+
+      // Add evidence event (before decision)
+      await fetch(`${API_BASE}/api/cases/${constraintTestCaseId}/events`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventType: "evidence_collected",
+          description: "Evidence was gathered",
+          eventTime: "2026-01-15T10:00:00Z",
+        }),
+      });
+
+      // Add decision event
+      await fetch(`${API_BASE}/api/cases/${constraintTestCaseId}/events`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventType: "decision",
+          description: "Decision was made",
+          eventTime: "2030-01-01T12:00:00Z",
+        }),
+      });
+
+      // Add constraints_documented event (THE KEY EVENT FOR THIS TEST)
+      await fetch(`${API_BASE}/api/cases/${constraintTestCaseId}/events`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventType: "constraints_documented",
+          description: "Constraints documented: Time pressure (moderate), Workload (normal)",
+          eventTime: "2026-01-15T09:00:00Z",
+          metadata: {
+            timePressure: "moderate",
+            workload: "normal",
+            guidelineCoherence: "clear",
+            irreversibility: "moderate",
+          },
+        }),
+      });
+    });
+
+    afterAll(async () => {
+      if (constraintTestCaseId) {
+        await fetch(`${API_BASE}/api/cases/${constraintTestCaseId}`, {
+          method: "DELETE",
+        }).catch(() => {});
+      }
+    });
+
+    it("evaluator uses constraints_documented event from database (no request body constraints needed)", async () => {
+      // Call evaluate WITHOUT passing constraints in the request body
+      const res = await fetch(`${API_BASE}/api/cases/${constraintTestCaseId}/evaluate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}), // Empty body - constraints come from event
+      });
+
+      // Must return 200 (permitted), not 403 (refusal)
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      
+      expect(data.constitutional.permitted).toBe(true);
+      expect(data.checklist.E_contextual_constraints.met).toBe(true);
+      // Evidence ref should reference the event
+      expect(data.checklist.E_contextual_constraints.evidenceRefs.length).toBeGreaterThan(0);
+    });
+
+    it("E_contextual_constraints.met is true when constraints_documented event exists", async () => {
+      const res = await fetch(`${API_BASE}/api/cases/${constraintTestCaseId}/evaluate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      
+      // The specific assertion: E must be met
+      expect(data.checklist.E_contextual_constraints.met).toBe(true);
+      expect(data.checklist.E_contextual_constraints.missing).toBeUndefined();
+    });
+  });
 });

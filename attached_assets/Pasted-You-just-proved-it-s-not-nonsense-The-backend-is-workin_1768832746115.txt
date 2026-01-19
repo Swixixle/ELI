@@ -1,0 +1,102 @@
+You just proved it’s not nonsense. The backend is working and returning clean, structured outcomes. What’s broken is one specific UI save path (and maybe a second: ACK check query params). Your logs contain the exact smoking gun:
+
+What’s happening
+	1.	The Constraints modal is saving to /api/cases/:id/events and that call is succeeding:
+
+	•	POST /api/cases/.../events 201 ... eventType:"constraints_documented" ✅
+
+	2.	But the Evaluate pipeline is still reporting:
+
+	•	E_contextual_constraints ... met:false ... neededConstraintArtifacts:1 ❌
+
+That means your evaluator is not counting the constraints_documented event as an S2 “constraint artifact,” even though it exists.
+
+So the app is doing the work, but the “prerequisites met” logic is looking in the wrong place or using the wrong criteria.
+
+⸻
+
+The fix in the least number of steps (paste to agent)
+
+Goal: Make S2 pass whenever a constraints_documented event exists for the case.
+
+Step 1 — Make the evaluator recognize the event (single change)
+
+In evaluateCanonConditions() (or wherever prerequisite E_contextual_constraints is computed):
+	•	Fetch events for the case (if not already).
+	•	Treat any event with:
+	•	eventType === "constraints_documented"
+	•	and metadata containing at least one of: timePressure, workload, guidelineCoherence, irreversibility
+as satisfying E.
+
+Acceptance criterion: E becomes met:true when that event exists.
+
+Step 2 — Align the eventType constant (if mismatch)
+
+Your DB has: constraints_documented
+
+The evaluator might be checking for something else like:
+	•	contextual_constraints_documented
+	•	constraints_recorded
+	•	or looking for a “constraints document” instead of an event.
+
+Fix: Standardize to one enum. If UI writes constraints_documented, evaluator must read constraints_documented.
+
+Step 3 — Add one deterministic test (locks it forever)
+
+Add an integration test:
+	1.	Create case
+	2.	POST decision-time (explicit)
+	3.	POST decision-target
+	4.	POST document
+	5.	POST events:
+	•	evidence_collected (before decision)
+	•	decision (at DTA)
+	•	constraints_documented (before decision or at decision)
+	6.	POST evaluate with empty constraints (or with constraints, depending on design)
+	7.	Assert:
+	•	checklist.E_contextual_constraints.met === true
+
+That’s it. One behavioral test prevents this from regressing.
+
+⸻
+
+Why you saw “Invalid event data” earlier
+
+That was your UI showing a generic failure even when the underlying issue was a schema mismatch. Your current logs show the constraints event is accepted now, so that part is fixed. The remaining failure is the reader, not the writer.
+
+⸻
+
+What you should pick in the modal for “same scenario”
+
+Use consistent defaults (your current choices are fine):
+	•	Time Pressure: Moderate
+	•	Workload: Normal
+	•	Guideline Coherence: Clear
+	•	Irreversibility: Moderate
+	•	Notes: optional
+
+The values are not the problem. Recognition is.
+
+⸻
+
+Two additional issues visible in logs (quick fixes)
+
+A) Wrong axiom values in refusals (cosmetic but governance-visible)
+
+Example:
+PB_A1_ENTITLEMENT_NOT_ESTABLISHED returns "axiom":"A0" (fine) but another shows "axiom":"S3" for an A1 code. That’s inconsistent metadata. Fix mapping so code→axiom is stable.
+
+B) /api/cases/:id/acks/check sometimes returns 400 missing query params
+
+GET ... /acks/check 400 :: required ["measurement_id","intended_use"]
+
+UI must always call it with:
+?measurement_id=...&intended_use=...
+
+⸻
+
+Bottom line
+
+You didn’t “mess up.” You built a real system and hit a classic bug: event written, evaluator not reading it.
+
+If you want, paste the code for the E_contextual_constraints check (or tell me the file path) and I’ll tell you exactly what line to change and what to match (constraints_documented vs something else).

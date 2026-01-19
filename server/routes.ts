@@ -539,8 +539,29 @@ export async function registerRoutes(
 
       // Constitutional gate check (AXIOM A9: No bypass permitted)
       // AXIOM S3: S2 requires real constraint evidence, not placeholders
-      // Fail closed if no constraints provided
+      // Check for constraints_documented event if no client constraints provided
       const clientConstraints = req.body?.constraints;
+      
+      // Extract constraints from database event if available
+      let effectiveConstraints = clientConstraints;
+      if (!effectiveConstraints) {
+        const constraintEvent = events.find(e => 
+          e.eventType === "constraints_documented" && 
+          e.metadata && 
+          (typeof e.metadata === 'object')
+        );
+        if (constraintEvent && constraintEvent.metadata) {
+          const meta = constraintEvent.metadata as Record<string, unknown>;
+          if (meta.timePressure || meta.workload || meta.guidelineCoherence || meta.irreversibility) {
+            effectiveConstraints = {
+              timePressure: meta.timePressure as string,
+              workload: meta.workload as string,
+              guidelineCoherence: meta.guidelineCoherence as string,
+              irreversibility: meta.irreversibility as string,
+            };
+          }
+        }
+      }
       
       const constitutionalContext: ConstitutionalContext = {
         caseId: req.params.id,
@@ -554,13 +575,13 @@ export async function registerRoutes(
           timestamp: doc.uploadedAt?.toISOString(),
           source: doc.type || "uploaded",
         })),
-        constraints: clientConstraints ? {
-          timePressure: clientConstraints.timePressure,
-          workload: clientConstraints.workload,
-          guidelineCoherence: clientConstraints.guidelineCoherence,
-          irreversibility: clientConstraints.irreversibility,
-          resourceFriction: clientConstraints.resourceFriction,
-          toolingAvailable: clientConstraints.toolingAvailable,
+        constraints: effectiveConstraints ? {
+          timePressure: effectiveConstraints.timePressure,
+          workload: effectiveConstraints.workload,
+          guidelineCoherence: effectiveConstraints.guidelineCoherence,
+          irreversibility: effectiveConstraints.irreversibility,
+          resourceFriction: effectiveConstraints.resourceFriction,
+          toolingAvailable: effectiveConstraints.toolingAvailable,
         } : undefined,
       };
 
@@ -668,7 +689,29 @@ export async function registerRoutes(
 
       // Constitutional gate check (AXIOM A9: No bypass permitted)
       // AXIOM S3: S2 requires real constraint evidence, not placeholders
+      // Check for constraints_documented event if no client constraints provided
       const clientConstraints = req.body?.constraints;
+      
+      // Extract constraints from database event if available (same as evaluate)
+      let effectiveConstraints = clientConstraints;
+      if (!effectiveConstraints) {
+        const constraintEvent = events.find(e => 
+          e.eventType === "constraints_documented" && 
+          e.metadata && 
+          (typeof e.metadata === 'object')
+        );
+        if (constraintEvent && constraintEvent.metadata) {
+          const meta = constraintEvent.metadata as Record<string, unknown>;
+          if (meta.timePressure || meta.workload || meta.guidelineCoherence || meta.irreversibility) {
+            effectiveConstraints = {
+              timePressure: meta.timePressure as string,
+              workload: meta.workload as string,
+              guidelineCoherence: meta.guidelineCoherence as string,
+              irreversibility: meta.irreversibility as string,
+            };
+          }
+        }
+      }
       
       const constitutionalContext: ConstitutionalContext = {
         caseId: req.params.id,
@@ -682,13 +725,13 @@ export async function registerRoutes(
           timestamp: doc.uploadedAt?.toISOString(),
           source: doc.type || "uploaded",
         })),
-        constraints: clientConstraints ? {
-          timePressure: clientConstraints.timePressure,
-          workload: clientConstraints.workload,
-          guidelineCoherence: clientConstraints.guidelineCoherence,
-          irreversibility: clientConstraints.irreversibility,
-          resourceFriction: clientConstraints.resourceFriction,
-          toolingAvailable: clientConstraints.toolingAvailable,
+        constraints: effectiveConstraints ? {
+          timePressure: effectiveConstraints.timePressure,
+          workload: effectiveConstraints.workload,
+          guidelineCoherence: effectiveConstraints.guidelineCoherence,
+          irreversibility: effectiveConstraints.irreversibility,
+          resourceFriction: effectiveConstraints.resourceFriction,
+          toolingAvailable: effectiveConstraints.toolingAvailable,
         } : undefined,
       };
 

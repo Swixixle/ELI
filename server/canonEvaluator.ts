@@ -52,7 +52,7 @@ export function evaluateCanonConditions(ctx: EvaluationContext): EvaluationResul
     B_temporal_verification: evaluateTemporalVerification(caseData, documents, events),
     C_independent_verification: evaluateIndependentVerification(documents),
     D_policy_application_record: evaluatePolicyApplication(documents),
-    E_contextual_constraints: evaluateContextualConstraints(documents),
+    E_contextual_constraints: evaluateContextualConstraints(documents, events),
   };
 
   const conditions = [
@@ -194,7 +194,16 @@ function evaluatePolicyApplication(documents: CanonDocument[]): ConditionStatus 
   };
 }
 
-function evaluateContextualConstraints(documents: CanonDocument[]): ConditionStatus {
+function evaluateContextualConstraints(documents: CanonDocument[], events: CaseEvent[]): ConditionStatus {
+  // Check for constraints_documented events with valid metadata
+  const constraintEvents = events.filter(e => {
+    if (e.eventType !== "constraints_documented") return false;
+    // Verify metadata contains at least one constraint field
+    const meta = e.metadata as Record<string, unknown> | null;
+    if (!meta) return false;
+    return meta.timePressure || meta.workload || meta.guidelineCoherence || meta.irreversibility;
+  });
+  
   const constraintDocs = documents.filter(d => 
     d.name.toLowerCase().includes("constraint") ||
     d.name.toLowerCase().includes("staffing") ||
@@ -203,12 +212,23 @@ function evaluateContextualConstraints(documents: CanonDocument[]): ConditionSta
     d.name.toLowerCase().includes("context")
   );
   
-  const met = constraintDocs.length >= 1 || documents.length >= 3;
+  // Met if: constraint event exists OR constraint document exists OR sufficient documents for inference
+  const met = constraintEvents.length >= 1 || constraintDocs.length >= 1 || documents.length >= 3;
+  
+  // Build evidence refs
+  const evidenceRefs: string[] = [];
+  if (constraintEvents.length > 0) {
+    evidenceRefs.push(`event:${constraintEvents[0].id}`);
+  } else if (constraintDocs.length > 0) {
+    evidenceRefs.push(`doc:${constraintDocs[0].id}`);
+  } else if (met) {
+    evidenceRefs.push("inferred:sufficient_context");
+  }
 
   return {
     required: true,
     met,
-    evidenceRefs: met ? (constraintDocs.length > 0 ? constraintDocs.slice(0, 1).map(d => `doc:${d.id}`) : ["inferred:sufficient_context"]) : [],
+    evidenceRefs,
     missing: met ? undefined : {
       neededConstraintArtifacts: 1,
       rule: "Need: 1 constraints artifact (staffing/time/system conditions)",
