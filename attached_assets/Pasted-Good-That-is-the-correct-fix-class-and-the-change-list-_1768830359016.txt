@@ -1,0 +1,60 @@
+Good. That is the correct fix class, and the change list you pasted is the right shape. Now you should do one thing before you mentally “close” this: verify the UI now distinguishes three different failure categories cleanly (because that’s where drift and confusion come back).
+
+Classification
+
+PROCEED — with a short verification checklist (10 minutes) before you treat it as done.
+
+⸻
+
+Verification checklist (exact)
+
+1) True constitutional refusal (expected: refusal card with details)
+
+Trigger: call /api/cases/:id/evaluate with missing constraints or missing evidence.
+
+You should see:
+	•	Title: Constitutional Refusal
+	•	code present (or at least error === CONSTITUTIONAL_REFUSAL)
+	•	governingAxiom displayed
+	•	failed_gate displayed
+	•	required_inputs list displayed (when provided)
+	•	No M5 card.
+	•	No “unexpected error.”
+
+2) M5 violation (expected: M5 card)
+
+Trigger: force the API (or mock response) to return 200 with summary present but measurement.envelope missing.
+
+You should see:
+	•	Title: Constitutional Violation: M5
+	•	The envelope-missing message
+	•	No refusal card
+
+This verifies ordering and avoids misclassifying refusals as M5.
+
+3) Real server error (expected: “unexpected” / error card)
+
+Trigger: temporarily break the endpoint (500) or simulate network failure.
+
+You should see:
+	•	A generic error card (your current “Constitutional Refusal” error card is okay, but ideally it should say Server Error not Refusal)
+	•	No fake refusal details (code/axiom should be absent)
+
+⸻
+
+Two says-the-quiet-part-out-loud notes (important)
+	1.	“queryFn treats 403 refusals as data”
+That’s correct. You just promoted refusals to first-class outcomes, which is a major governance win.
+	2.	Do not let the UI call everything “Constitutional Refusal.”
+Only 403 + refusal-shaped payloads should be labeled that way.
+500s and network errors should be labeled system failure, not governance refusal.
+
+If your current error card still says “Constitutional Refusal” for thrown exceptions, change that label. Otherwise users will said “the gate refused” when the server actually crashed.
+
+⸻
+
+What to ask the agent for next (one line)
+
+“Show me one screenshot each for (1) refusal, (2) M5, (3) 500 error, confirming the correct card renders.”
+
+If you paste those outcomes (even as text), I’ll give you a clean closeout call on this fix set.

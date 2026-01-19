@@ -169,16 +169,19 @@ export default function TerrainSheet() {
             Back
           </Button>
         </Link>
-        <Card>
+        <Card data-testid="system-error-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Constitutional Refusal
+              System Error
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              {error instanceof Error ? error.message : "Unable to generate terrain sheet. Gate refused evaluation."}
+              {error instanceof Error ? error.message : "Unable to process request. Please try again."}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              This is a server or network error, not a governance refusal.
             </p>
           </CardContent>
         </Card>
