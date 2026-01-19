@@ -23,8 +23,16 @@ interface EvaluationResponse {
     status: string;
     reason: SanitizedSummaryReason;
   };
+  // Refusal fields (returned on 403 constitutional refusals)
   error?: string;
+  code?: string;
+  axiom?: string;
+  governingAxiom?: string;
+  failed_gate?: string;
+  required_inputs?: string[];
   message?: string;
+  hint?: string;
+  evaluationBlocked?: boolean;
 }
 
 interface AckCheckResponse {
@@ -77,10 +85,20 @@ export default function TerrainSheet() {
         }),
       });
 
-      const responseData = await res.json();
+      const responseData = await res.json().catch(() => ({} as EvaluationResponse));
 
+      /**
+       * Treat constitutional refusals as DATA, not exceptions.
+       * Only throw for true server/client errors.
+       */
       if (!res.ok) {
-        throw new Error(responseData.message || responseData.error || "Evaluation failed");
+        // If the API returns a structured constitutional refusal, render it.
+        if (res.status === 403 && (responseData.error || responseData.code || responseData.governingAxiom || responseData.axiom)) {
+          return responseData;
+        }
+
+        // Otherwise, this is a real error (500, network, malformed JSON, etc.)
+        throw new Error(responseData.message || responseData.error || `Request failed (${res.status})`);
       }
 
       return responseData;
@@ -162,6 +180,73 @@ export default function TerrainSheet() {
             <p className="text-muted-foreground">
               {error instanceof Error ? error.message : "Unable to generate terrain sheet. Gate refused evaluation."}
             </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // If backend returned a constitutional refusal, render it explicitly.
+  if (data?.error === "CONSTITUTIONAL_REFUSAL" || data?.code || data?.governingAxiom || data?.axiom || data?.evaluationBlocked) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <Link href="/">
+          <Button variant="ghost" className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </Link>
+
+        <Card data-testid="constitutional-refusal-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <ShieldX className="h-5 w-5" />
+              Constitutional Refusal
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              {data.message || "Evaluation refused by constitutional gate."}
+            </p>
+
+            <div className="text-sm space-y-1 p-3 bg-muted rounded-lg">
+              {data.code && (
+                <div className="flex gap-2">
+                  <span className="font-medium text-muted-foreground">Code:</span>
+                  <code className="text-xs font-mono">{data.code}</code>
+                </div>
+              )}
+              {(data.governingAxiom || data.axiom) && (
+                <div className="flex gap-2">
+                  <span className="font-medium text-muted-foreground">Axiom:</span>
+                  <Badge variant="outline">{data.governingAxiom || data.axiom}</Badge>
+                </div>
+              )}
+              {data.failed_gate && (
+                <div className="flex gap-2">
+                  <span className="font-medium text-muted-foreground">Failed Gate:</span>
+                  <span>{data.failed_gate}</span>
+                </div>
+              )}
+            </div>
+
+            {data.hint && (
+              <div className="p-3 border border-amber-200 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  <strong>Hint:</strong> {data.hint}
+                </p>
+              </div>
+            )}
+
+            {Array.isArray(data.required_inputs) && data.required_inputs.length > 0 && (
+              <div className="text-sm">
+                <strong className="text-muted-foreground">Required inputs:</strong>
+                <ul className="list-disc list-inside mt-1">
+                  {data.required_inputs.map((x, i) => <li key={i}>{x}</li>)}
+                </ul>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
