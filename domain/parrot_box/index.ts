@@ -43,3 +43,9 @@ export {
   type GateContext,
   type GateResult,
 } from "./gate";
+
+export {
+  checkEntitlementWithStrata,
+  type StratumGatedContext,
+  type StratumGatedResult,
+} from "./stratum_integration";

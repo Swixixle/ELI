@@ -40,6 +40,10 @@ export const REFUSAL_CODES = {
   
   // AXIOM A9 — Structural Supremacy
   BYPASS_ATTEMPTED: "PB_A9_BYPASS_ATTEMPTED",
+  
+  // SRE Stratum Integration (Section 7)
+  STRATUM_NOT_LOCKED: "PB_SRE_STRATUM_NOT_LOCKED",
+  NARRATIVE_STRATUM_VIOLATION: "PB_SRE_NARRATIVE_STRATUM_VIOLATION",
 } as const;
 
 export type RefusalCode = typeof REFUSAL_CODES[keyof typeof REFUSAL_CODES];

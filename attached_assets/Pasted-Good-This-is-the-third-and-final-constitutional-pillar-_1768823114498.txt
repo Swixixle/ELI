@@ -1,0 +1,270 @@
+Good. This is the third and final constitutional pillar.
+What you are locking now is metric authority.
+
+Below is the copy-ready, frozen text for the ELI Measurement Envelope Protocol v1.0.
+Paste this verbatim to the agent.
+No preface. No commentary. No summarization.
+
+⸻
+
+📜 eli_measurement_envelope.md — Epistemic Load Index
+
+Measurement Envelope Protocol (v1.0)
+
+Status
+
+This document constitutes constitutional law governing all measurement, scoring, indexing, and quantitative outputs within ELI.
+
+It is authoritative, versioned, and immutable once ratified.
+
+⸻
+
+1. Purpose
+
+The Measurement Envelope Protocol exists to prevent metric absolutism, authority laundering, and retroactive justification by binding every measurement to the epistemic conditions under which it was produced.
+
+No measurement may exist without an explicit envelope defining:
+	•	what it can support,
+	•	what it cannot support,
+	•	and under which epistemic constraints it was generated.
+
+⸻
+
+2. Core Principle
+
+Metrics do not speak for themselves.
+Envelopes speak for metrics.
+
+A measurement without an envelope is epistemically invalid.
+
+⸻
+
+3. Definitions
+
+3.1 Measurement
+
+Any scalar, vector, index, score, category, or quantitative output produced by the system, including but not limited to:
+	•	Epistemic Load Index (ELI),
+	•	sub-scores,
+	•	normalized values,
+	•	thresholds,
+	•	or comparisons.
+
+3.2 Measurement Envelope
+
+A structured, immutable record describing the epistemic conditions under which a measurement was produced.
+
+The envelope is authoritative; the numeric value is subordinate.
+
+⸻
+
+4. Envelope Requirements (Mandatory)
+
+Every measurement must be accompanied by a Measurement Envelope containing:
+	•	measurement_id
+	•	measurement_type
+	•	ruleset_version
+	•	decision_time_anchor (DTA)
+	•	locked_strata_referenced[]
+	•	admissible_record_hash
+	•	excluded_information_classes[]
+	•	dominant_constraints[]
+	•	epistemic_volume_descriptor
+	•	authorized_uses[]
+	•	prohibited_uses[]
+
+Measurements lacking a complete envelope are invalid.
+
+⸻
+
+5. Stratification Compliance
+
+AXIOM M1 — Outcome Blindness
+
+Measurements must be computed using only locked S1 and S2 strata.
+
+Outcome knowledge (S3) and narrative strata (S4) are categorically excluded.
+
+⸻
+
+AXIOM M2 — Non-Upward Authority
+
+Measurements may not be used to:
+	•	infer individual competence,
+	•	assign blame,
+	•	justify discipline,
+	•	or override admissibility limits.
+
+Any attempt to do so mandates refusal.
+
+⸻
+
+AXIOM M3 — Envelope Precedes Interpretation
+
+Interpretation without envelope inspection is invalid.
+
+Systems must refuse to display, compare, or reason over measurements if the envelope is not explicitly acknowledged.
+
+⸻
+
+6. Authorized vs Prohibited Uses
+
+6.1 Authorized Uses (Exhaustive)
+
+Measurements may be used to:
+	•	constrain downstream review posture,
+	•	calibrate permissible certainty,
+	•	trigger system-level learning pathways,
+	•	compare constraint environments, not actors.
+
+⸻
+
+6.2 Prohibited Uses (Categorical)
+
+Measurements may never be used to:
+	•	rank individuals,
+	•	evaluate performance,
+	•	predict future behavior,
+	•	justify sanctions,
+	•	or serve as proxy evidence of fault.
+
+Violation mandates refusal.
+
+⸻
+
+7. Comparability Constraints
+
+AXIOM M4 — Envelope Compatibility
+
+Two measurements may be compared only if:
+	•	their envelopes share compatible constraint classes,
+	•	their dominant axes align,
+	•	and no prohibited use is invoked.
+
+Scalar similarity without envelope compatibility is epistemically invalid.
+
+⸻
+
+8. Volumetric Context Requirement
+
+All ELI measurements must declare an epistemic volume descriptor indicating:
+	•	relative constraint density,
+	•	dominant limiting axes,
+	•	and degree of decision-space compression.
+
+The volume contextualizes the score and limits interpretive latitude.
+
+⸻
+
+9. Prohibited Transformations
+
+The following operations are forbidden:
+	•	envelope stripping,
+	•	score extraction without context,
+	•	threshold redefinition post hoc,
+	•	aggregation across incompatible envelopes,
+	•	narrative reinterpretation of scores.
+
+Detection mandates refusal.
+
+⸻
+
+10. Interface Enforcement
+
+AXIOM M5 — Non-Bypassable Envelope Gate
+
+No interface, export, visualization, or API may expose a measurement without its envelope.
+
+Any attempt to separate score from envelope is a constitutional violation.
+
+⸻
+
+11. Interaction with Parrot Box & SRE
+	•	Measurement envelopes are inputs to Parrot Box entitlement checks.
+	•	Measurements cannot expand speech entitlement.
+	•	High epistemic load reduces, not increases, permissible judgment.
+
+Metrics do not relax epistemic law.
+
+⸻
+
+12. Failure Handling
+
+12.1 Missing Envelope
+
+If an envelope is missing:
+	•	the system must refuse output,
+	•	and surface an explicit “Envelope Missing” error.
+
+12.2 Envelope Mismatch
+
+If envelope hashes mismatch referenced strata:
+	•	invalidate the measurement,
+	•	halt downstream processing.
+
+⸻
+
+13. Versioning and Amendment
+
+This protocol is frozen upon ratification.
+
+Amendments require:
+	•	explicit version increment,
+	•	documented rationale,
+	•	and re-ratification.
+
+No silent evolution is permitted.
+
+⸻
+
+RATIFICATION CLAUSE
+
+Numbers do not create authority.
+Constraint creates authority.
+
+All measurement authority within ELI derives from envelopes, not values.
+
+⸻
+
+End of Constitutional Text
+
+⸻
+
+What should happen immediately after you paste this
+
+The agent should:
+	1.	Add eli_measurement_envelope.md to governance/domain root
+	2.	Treat envelopes as blocking dependencies
+	3.	Refuse any score exposure without envelope
+	4.	Fail closed on comparison attempts
+	5.	Write tests that prove:
+	•	envelope stripping is impossible
+	•	scores cannot justify blame
+	•	outcome knowledge cannot enter metrics
+
+If it tries to:
+	•	“summarize the envelope for UX”
+	•	“display just the score”
+	•	“add helpful interpretations”
+
+You stop it. That is metric laundering.
+
+⸻
+
+Final Thinking Contract Classification
+
+PROCEED — CONSTITUTION COMPLETE
+
+You now have:
+	1.	Parrot Box — Speech entitlement law
+	2.	SRE Locking — Temporal integrity law
+	3.	Measurement Envelope — Metric authority law
+
+Together, these form a closed epistemic constitution.
+
+Anything built on top of this stack is now governed, not merely designed.
+
+When you’re ready, the next step is implementation audit mode:
+verifying the agent did not accidentally smuggle discretion anywhere.
+
+Say the word when you want to enter that phase.
