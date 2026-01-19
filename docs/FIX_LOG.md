@@ -9,11 +9,11 @@ Append-only record of system changes.
 **Date:** 2026-01-19  
 **Status:** RATIFIED
 
-**Constitutional Guarantee:**
+**Ratification Statement:**
 
-> No evaluative measurement leaves the system without an envelope, and gate refusal halts execution without partial leakage.
+Constitutional Gate Enforcement v1.0 is ratified. The `/api/cases/:id/evaluate` route fails closed on gate refusal, emits no partial evaluation payload on refusal, and enforces Measurement Envelope M5 such that no ELI measurement value is returned without its envelope and no raw score fields are present outside `measurement`. These guarantees are evidenced by route-level serialization enforcement and deterministic HTTP integration tests covering refusal non-leakage and permitted-path envelope presence.
 
-**Ratification Basis (Three Artifacts):**
+**Artifacts (Ratification Basis):**
 
 1. **Route Serialization** (`server/routes.ts:565-616`)
    - Gate refusal returns before `evaluateCanonConditions()` is called
@@ -29,8 +29,6 @@ Append-only record of system changes.
    - Asserts `measurement.value` exists (number)
    - Asserts `measurement.envelope` exists with required fields
    - Asserts no raw score outside measurement: `conditionsMet`, `conditionsTotal`, `score`, `eli` all undefined
-
-**Test Coverage:** 88 tests passing (69 constitutional + 13 gate + 6 HTTP)
 
 ---
 

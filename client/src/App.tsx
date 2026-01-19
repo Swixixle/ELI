@@ -15,6 +15,7 @@ import CaseOverviewPage from "@/pages/case/CaseOverviewPage";
 import CaseBuildPage from "@/pages/case/CaseBuildPage";
 import CaseEvaluatePage from "@/pages/case/CaseEvaluatePage";
 import CaseAuditPage from "@/pages/case/CaseAuditPage";
+import TerrainSheet from "@/pages/TerrainSheet";
 
 function Router() {
   return (
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/cases/:caseId/audit" component={CaseAuditPage} />
       <Route path="/cases/:caseId/printouts" component={PrintoutsList} />
       <Route path="/cases/:caseId/printouts/:printoutId" component={PrintoutView} />
+      <Route path="/cases/:caseId/terrain" component={TerrainSheet} />
       <Route path="/value-imaging" component={ValueImaging} />
       <Route component={NotFound} />
     </Switch>

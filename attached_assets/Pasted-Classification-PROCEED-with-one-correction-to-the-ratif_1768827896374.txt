@@ -1,0 +1,66 @@
+Classification
+
+PROCEED — with one correction to the ratification language.
+
+You are in a valid stopping point, and yes: you are now in-bounds to proceed to Visual Spec v1.
+
+However, the ratification statement as written is too thin and slightly wrong in what it cites (the “88 tests” line is not the ratification basis; it’s a confidence signal). Ratification should cite guarantees and artifacts, not test counts.
+
+⸻
+
+What to fix in the ratification statement (minimal but defensible)
+
+Problems in the current sentence
+	•	“Constitutional Gate Enforcement v1.0 is now ratified.” → fine, but incomplete.
+	•	“88 tests passing…” → not a ratification basis; also test counts change and invite “audit drift.”
+	•	“Ready to proceed…” → fine as an operational note, not part of ratification.
+
+Replace it with this (copy/paste)
+
+Ratification Statement (v1.0)
+
+Constitutional Gate Enforcement v1.0 is ratified. The /api/cases/:id/evaluate route fails closed on gate refusal, emits no partial evaluation payload on refusal, and enforces Measurement Envelope M5 such that no ELI measurement value is returned without its envelope and no raw score fields are present outside measurement. These guarantees are evidenced by route-level serialization enforcement and deterministic HTTP integration tests covering refusal non-leakage and permitted-path envelope/no-raw-score invariants. Visual Spec v1 is authorized to proceed.
+
+That is short, defensible, and doesn’t hinge on a test count.
+
+⸻
+
+Visual Spec v1 — what I would do next (my version)
+
+Now that envelope enforcement is real, I would ship a single specialist-readable sheet with exactly three components:
+
+1) Envelope Header (immutable metadata)
+	•	Case ID
+	•	Decision Time Anchor (timestamp + source)
+	•	Ruleset version
+	•	Strata lock status (S1/S2 locked + hashes if available)
+	•	Authorized uses / Prohibited uses (from envelope)
+
+2) Epistemic Terrain Plot (one plot only for v1)
+
+2D constraint field (contour / heatmap):
+	•	X-axis: Information completeness (low → high)
+	•	Y-axis: Time pressure (low → high)
+	•	Contours: constraint density (computed from S2 + admissible evidence properties)
+
+No harm prediction. No persona. No “quality.”
+
+3) Refusal & Exclusion Ledger (non-substitutable)
+
+A table listing:
+	•	excluded class
+	•	governing axiom
+	•	refusal code
+	•	“No authorized substitution” marker
+
+⸻
+
+Decision
+
+Yes: Proceed to Visual Spec v1 (Medical retrospective review is still the best anchor).
+
+If you want the fastest next step: tell the agent:
+
+Build Visual Spec v1 as a static “Epistemic Terrain Sheet” JSON schema + a simple renderer that consumes only measurement.envelope + measurement.value + sanitized summary fields. No other numeric score fields allowed anywhere in the UI.
+
+That keeps the UI honest and forces envelope centrality.
