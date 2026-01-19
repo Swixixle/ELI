@@ -590,8 +590,18 @@ export async function registerRoutes(
         gateResult.registry
       );
       
+      // AXIOM M5 ENFORCEMENT: Strip raw score from response
+      // Only enveloped measurement may contain numeric values
+      const { summary, ...resultWithoutRawScore } = result;
+      const sanitizedSummary = {
+        status: summary.status,
+        explanationPlain: summary.explanationPlain,
+        // conditionsMet and conditionsTotal are stripped - use measurement.value instead
+      };
+      
       res.json({
-        ...result,
+        ...resultWithoutRawScore,
+        summary: sanitizedSummary,
         constitutional: { 
           permitted: true, 
           registry: { 
