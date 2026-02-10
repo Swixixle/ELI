@@ -1,4 +1,4 @@
-# ELI — Evidence-Linked Inference
+# ELI — Epistemic Load Index
 
 ELI is a framework for producing justified, auditable claims from signed artifacts.
 
