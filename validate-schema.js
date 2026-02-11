@@ -8,6 +8,33 @@ function validateSchema(data, schema) {
   const errors = [];
   
   function validate(data, schema, path = '') {
+    // Check type first
+    if (schema.type) {
+      const actualType = Array.isArray(data) ? 'array' : typeof data;
+      const expectedType = schema.type;
+      
+      if (expectedType === 'object' && actualType !== 'object') {
+        errors.push(`Field ${path} must be an object, got ${actualType}`);
+        return;
+      }
+      if (expectedType === 'string' && actualType !== 'string') {
+        errors.push(`Field ${path} must be a string, got ${actualType}`);
+        return;
+      }
+      if (expectedType === 'number' && actualType !== 'number') {
+        errors.push(`Field ${path} must be a number, got ${actualType}`);
+        return;
+      }
+      if (expectedType === 'array' && actualType !== 'array') {
+        errors.push(`Field ${path} must be an array, got ${actualType}`);
+        return;
+      }
+      if (expectedType === 'boolean' && actualType !== 'boolean') {
+        errors.push(`Field ${path} must be a boolean, got ${actualType}`);
+        return;
+      }
+    }
+    
     // Check required fields
     if (schema.required && Array.isArray(schema.required)) {
       for (const field of schema.required) {
@@ -17,7 +44,7 @@ function validateSchema(data, schema) {
       }
     }
     
-    // Check type
+    // Check object properties
     if (schema.type === 'object' && schema.properties) {
       for (const [key, value] of Object.entries(data)) {
         if (schema.properties[key]) {
@@ -29,7 +56,7 @@ function validateSchema(data, schema) {
     }
     
     // Check string patterns
-    if (schema.type === 'string' && schema.pattern && typeof data === 'string') {
+    if (schema.type === 'string' && schema.pattern) {
       const regex = new RegExp(schema.pattern);
       if (!regex.test(data)) {
         errors.push(`Field ${path} does not match pattern ${schema.pattern}: ${data}`);
@@ -47,7 +74,7 @@ function validateSchema(data, schema) {
     }
     
     // Check arrays
-    if (schema.type === 'array' && Array.isArray(data)) {
+    if (schema.type === 'array') {
       if (schema.minItems && data.length < schema.minItems) {
         errors.push(`Array ${path} must have at least ${schema.minItems} items`);
       }
@@ -57,7 +84,7 @@ function validateSchema(data, schema) {
     }
     
     // Check number constraints
-    if (schema.type === 'number' && typeof data === 'number') {
+    if (schema.type === 'number') {
       if (schema.minimum !== undefined && data < schema.minimum) {
         errors.push(`Field ${path} must be >= ${schema.minimum}, got ${data}`);
       }
