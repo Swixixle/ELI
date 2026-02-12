@@ -13,6 +13,8 @@ ELI is designed to work with external signing and receipt systems
 
 ### Run in Replit
 
+[Open in Replit](https://replit.com/github/Swixixle/ELI)
+
 This repository is configured to run in Replit. Simply:
 1. Open this repository in Replit
 2. Click "Run" to validate the ELI schema and sample output
