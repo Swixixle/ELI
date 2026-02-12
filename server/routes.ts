@@ -1539,19 +1539,14 @@ export async function registerRoutes(
         return;
       }
 
-      // Idempotency guard: reject duplicate (source, requestId) pairs
-      if (requestId && parsed.data.caseId) {
-        const existingEvents = await storage.getCaseEvents(parsed.data.caseId);
-        const duplicate = existingEvents.find((e) => {
-          const meta = e.metadata as Record<string, unknown> | null;
-          return meta?.ingestSource === source && meta?.ingestRequestId === requestId;
-        });
-        if (duplicate) {
+      // Global idempotency guard: reject duplicate (source, requestId) via dedupe ledger
+      if (requestId) {
+        const existing = await storage.findIngestRequest(source, requestId);
+        if (existing) {
           res.status(409).json({
             error: "DUPLICATE_REQUEST",
             message: `Event with requestId '${requestId}' from source '${source}' already exists`,
-            existingEventId: duplicate.id,
-            caseId: parsed.data.caseId,
+            caseId: existing.caseId,
           });
           return;
         }
@@ -1595,6 +1590,11 @@ export async function registerRoutes(
       });
 
       const newEvent = await storage.createCaseEvent(eventData);
+
+      // Record in dedupe ledger (after successful event creation)
+      if (requestId) {
+        await storage.createIngestRequest(source, requestId, targetCaseId!);
+      }
 
       // Append audit event (forensic log of the ingest itself)
       const auditData = insertCaseEventSchema.parse({

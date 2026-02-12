@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, type Case, type InsertCase, type CaseEvent, type InsertCaseEvent, type DecisionTarget, type InsertDecisionTarget, type Determination, type InsertDetermination, type CasePrintout, type InsertCasePrintout, type ArchiveReasonCode, type DecisionContext, type InsertDecisionContext, type CaseOrigin, type EnvelopeAcknowledgment, type InsertEnvelopeAcknowledgment, users, canonDocuments, canonChunks, cases, caseEvents, decisionTargets, determinations, casePrintouts, decisionContexts, envelopeAcknowledgments } from "@shared/schema";
+import { type User, type InsertUser, type CanonDocument, type InsertCanonDocument, type CanonChunk, type Case, type InsertCase, type CaseEvent, type InsertCaseEvent, type DecisionTarget, type InsertDecisionTarget, type Determination, type InsertDetermination, type CasePrintout, type InsertCasePrintout, type ArchiveReasonCode, type DecisionContext, type InsertDecisionContext, type CaseOrigin, type EnvelopeAcknowledgment, type InsertEnvelopeAcknowledgment, type IngestRequest, users, canonDocuments, canonChunks, cases, caseEvents, decisionTargets, determinations, casePrintouts, decisionContexts, envelopeAcknowledgments, ingestRequests } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, or, sql, and, ne } from "drizzle-orm";
 
@@ -52,6 +52,10 @@ export interface IStorage {
   createEnvelopeAcknowledgment(ack: InsertEnvelopeAcknowledgment): Promise<EnvelopeAcknowledgment>;
   getAcknowledgmentByMeasurement(measurementId: string, intendedUse: string): Promise<EnvelopeAcknowledgment | undefined>;
   getAcknowledgmentsForCase(caseId: string): Promise<EnvelopeAcknowledgment[]>;
+
+  // Ingest deduplication
+  findIngestRequest(source: string, requestId: string): Promise<IngestRequest | undefined>;
+  createIngestRequest(source: string, requestId: string, caseId: string): Promise<IngestRequest>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -363,6 +367,22 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(envelopeAcknowledgments)
       .where(eq(envelopeAcknowledgments.caseId, caseId))
       .orderBy(desc(envelopeAcknowledgments.createdAt));
+  }
+
+  async findIngestRequest(source: string, requestId: string): Promise<IngestRequest | undefined> {
+    const [existing] = await db.select().from(ingestRequests)
+      .where(and(
+        eq(ingestRequests.source, source),
+        eq(ingestRequests.requestId, requestId)
+      ));
+    return existing;
+  }
+
+  async createIngestRequest(source: string, requestId: string, caseId: string): Promise<IngestRequest> {
+    const [record] = await db.insert(ingestRequests)
+      .values({ source, requestId, caseId })
+      .returning();
+    return record;
   }
 }
 

@@ -149,7 +149,7 @@ describe("External Ingest Integration", () => {
   describe("Idempotency", () => {
     it("rejects duplicate (source, requestId) for same case", async () => {
       const caseId = createdCaseIds[0];
-      const uniqueRequestId = `idem-${Date.now()}`;
+      const uniqueRequestId = `idem-case-${Date.now()}`;
 
       const first = await fetch(`${API_BASE}/api/integrations/ingest`, {
         method: "POST",
@@ -184,13 +184,50 @@ describe("External Ingest Integration", () => {
       expect(second.status).toBe(409);
       const data = await second.json();
       expect(data.error).toBe("DUPLICATE_REQUEST");
-      expect(data.existingEventId).toBeDefined();
+      expect(data.caseId).toBe(caseId);
     });
 
-    it("allows same requestId from different sources", async () => {
-      // This test verifies idempotency is scoped to (source, requestId)
-      // Since we only allow "lantern" by default, we test that without
-      // requestId the same description can be ingested multiple times
+    it("rejects duplicate (source, requestId) even without caseId (global dedupe)", async () => {
+      const uniqueRequestId = `idem-global-${Date.now()}`;
+
+      const first = await fetch(`${API_BASE}/api/integrations/ingest`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${INGEST_TOKEN}`,
+        },
+        body: JSON.stringify({
+          source: "lantern",
+          requestId: uniqueRequestId,
+          eventTime: new Date().toISOString(),
+          description: "First global ingest",
+        }),
+      });
+      expect(first.status).toBe(201);
+      const firstData = await first.json();
+      expect(firstData.caseId).toBeDefined();
+      createdCaseIds.push(firstData.caseId);
+
+      const second = await fetch(`${API_BASE}/api/integrations/ingest`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${INGEST_TOKEN}`,
+        },
+        body: JSON.stringify({
+          source: "lantern",
+          requestId: uniqueRequestId,
+          eventTime: new Date().toISOString(),
+          description: "Duplicate global ingest — should be rejected",
+        }),
+      });
+      expect(second.status).toBe(409);
+      const data = await second.json();
+      expect(data.error).toBe("DUPLICATE_REQUEST");
+      expect(data.caseId).toBe(firstData.caseId);
+    });
+
+    it("allows ingest without requestId (no idempotency check)", async () => {
       const caseId = createdCaseIds[0];
       const res = await fetch(`${API_BASE}/api/integrations/ingest`, {
         method: "POST",

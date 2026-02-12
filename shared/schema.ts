@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, serial, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, serial, boolean, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -232,6 +232,19 @@ export type Determination = typeof determinations.$inferSelect;
 export type InsertDetermination = z.infer<typeof insertDeterminationSchema>;
 export type CasePrintout = typeof casePrintouts.$inferSelect;
 export type InsertCasePrintout = z.infer<typeof insertCasePrintoutSchema>;
+
+// Ingest deduplication ledger — UNIQUE(source, request_id) prevents duplicate ingests
+export const ingestRequests = pgTable("ingest_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  source: text("source").notNull(),
+  requestId: text("request_id").notNull(),
+  caseId: varchar("case_id").references(() => cases.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("ingest_source_request_id_idx").on(table.source, table.requestId),
+]);
+
+export type IngestRequest = typeof ingestRequests.$inferSelect;
 
 // CaseOverview - derived, read-only object assembled from existing tables
 export type PrerequisiteStatusValue = "met" | "partial" | "unmet";
