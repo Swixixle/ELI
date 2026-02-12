@@ -1,0 +1,87 @@
+Good — you’ve already done the only “hard” part: **redeploy is in progress / completed** and your own note says the **dedupe ledger exists** and you verified it **in dev**.
+
+Now you just need to **prove it on production** (one-minute, binary outcome). Do this exactly:
+
+## 1) Confirm production is actually on the new build
+
+In your Deployments UI, wait until **Publishing** finishes all stages (Provision → Security Scan → Build → Bundle → Promote).
+If it still shows “Started less than a minute ago,” don’t run tests until it’s fully promoted.
+
+Once status reads “Published” and not actively promoting, proceed.
+
+---
+
+## 2) Run the definitive production idempotency test (no caseId)
+
+### Set token in your shell
+
+```bash
+export ELI_INGEST_TOKEN="PASTE_TOKEN"
+```
+
+### Call #1 (expect 200 + {caseId,url})
+
+```bash
+curl -sS -X POST "https://ajmaksimeli.com/api/integrations/ingest" \
+  -H "Authorization: Bearer $ELI_INGEST_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source":"lantern",
+    "eventType":"external_ingest",
+    "eventTime":"'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'",
+    "description":"Prod ingest smoke test",
+    "metadata":{"requestId":"prod-smoke-1","threadId":"t-1","model":"unknown"}
+  }'
+```
+
+### Call #2 (same requestId; expect 409 DUPLICATE_REQUEST)
+
+```bash
+curl -sS -i -X POST "https://ajmaksimeli.com/api/integrations/ingest" \
+  -H "Authorization: Bearer $ELI_INGEST_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source":"lantern",
+    "eventType":"external_ingest",
+    "eventTime":"'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'",
+    "description":"Prod ingest smoke test retry",
+    "metadata":{"requestId":"prod-smoke-1","threadId":"t-1","model":"unknown"}
+  }'
+```
+
+**Pass condition:** HTTP **409** with your duplicate code/message.
+**Fail condition:** another 200 + new case (means prod didn’t pick up dedupe ledger or constraint).
+
+---
+
+## 3) UI confirmation (fast)
+
+Open the `url` from call #1 in a browser:
+
+* confirm the ingested event is on the case timeline
+* confirm the audit trail recorded the ingest
+
+---
+
+## 4) If you want the cleanest operator outcome (optional polish)
+
+If your ledger exists, the best duplicate response is:
+
+* `409 DUPLICATE_REQUEST`
+* include `caseId` + `url` of the original request
+
+That way Lantern can treat duplicate as success (“already created—here’s the link”).
+
+---
+
+## 5) Then wire Lantern (now that prod is proven)
+
+Lantern implementation becomes trivial:
+
+* Add backend route `/api/send-to-eli` (keeps token server-side)
+* UI button “Send to ELI”
+* Use `crypto.randomUUID()` → `metadata.requestId`
+
+---
+
+Paste me the **HTTP status line + body** from production call #2 (no token), and I’ll tell you if you’re conclusively green and what to do next in Lantern (exact patch).
