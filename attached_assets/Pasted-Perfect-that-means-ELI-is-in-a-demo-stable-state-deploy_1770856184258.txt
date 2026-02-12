@@ -1,0 +1,109 @@
+Perfect — that means **ELI is in a “demo-stable” state**:
+
+* ✅ deployed (Autoscale, prod DB connected)
+* ✅ all three save flows use correct payload shapes
+* ✅ tests green
+* ✅ dev runner isn’t fighting the port anymore
+
+So the next work is no longer “fix ELI.” It’s **integration + packaging**.
+
+---
+
+## The clean integration path: Lantern → ELI
+
+### Phase 1 — Zero-risk integration (do this first)
+
+**Add a link from Lantern to ELI** (no ELI code changes).
+
+In Lantern UI (nav / header / “Tools” panel), add:
+
+* **Open ELI** → `https://ajmaksimeli.com` (or your `.replit.app` backup)
+
+If you want it to feel unified, open in a new tab:
+
+```tsx
+<a href="https://ajmaksimeli.com" target="_blank" rel="noreferrer">
+  Open ELI
+</a>
+```
+
+This gets you “linked up and running online” immediately.
+
+---
+
+### Phase 2 — “Send to ELI” button (light integration, real value)
+
+Goal: After Lantern produces an output, you can click **Send to ELI** and create an ELI case event (or case stub) automatically.
+
+**Minimal design (recommended):**
+
+* Lantern calls **a new ELI endpoint** that creates an event (or case + event).
+* ELI returns `caseId` + link to the case.
+
+**ELI endpoint example**
+`POST /api/lantern/ingest`
+
+Body:
+
+```json
+{
+  "source": "lantern",
+  "requestId": "uuid",
+  "eventTime": "2026-02-11T18:22:00.000Z",
+  "text": "... lantern output ...",
+  "metadata": { "model": "gpt-...", "threadId": "...", "userTag": "..." }
+}
+```
+
+Auth (simple and sufficient for now):
+
+* `Authorization: Bearer <INGEST_TOKEN>`
+* Store token in Lantern secrets + ELI secrets.
+
+**What ELI does:**
+
+* Validate schema
+* Create an event using the same `{ eventType, eventTime, description, metadata }` pattern you already hardened
+* Append an audit event (so the ingest is forensically logged)
+* Return `{ caseId, url }`
+
+This is the first point where “integration” starts paying off.
+
+---
+
+### Phase 3 — Evidence-grade integration (your real differentiator)
+
+Once Phase 2 is stable:
+
+* Lantern generates an **evidence capsule** (transcript hash + payload + signature or receipt)
+* ELI stores *only the receipt artifacts* or references
+* ELI can verify integrity without needing Lantern’s DB
+
+This is where your HALO/receipts work becomes the backbone, not just a feature.
+
+---
+
+## What I would do next, in order
+
+1. **Phase 1 link** in Lantern (5 minutes)
+2. Add a “Demos” hub page with:
+
+   * Lantern link
+   * ELI link
+   * One-sentence scope disclaimer for each
+3. **Phase 2 ingest endpoint** + “Send to ELI” button (1 focused build session)
+4. Only after that: proxy/iframe/SSO (optional complexity)
+
+---
+
+## One important note about “104 tests pass”
+
+That’s a strong sign, but for integration you want **one new test**:
+
+* Lantern ingest request → creates ELI event → appears in ELI UI → audit trail logs it
+
+That becomes your “integration proof.”
+
+---
+
+If you tell me what stack Lantern is running (Express? Next? Vite+Express like ELI?), I’ll give you the exact minimal implementation for **Phase 1** (link location) and **Phase 2** (Lantern client call + ELI endpoint + token handling) in copy/paste form that matches your current patterns.
