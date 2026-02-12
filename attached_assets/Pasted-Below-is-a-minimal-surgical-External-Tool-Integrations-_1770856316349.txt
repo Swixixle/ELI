@@ -1,0 +1,189 @@
+Below is a **minimal, surgical “External Tool Integrations” section** you can drop into your ELI docs (README or `docs/integrations.md`). It’s written to match where you are now: **ELI is deployed**, buttons work, audit trail is hardened, and you want clear steps to connect things like Lantern or other upstream systems.
+
+---
+
+# External Tool Integrations
+
+ELI can integrate with external tools in three escalating levels of coupling. Start with Level 1 and only move up if you need automation.
+
+## Level 1 — Link Out (Zero Risk, 5 minutes)
+
+**Goal:** Make ELI accessible from Lantern or any external tool with **no backend changes**.
+
+### Steps
+
+1. Identify your ELI public URL:
+
+   * Primary: `https://ajmaksimeli.com`
+   * Backup: `https://EpidemicLoadIndex-NikodemusSystems.replit.app`
+
+2. In the external tool UI (e.g., Lantern), add a link:
+
+```html
+<a href="https://ajmaksimeli.com" target="_blank" rel="noreferrer">
+  Open ELI
+</a>
+```
+
+**Pros:** No auth, no CORS, no backend changes.
+**Cons:** Manual copy/paste between systems.
+
+---
+
+## Level 2 — Push Events Into ELI (Recommended Next Step)
+
+**Goal:** Let an external tool create ELI case events automatically (e.g., “Send to ELI” button in Lantern).
+
+### 2.1 Add an Ingest Token (shared secret)
+
+In your ELI deployment secrets (Replit → Secrets / Environment Variables):
+
+* `ELI_INGEST_TOKEN = <long-random-string>`
+
+In Lantern secrets:
+
+* `ELI_INGEST_TOKEN = <same value>`
+* `ELI_BASE_URL = https://ajmaksimeli.com`
+
+### 2.2 Add a single endpoint in ELI
+
+**Endpoint**
+
+* `POST /api/integrations/ingest`
+
+**Auth**
+
+* Header: `Authorization: Bearer <ELI_INGEST_TOKEN>`
+
+**Request Body (stable v1)**
+
+```json
+{
+  "source": "lantern",
+  "eventTime": "2026-02-11T18:22:00.000Z",
+  "eventType": "external_ingest",
+  "description": "Lantern output captured for evaluation",
+  "metadata": {
+    "tool": "Lantern",
+    "threadId": "abc123",
+    "requestId": "uuid",
+    "model": "gpt-…",
+    "payload": { "any": "json" }
+  }
+}
+```
+
+**Behavior**
+
+* Validate schema (fail closed)
+* Create (or find) a case
+* Append event to `/api/cases/:id/events` pipeline (same canonical shape you already use)
+* Append an audit event (so ingest is forensically logged)
+* Return `{ caseId, url }`
+
+**Response**
+
+```json
+{ "caseId": "123", "url": "https://ajmaksimeli.com/cases/123" }
+```
+
+### 2.3 Client-side “Send to ELI” (Lantern)
+
+```ts
+async function sendToELI(payload: any) {
+  const res = await fetch(`${process.env.ELI_BASE_URL}/api/integrations/ingest`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.ELI_INGEST_TOKEN}`,
+    },
+    body: JSON.stringify({
+      source: "lantern",
+      eventTime: new Date().toISOString(),
+      eventType: "external_ingest",
+      description: "Lantern output captured for evaluation",
+      metadata: payload,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`ELI ingest failed: ${res.status} ${err}`);
+  }
+
+  return await res.json();
+}
+```
+
+### 2.4 Smoke test with curl
+
+```bash
+curl -sS -X POST "https://ajmaksimeli.com/api/integrations/ingest" \
+  -H "Authorization: Bearer $ELI_INGEST_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"source":"lantern","eventTime":"2026-02-11T18:22:00.000Z","eventType":"external_ingest","description":"test","metadata":{"requestId":"test-1"}}'
+```
+
+**Pros:** Real integration, minimal coupling, easy to debug.
+**Cons:** Shared secret management; you need one new endpoint.
+
+---
+
+## Level 2.5 — Allow-listed Sources (Optional Guardrail)
+
+If you expect multiple external tools, add:
+
+* `ELI_INGEST_SOURCES=lantern,eli-hub,cli`
+* Reject any `source` not in allowlist (fail closed)
+
+---
+
+## Level 3 — Evidence-Grade Integration (Receipts / Cryptographic Proof)
+
+**Goal:** External tools send *proof artifacts* (hashes, signed payloads, receipts) so ELI can store/verify integrity independently.
+
+Typical payload upgrades:
+
+* `contentHash` (sha256 of transcript/output)
+* `receipt` (signed canonical payload)
+* `signature` + `signerId`
+* optional `bundleUrl` (where the evidence lives)
+
+ELI stores:
+
+* receipt + verification result + metadata
+* without needing the full transcript in the DB
+
+**Pros:** Highest defensibility.
+**Cons:** More design work; best done after Level 2 is stable.
+
+---
+
+## Operational Notes
+
+### CORS
+
+If you call ELI ingest from a browser-based Lantern UI, you may need CORS allowlisting for Lantern’s domain. Easiest path is server-to-server calls (Lantern backend → ELI).
+
+### Logging
+
+For integrations, always log:
+
+* `source`, `requestId`, `caseId`, `status`, and validation failures
+  And include these in audit trail events.
+
+### Fail Closed
+
+Any validation or auth failure returns non-2xx and should not create partial case state.
+
+---
+
+## Recommended Path
+
+1. **Link out** today (Level 1)
+2. Implement **/api/integrations/ingest** (Level 2)
+3. Add receipts/hashes (Level 3) once you’re demoing consistently
+
+---
+
+If you want, I can tailor this to your actual ELI code structure by writing the **exact Express route** + **Zod/schema validator** pattern that matches your existing `/api/cases/:id/events` handler (so you’re not introducing a parallel style).

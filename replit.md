@@ -124,6 +124,21 @@ Case-scoped API endpoints:
 - `POST /api/cases/:id/documents` - Create document in case
 - `DELETE /api/cases/:caseId/documents/:docId` - Delete document (validates ownership)
 
+### External Tool Integration
+
+**Ingest endpoint:** `POST /api/integrations/ingest`
+- Bearer token auth via `ELI_INGEST_TOKEN` environment variable
+- Source allowlist via `ELI_INGEST_SOURCES` (default: "lantern")
+- Creates or appends to cases with `origin: "EXTERNAL_INGEST"`
+- Appends audit trail event for forensic logging
+- Rejects archived cases (409)
+- Returns `{ caseId, eventId, url }`
+
+**EFX Protocol v0.1 (Envelope Acknowledgments):**
+- `POST /api/acks` - Create envelope acknowledgment (binds downstream agent to intended_use)
+- `GET /api/cases/:id/acks` - List acknowledgments for case
+- `GET /api/cases/:id/acks/check` - Check ACK status for measurement
+
 ### Case Overview (Derived View)
 
 The `/api/cases/:id/overview` endpoint provides a computed, read-only snapshot for immediate case comprehension:

@@ -1480,6 +1480,131 @@ export async function registerRoutes(
     }
   });
 
+  // === EXTERNAL TOOL INTEGRATION ROUTES ===
+
+  // Ingest endpoint for external tools (e.g., Lantern)
+  // Level 2 integration: Push events into ELI with Bearer token auth
+  const ingestBodySchema = z.object({
+    source: z.string().min(1),
+    eventTime: z.string().min(1),
+    eventType: z.string().default("external_ingest"),
+    description: z.string().min(1),
+    caseId: z.string().uuid().optional(),
+    caseName: z.string().optional(),
+    metadata: z.record(z.unknown()).optional(),
+  });
+
+  app.post("/api/integrations/ingest", async (req, res) => {
+    try {
+      // Bearer token auth
+      const authHeader = req.headers.authorization;
+      const expectedToken = process.env.ELI_INGEST_TOKEN;
+
+      if (!expectedToken) {
+        console.error("[ingest] ELI_INGEST_TOKEN not configured");
+        res.status(503).json({ error: "Ingest endpoint not configured" });
+        return;
+      }
+
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.status(401).json({ error: "Missing or invalid Authorization header" });
+        return;
+      }
+
+      const token = authHeader.slice(7);
+      if (token !== expectedToken) {
+        res.status(403).json({ error: "Invalid ingest token" });
+        return;
+      }
+
+      // Source allowlist (fail closed)
+      const allowedSourcesEnv = process.env.ELI_INGEST_SOURCES || "lantern";
+      const allowedSources = allowedSourcesEnv.split(",").map(s => s.trim().toLowerCase());
+
+      const parsed = ingestBodySchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: "Invalid ingest payload", details: parsed.error.errors });
+        return;
+      }
+
+      const { source, eventTime, eventType, description, metadata } = parsed.data;
+
+      if (!allowedSources.includes(source.toLowerCase())) {
+        res.status(403).json({
+          error: "INGEST_SOURCE_NOT_ALLOWED",
+          allowed: allowedSources,
+          provided: source,
+        });
+        return;
+      }
+
+      // Find or create case
+      let targetCaseId = parsed.data.caseId;
+
+      if (targetCaseId) {
+        const existing = await storage.getCase(targetCaseId);
+        if (!existing) {
+          res.status(404).json({ error: "Specified case not found" });
+          return;
+        }
+        if (existing.status === "archived") {
+          res.status(409).json({ error: "ARCHIVED_RESOURCE_IMMUTABLE" });
+          return;
+        }
+      } else {
+        const caseName = parsed.data.caseName || `${source} ingest — ${new Date(eventTime).toISOString().slice(0, 10)}`;
+        const newCase = await storage.createCase({
+          name: caseName,
+          description: `Auto-created from ${source} ingest`,
+          origin: "EXTERNAL_INGEST",
+        });
+        targetCaseId = newCase.id;
+      }
+
+      // Create the event using the same canonical shape
+      const eventData = insertCaseEventSchema.parse({
+        caseId: targetCaseId,
+        eventType,
+        eventTime: new Date(eventTime),
+        description,
+        metadata: {
+          ...((metadata as Record<string, unknown>) || {}),
+          ingestSource: source,
+          ingestTimestamp: new Date().toISOString(),
+        },
+      });
+
+      const newEvent = await storage.createCaseEvent(eventData);
+
+      // Append audit event (forensic log of the ingest itself)
+      const auditData = insertCaseEventSchema.parse({
+        caseId: targetCaseId,
+        eventType: "audit_ingest_received",
+        eventTime: new Date(),
+        description: `External ingest received from ${source}`,
+        metadata: {
+          ingestSource: source,
+          ingestEventId: newEvent.id,
+          ingestTimestamp: new Date().toISOString(),
+          environment: process.env.NODE_ENV || "development",
+          service: "eli-imaging-api",
+        },
+      });
+      await storage.createCaseEvent(auditData);
+
+      const baseUrl = process.env.ELI_BASE_URL || `${req.protocol}://${req.get("host")}`;
+
+      res.status(201).json({
+        caseId: targetCaseId,
+        eventId: newEvent.id,
+        url: `${baseUrl}/cases/${targetCaseId}/build`,
+      });
+    } catch (error) {
+      console.error("[ingest] Error:", error);
+      res.status(500).json({ error: "Ingest failed" });
+    }
+  });
+
   // === DOCUMENT ROUTES ===
 
   // Get all canon documents (DEPRECATED - use GET /api/cases/:id/documents)
