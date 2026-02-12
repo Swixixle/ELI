@@ -132,6 +132,7 @@ Case-scoped API endpoints:
 - Creates or appends to cases with `origin: "EXTERNAL_INGEST"`
 - Appends audit trail event for forensic logging
 - Rejects archived cases (409)
+- Idempotency via optional `requestId` field — rejects duplicate `(source, requestId)` per case (409 DUPLICATE_REQUEST)
 - Returns `{ caseId, eventId, url }`
 
 **EFX Protocol v0.1 (Envelope Acknowledgments):**
