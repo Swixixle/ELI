@@ -1,0 +1,103 @@
+That’s a clean, non-mysterious failure: **ELI is not booting because port `5000` is already in use**.
+
+So the “current state” is:
+
+* ✅ deps installed
+* ✅ dev command is correct (`tsx server/index.ts`)
+* ❌ server can’t start because **something is already listening on `0.0.0.0:5000`**
+* (separately) `npm audit` reports vulnerabilities, but that’s not what’s blocking you right now
+
+---
+
+## Fix the port collision (fastest path)
+
+### 1) Find what’s using port 5000
+
+Run **one** of these (whichever exists in your Replit shell):
+
+**Option A**
+
+```bash
+lsof -i :5000
+```
+
+**Option B**
+
+```bash
+ss -lptn | grep :5000
+```
+
+**Option C**
+
+```bash
+netstat -tulpn | grep :5000
+```
+
+### 2) Kill the process that’s holding it
+
+If you used `lsof` and you see a PID, kill it:
+
+```bash
+kill -9 <PID>
+```
+
+Or do it in one line:
+
+```bash
+kill -9 $(lsof -t -i :5000) 2>/dev/null || true
+```
+
+### 3) Re-run the dev server
+
+```bash
+npm run dev
+```
+
+---
+
+## If you can’t find it, use the blunt “kill the old dev server” approach
+
+This usually works if the port is held by an earlier `tsx server/index.ts` instance:
+
+```bash
+ps aux | grep "tsx server/index.ts" | grep -v grep
+```
+
+Then kill the PID you see, or:
+
+```bash
+pkill -f "tsx server/index.ts" || true
+pkill -f "tsx" || true
+npm run dev
+```
+
+---
+
+## Hardening so this doesn’t keep happening (recommended next step)
+
+Open `server/index.ts` and make sure it uses **`process.env.PORT`** (Replit-friendly) rather than hard-coding `5000`.
+
+Use this pattern:
+
+```ts
+const port = Number(process.env.PORT) || 5000;
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server listening on ${port}`);
+});
+```
+
+That way, if Replit assigns a port or you need to bump it, you’re not fighting a hard-coded port.
+
+---
+
+## What to do next after it boots
+
+Once it runs, we’ll immediately confirm:
+
+1. the UI loads
+2. any `/api/*` endpoints respond
+3. DB connects/migrations are applied (if applicable)
+
+---
+
+If you run `lsof -i :5000` (or `ss -lptn | grep :5000`) and paste the output, I’ll tell you exactly which PID to kill and what it likely is (old dev server vs another service).
