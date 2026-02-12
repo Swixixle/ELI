@@ -1489,6 +1489,7 @@ export async function registerRoutes(
     eventTime: z.string().min(1),
     eventType: z.string().default("external_ingest"),
     description: z.string().min(1),
+    requestId: z.string().optional(),
     caseId: z.string().uuid().optional(),
     caseName: z.string().optional(),
     metadata: z.record(z.unknown()).optional(),
@@ -1527,7 +1528,7 @@ export async function registerRoutes(
         return;
       }
 
-      const { source, eventTime, eventType, description, metadata } = parsed.data;
+      const { source, eventTime, eventType, description, metadata, requestId } = parsed.data;
 
       if (!allowedSources.includes(source.toLowerCase())) {
         res.status(403).json({
@@ -1536,6 +1537,24 @@ export async function registerRoutes(
           provided: source,
         });
         return;
+      }
+
+      // Idempotency guard: reject duplicate (source, requestId) pairs
+      if (requestId && parsed.data.caseId) {
+        const existingEvents = await storage.getCaseEvents(parsed.data.caseId);
+        const duplicate = existingEvents.find((e) => {
+          const meta = e.metadata as Record<string, unknown> | null;
+          return meta?.ingestSource === source && meta?.ingestRequestId === requestId;
+        });
+        if (duplicate) {
+          res.status(409).json({
+            error: "DUPLICATE_REQUEST",
+            message: `Event with requestId '${requestId}' from source '${source}' already exists`,
+            existingEventId: duplicate.id,
+            caseId: parsed.data.caseId,
+          });
+          return;
+        }
       }
 
       // Find or create case
@@ -1570,6 +1589,7 @@ export async function registerRoutes(
         metadata: {
           ...((metadata as Record<string, unknown>) || {}),
           ingestSource: source,
+          ...(requestId ? { ingestRequestId: requestId } : {}),
           ingestTimestamp: new Date().toISOString(),
         },
       });
