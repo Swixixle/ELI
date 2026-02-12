@@ -1,0 +1,133 @@
+Good — you’re now at **“Level 2 integration is real”** (not theoretical): authenticated ingest, archived-case protection, audit logging, and test coverage. That’s exactly the point where you can safely wire Lantern into ELI without turning ELI into a brittle science project.
+
+Here’s what you should do next, in **concrete, follow-along steps**, so the integration actually gets *used*.
+
+---
+
+## 1) Lock the deployment configuration (production secrets)
+
+### In ELI (deployment secrets)
+
+Set these in the **Production** deployment env vars:
+
+* `ELI_INGEST_TOKEN` = long random (32+ chars)
+* `ELI_INGEST_SOURCES` = `lantern` (plus others later if you want)
+
+If you already implemented an allowlist, confirm `lantern` is included.
+
+### In Lantern (deployment secrets)
+
+Set:
+
+* `ELI_BASE_URL` = `https://ajmaksimeli.com`
+* `ELI_INGEST_TOKEN` = **same token** as ELI
+
+**Rule:** don’t hardcode these in code; only secrets.
+
+---
+
+## 2) Add a “Send to ELI” button in Lantern (minimum viable wiring)
+
+Wherever Lantern shows a final response (or “Deep Read” output), add:
+
+* Button: **Send to ELI**
+* On click: POST to ELI ingest endpoint
+* On success: show link **Open case in ELI**
+
+### Client payload you should send (matches your v1 schema)
+
+Use the exact fields you already standardized:
+
+* `source`: `"lantern"`
+* `eventType`: e.g. `"external_ingest"` or `"lantern_output"`
+* `eventTime`: `new Date().toISOString()`
+* `description`: short, human-readable
+* `metadata`: structured object
+
+**Metadata should include the minimum you’ll regret not having later:**
+
+* `threadId`
+* `requestId` (uuid)
+* `model`
+* `userPrompt` (or prompt hash if you don’t want raw)
+* `responseText` (or response hash + link if you don’t want raw)
+* optional: `receipt` fields later (Level 3)
+
+---
+
+## 3) Run a production smoke test (this is the real “integration proof”)
+
+### A) From your local machine (or Replit shell), hit production ELI
+
+```bash
+curl -sS -X POST "https://ajmaksimeli.com/api/integrations/ingest" \
+  -H "Authorization: Bearer $ELI_INGEST_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source":"lantern",
+    "eventType":"external_ingest",
+    "eventTime":"'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'",
+    "description":"Lantern integration smoke test",
+    "metadata":{"requestId":"smoke-1","threadId":"t-1","model":"unknown"}
+  }'
+```
+
+You should receive:
+
+* `{ caseId, url }`
+
+### B) Open the returned `url`
+
+Confirm:
+
+* event exists in the case timeline
+* audit trail contains an ingest audit event
+
+### C) Archived-case guard
+
+Archive that case (with correct `reasonCode`), then try ingesting into it again. Confirm **reject**.
+
+---
+
+## 4) Update the hub to reflect “connected systems”
+
+On your hub page:
+
+* Lantern → “Send to ELI supported”
+* ELI → “External ingest endpoint (token-gated)”
+
+This helps you pitch: “These aren’t random apps; they’re a connected workflow.”
+
+---
+
+## 5) One small hardening (worth doing now)
+
+Add **idempotency** via `requestId` (if you’re not already).
+
+* Store `requestId` on the event (or in metadata + indexed column if you have one)
+* Reject duplicates per `(source, requestId)`
+
+This prevents double-clicks / retries from creating duplicate events — which is a common demo failure mode.
+
+---
+
+## What point are you at now?
+
+You’re at **“integration API shipped”**. The only missing piece is the **Lantern UI wiring** + a **production smoke** that proves:
+
+> Lantern → ELI ingest → event recorded → audit logs it → user opens case.
+
+That’s your real “it’s connected” moment.
+
+---
+
+## Tell me one thing and I’ll give you the exact Lantern patch
+
+Where is Lantern built?
+
+* **A)** Next.js / React fullstack
+* **B)** Vite + React + Express
+* **C)** Express-only UI
+* **D)** Something else
+
+If you answer A/B/C, I’ll give you the exact file-level change: button component + fetch call + success link UI, using your current coding style.
