@@ -1,0 +1,137 @@
+Got it. Two things here:
+
+1. **Don’t paste that token into chat again** (it’s already in this conversation text). Treat it as compromised *for safety* and rotate to a fresh one for production.
+2. “Not showing in shell” on Replit is **normal** depending on where you set it (Deployment secrets vs Workspace secrets). You need it in the right place(s).
+
+Here’s the exact protocol that avoids this confusion going forward.
+
+---
+
+# Security protocol: private repos + token management
+
+## A) Token hygiene rules (non-negotiable)
+
+* **Never put tokens in chat, README, issues, PRs, or screenshots.**
+* **Never hardcode tokens in code** (even temporarily).
+* **Rotate immediately** if a token is ever pasted into chat or committed.
+* Use **separate tokens** for:
+
+  * dev / local testing
+  * production ingest
+
+Minimum: 2 tokens: `ELI_INGEST_TOKEN_DEV` and `ELI_INGEST_TOKEN_PROD` (or same key in different environments).
+
+---
+
+## B) Why it’s not showing in your shell
+
+Replit has **two different secret contexts**:
+
+### 1) Workspace (Dev) secrets
+
+* Used by `npm run dev` in the workspace shell.
+* These should show up in the running dev process environment.
+
+### 2) Deployment (Prod) secrets
+
+* Used by the deployed app at `ajmaksimeli.com`.
+* These **will not** appear in the workspace shell.
+
+So if you set it only in Deployments, you won’t see it in `echo $ELI_INGEST_TOKEN` in dev. And if you set it only in workspace secrets, production won’t have it.
+
+---
+
+## C) Fix it cleanly (do this now)
+
+### Step 1 — Rotate token (because it appeared in chat)
+
+Generate a new one:
+
+```bash
+openssl rand -hex 32
+```
+
+### Step 2 — Set it in BOTH places
+
+#### 2.1 Workspace secrets (for dev)
+
+Replit project → **Secrets** (not Deployments) → add:
+
+* `ELI_INGEST_TOKEN=<new token>`
+* `ELI_INGEST_SOURCES=lantern`
+
+Then restart dev server:
+
+```bash
+npm run dev
+```
+
+#### 2.2 Deployment secrets (for production)
+
+Replit → **Deployments** → your Autoscale deployment → **Secrets/Env** → add the same keys:
+
+* `ELI_INGEST_TOKEN=<new token>`
+* `ELI_INGEST_SOURCES=lantern`
+
+Then **Redeploy**.
+
+---
+
+## D) Verify in dev (shell)
+
+After setting Workspace secrets and restarting:
+
+```bash
+node -e 'console.log("token?", !!process.env.ELI_INGEST_TOKEN)'
+```
+
+If this prints `true`, dev has it.
+
+(If you run `echo $ELI_INGEST_TOKEN` and it prints blank, don’t panic—some shells don’t show secrets the way you expect; the node check is definitive.)
+
+---
+
+## E) Verify in production (real proof)
+
+Run the curl test against prod **after redeploy**. You already have the commands; the pass condition is:
+
+* first call returns `{ caseId, url }`
+* second call returns `409 DUPLICATE_REQUEST`
+
+---
+
+# Private repo protocol (GitHub) — what actually matters
+
+## 1) Private ≠ erased
+
+Making a repo private reduces exposure, but if a secret was ever committed, assume it leaked.
+
+## 2) Scan for secrets in history (quick check)
+
+From your local repo:
+
+```bash
+git log -p -S "ELI_INGEST_TOKEN" --all
+```
+
+If you ever see a real token in a commit:
+
+* rotate token (already doing)
+* then purge history (filter-repo)
+
+## 3) Prevent future leaks
+
+Enable:
+
+* GitHub secret scanning (if available to you)
+* Pre-commit hook to block common patterns (`Bearer `, long hex strings, `API_KEY`, etc.)
+
+I can give you a simple pre-commit hook if you want.
+
+---
+
+# What you should do with the token you pasted
+
+**Do not use it for production.** Use it only if you don’t care about it being “burned.” Best practice: rotate.
+
+If you tell me whether you set the token under **Workspace Secrets** or **Deployment Secrets**, I’ll tell you exactly why it didn’t show up and what one click fixes it.
