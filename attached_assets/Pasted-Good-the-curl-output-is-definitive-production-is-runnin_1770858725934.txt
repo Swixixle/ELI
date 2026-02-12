@@ -1,0 +1,112 @@
+Good — the curl output is definitive: **production is running code that sees `process.env.ELI_INGEST_TOKEN` as empty**, so your token is only in your **shell** (local env), not in the **deployed Autoscale environment**.
+
+Also: you did `export ELI_INGEST_TOKEN="(your token)"` literally, so your shell variable is not set to the real value. That didn’t matter here anyway because the server is failing *before* auth (it’s not configured), but we’ll fix that too.
+
+Here’s the exact fix, no guessing.
+
+---
+
+## 1) Fix your local export (for later)
+
+In shell, do **this** (no parentheses):
+
+```bash
+export ELI_INGEST_TOKEN="52ab0a6327ede3f329a219cf8b4eb6f165d53b0476d834b54f1d753b5a9ea36b"
+```
+
+Quick verify:
+
+```bash
+echo ${#ELI_INGEST_TOKEN}
+```
+
+Should print `64`.
+
+Again: this only matters once prod is configured.
+
+---
+
+## 2) Put the token into **Deployment Secrets** (this is the real blocker)
+
+Go to:
+
+**Replit → Deployments → your Autoscale deployment (the one serving ajmaksimeli.com) → Secrets/Env**
+
+Add / update:
+
+* `ELI_INGEST_TOKEN` = `52ab0a6327ede3f329a219cf8b4eb6f165d53b0476d834b54f1d753b5a9ea36b`
+* `ELI_INGEST_SOURCES` = `lantern`
+
+Then click **Redeploy**.
+
+**Important:** Project “Secrets” ≠ Deployment “Secrets/Env”. You need both if you want dev and prod.
+
+---
+
+## 3) Confirm you updated the right deployment
+
+You likely have multiple deployments / revisions. Make sure you’re editing the **Autoscale** deployment that lists:
+
+* Domain: `https://ajmaksimeli.com`
+
+---
+
+## 4) Re-run the production smoke tests (after redeploy completes)
+
+### Call #1 (should be 201/200 now, not 503)
+
+```bash
+curl -sS -i -X POST "https://ajmaksimeli.com/api/integrations/ingest" \
+  -H "Authorization: Bearer $ELI_INGEST_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source":"lantern",
+    "eventType":"external_ingest",
+    "eventTime":"'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'",
+    "description":"Prod ingest smoke test",
+    "metadata":{"requestId":"prod-smoke-2","threadId":"t-1","model":"unknown"}
+  }'
+```
+
+### Call #2 (same requestId; should be 409)
+
+```bash
+curl -sS -i -X POST "https://ajmaksimeli.com/api/integrations/ingest" \
+  -H "Authorization: Bearer $ELI_INGEST_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source":"lantern",
+    "eventType":"external_ingest",
+    "eventTime":"'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'",
+    "description":"Prod ingest smoke test retry",
+    "metadata":{"requestId":"prod-smoke-2","threadId":"t-1","model":"unknown"}
+  }'
+```
+
+Use `prod-smoke-2` so you’re not reusing the same id.
+
+---
+
+## 5) If you still get 503 after setting Deployment Secrets + redeploy
+
+Then we do one of these *fast* diagnostics:
+
+### A) Check production logs for “INGEST configured”
+
+Add a one-line log at server startup (or in the ingest route initialization), redeploy, then check logs:
+
+```ts
+console.log("[boot] ingest configured:", !!process.env.ELI_INGEST_TOKEN);
+```
+
+### B) Confirm the domain points to the deployment you edited
+
+Sometimes you redeploy one revision but the custom domain is attached to another. In Deployments, verify `ajmaksimeli.com` is attached to the exact deployment you updated.
+
+---
+
+### Your current state, in one sentence
+
+**ELI production is deployed, but the Autoscale deployment does not have `ELI_INGEST_TOKEN` set**, so it correctly refuses ingest.
+
+Do the Deployment Secrets/Env update + redeploy, then paste the **status line + body** of call #1 after redeploy (no token). That will tell us immediately if you’re green.
