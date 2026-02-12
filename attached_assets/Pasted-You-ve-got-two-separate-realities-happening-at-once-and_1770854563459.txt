@@ -1,0 +1,111 @@
+You’ve got two separate realities happening at once, and the screenshot confirms it:
+
+1. **Production ELI is already deployed and online** (Autoscale, DB connected) at:
+
+* `https://EpidemicLoadIndex-NikodemusSystems.replit.app`
+* `https://ajmaksimeli.com`
+
+2. **Your dev workspace process tried to start another server on port 5000** and hit `EADDRINUSE`. That’s a **local dev process collision**, not a production/deploy problem.
+
+So the “point we’re at” is: **ELI is live, but your local dev runner was competing with an already-running process**.
+
+---
+
+## A) Fix the port collision in the dev workspace (so you can keep iterating)
+
+### 1) Stop the process that’s already holding 5000
+
+In Replit, the most common cause is an already-running “workflow” (preview/server) that never stopped.
+
+**Fastest:**
+
+* Click **Stop** in the Replit run panel (the running process).
+
+If you want the shell method (works even when UI is weird):
+
+```bash
+kill -9 $(lsof -t -i :5000) 2>/dev/null || true
+npm run dev
+```
+
+If `lsof` isn’t available:
+
+```bash
+ss -lptn | grep :5000
+# then kill -9 <PID>
+```
+
+### 2) Prevent future collisions (recommended)
+
+Make sure `server/index.ts` binds to env PORT:
+
+```ts
+const port = Number(process.env.PORT) || 5000;
+app.listen(port, "0.0.0.0", () => console.log(`listening on ${port}`));
+```
+
+This makes Replit deployments happier and keeps dev flexible.
+
+---
+
+## B) The “Invalid event data” situation
+
+From what you pasted, the Replit agent diagnosed it correctly: **client/server schema mismatch + modal wiring reuse**.
+
+You already have:
+
+* ✅ constraints modal saving correctly
+* ✅ evaluator recognizing saved constraints
+
+Now the correct next step is to make sure **every button uses the same builder pattern**, not ad-hoc bodies.
+
+### Do this next (surgical)
+
+1. Identify every event type your UI can emit (Constraints, Set Target, Decision Time, etc.)
+2. For each: create a `buildXEvent()` function that returns **exactly** what the server validator expects
+3. In the client, log outgoing request + log server error details
+4. Replace “Invalid event data” with server validation message
+
+That’s how you stop the “every button fails” cascade permanently.
+
+---
+
+## C) You asked to “integrate Lantern”
+
+Since ELI is already deployed with a custom domain, the clean integration is **link-level first**, then optional deep integration.
+
+### Level 1 (do this now): link Lantern → ELI
+
+In your Lantern UI, add a simple link:
+
+* “Open ELI” → `https://ajmaksimeli.com`
+
+No auth, no CORS, no complexity.
+
+### Level 2 (next): send Lantern outputs into ELI as “events”
+
+Only after the UI is stable:
+
+* Lantern posts a signed/structured event to ELI (or your hub) for audit/receipts.
+
+---
+
+## What I need from you to tell you the *exact* next action
+
+You’re clearly already live—so “what next” depends on your target:
+
+### If the goal is **“get the buttons working”**
+
+Paste the server-side validator for **Set Target** and **Decision Time** (or tell me the file + function name), and I’ll give you the exact `buildSetTargetEvent()` / `buildDecisionTimeEvent()` payload shapes and client wiring.
+
+### If the goal is **“Lantern integrated today”**
+
+Tell me where you want the link:
+
+* Lantern navbar?
+* a “Send to ELI” button after responses?
+* hub page?
+
+And I’ll give you the exact UI snippet.
+
+Right now, the highest-leverage move is: **finish the builder pattern for the remaining two failing buttons**, because once those are stable, “integration” stops being fragile.
