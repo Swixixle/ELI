@@ -1,0 +1,90 @@
+No one can tell you “yes” or “no” with certainty from what you’ve shown — there isn’t a reliable way to prove scraping happened after the fact unless you already had monitoring in place.
+
+What you **can** say with confidence is:
+
+### What’s *likely* (normal internet reality)
+
+* If a repo or deployment was **public**, it could have been **indexed** (e.g., by search engines) and **passively scraped** by automated bots.
+* That does **not** automatically mean a human copied your system or that your database was dumped.
+
+### What’s *unlikely* unless you’re specifically targeted
+
+* A person deliberately “stealing your logic” in a focused way.
+* Your production database being directly readable just because the app was public (DB access depends on your endpoints, not the visibility toggle).
+
+### The only question that matters operationally
+
+**“Is anything exposed still usable against me?”**
+And you can make that answer **no**.
+
+---
+
+## Immediate actions that make “stolen” mostly irrelevant
+
+### 1) Rotate *all* secrets (you already started)
+
+Do this for:
+
+* `ELI_INGEST_TOKEN`
+* any OpenAI keys
+* any DB connection strings
+* any signing keys
+
+If a token ever appeared in chat or public code, treat it as burned.
+
+### 2) Check whether you ever committed secrets to Git history
+
+If you did, even briefly, assume it leaked.
+
+Run locally:
+
+```bash
+git log -p -S "ELI_INGEST_TOKEN" --all
+git log -p -S "OPENAI_API_KEY" --all
+git log -p -S "BEGIN PRIVATE KEY" --all
+```
+
+If anything real shows up: rotate + purge history (filter-repo).
+
+### 3) Verify you didn’t have “data dump” endpoints
+
+Look for routes like:
+
+* `/debug`
+* `/admin`
+* `/api/export-all`
+* anything that returns lists of cases/events without auth
+
+If you never exposed such endpoints, “public deployment” ≠ “public data.”
+
+### 4) Add minimal monitoring now
+
+Even without fancy tools:
+
+* log ingest attempts (source, requestId, outcome)
+* alert on spikes of 401/403/409
+* rate-limit ingest
+
+---
+
+## Practical risk statement (the honest one)
+
+* **Your ideas/architecture aren’t protectable by secrecy anyway**; what matters is execution + receipts + governance + credibility.
+* If your repos were public, it’s plausible someone has seen pieces.
+* If secrets weren’t leaked and endpoints weren’t dumping data, the harm is usually **low**.
+* Rotating secrets + tightening endpoints makes prior exposure mostly moot.
+
+---
+
+## If you want to know “how bad” in 5 minutes
+
+Answer these yes/no (no details, no tokens):
+
+1. Was **ELI** ever public **with a working admin login** or any unauthenticated “list cases/events” endpoints?
+2. Did you ever commit **any real secret** (API key/token/private key) to GitHub, even briefly?
+3. Was Lantern public at any time with the token in code or `.env` committed?
+
+If you say:
+
+* **No / No / No** → you’re very likely fine.
+* Any **Yes** → we do a targeted cleanup plan (rotate, purge history, check logs, and close any dump routes).
