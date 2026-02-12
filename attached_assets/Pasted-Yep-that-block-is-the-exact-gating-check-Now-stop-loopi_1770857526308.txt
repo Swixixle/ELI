@@ -1,0 +1,76 @@
+Yep — that block is the exact gating check. Now stop looping and **run the definitive production test**. If it passes, you ship. If it fails, you add the dedupe ledger.
+
+## Do this now (production, no caseId)
+
+### 1) Set the token in your shell (don’t paste it into chat)
+
+```bash
+export ELI_INGEST_TOKEN="PASTE_YOUR_TOKEN_HERE"
+```
+
+### 2) Call production ingest (1st time should succeed)
+
+```bash
+curl -sS -X POST "https://ajmaksimeli.com/api/integrations/ingest" \
+  -H "Authorization: Bearer $ELI_INGEST_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source":"lantern",
+    "eventType":"external_ingest",
+    "eventTime":"'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'",
+    "description":"Prod ingest smoke test",
+    "metadata":{"requestId":"prod-smoke-1","threadId":"t-1","model":"unknown"}
+  }'
+```
+
+**Expected:** JSON containing `{ caseId, url }`.
+
+### 3) Call production ingest again with the *same* requestId (should 409)
+
+```bash
+curl -sS -i -X POST "https://ajmaksimeli.com/api/integrations/ingest" \
+  -H "Authorization: Bearer $ELI_INGEST_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source":"lantern",
+    "eventType":"external_ingest",
+    "eventTime":"'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'",
+    "description":"Prod ingest smoke test retry",
+    "metadata":{"requestId":"prod-smoke-1","threadId":"t-1","model":"unknown"}
+  }'
+```
+
+**Expected:** HTTP **409** with `DUPLICATE_REQUEST` (or your equivalent).
+
+### 4) Open the `url` from the first call
+
+Confirm:
+
+* event exists in case timeline
+* audit trail contains ingest audit event
+
+---
+
+## Interpret the result (binary)
+
+### ✅ If second call returns 409 and no new case is created
+
+You’re **safe to publish**. Proceed:
+
+* redeploy in Replit if needed
+* wire the Lantern “Send to ELI” button next
+* you’re done on the ELI side
+
+### ❌ If second call creates a new case (or returns 200 again)
+
+Your idempotency is only **per-case**, not global. Fix is the **dedupe ledger** with `UNIQUE(source, request_id)` and optional “return existing case url” behavior.
+
+---
+
+## If you want the tightest enterprise version (recommended anyway)
+
+Even if the global check passes today, the **best** implementation long-term is still the ledger table with a unique constraint (because it’s race-proof under autoscale concurrency).
+
+---
+
+If you paste just the **HTTP status + response body** from call #2 (redact token), I’ll tell you immediately: **ship now** vs **add ledger**.

@@ -1,0 +1,154 @@
+You’re in the right place **conceptually** (ELI-side readiness), but before you “publish,” there’s one thing to sanity-check because it determines whether your idempotency is actually protecting you in the real Lantern flow.
+
+## 0) One critical idempotency detail to verify
+
+There are **two** ingest patterns:
+
+1. **Append-to-existing case** (Lantern already knows `caseId`)
+2. **Create-or-append** (Lantern does *not* know a caseId yet, so ingest creates a new case)
+
+If your dedupe check only searches **events inside a given case**, then:
+
+* ✅ it will stop double-click duplicates **when `caseId` is provided**
+* ❌ it will *not* stop duplicates **when no `caseId` is provided**, because each retry would create a brand-new case before you even have a case to search
+
+Your smoke test description (“case created… retry rejected”) *suggests* you already dedupe **before case creation** (global), which is the correct implementation — but it’s worth confirming explicitly.
+
+### The definitive test (run this)
+
+Call ingest **twice** with the **same `source + requestId`** and **NO `caseId`**:
+
+* 1st call: should create case + return `{ caseId, url }`
+* 2nd call: should return **409 DUPLICATE_REQUEST** (and NOT create a new case)
+
+If that’s true, your idempotency is real.
+
+If it’s not true, the correct fix is a small “dedupe ledger” with a **unique constraint** on `(source, requestId)` (more on that below).
+
+---
+
+## 1) “Publish this update” means: deploy a new production build
+
+I can’t click publish for you from here, but you can do it reliably with this checklist.
+
+### A) Make sure the changes are committed
+
+From your repo root:
+
+```bash
+git status
+git diff
+```
+
+If clean, you’re good.
+
+If not:
+
+```bash
+git add .
+git commit -m "eli: add ingest idempotency via (source, requestId)"
+git push
+```
+
+### B) Confirm production secrets (ELI deployment)
+
+In **ELI → Deployments → your Autoscale deployment → Secrets/Env** confirm:
+
+* `ELI_INGEST_TOKEN` = set
+* `ELI_INGEST_SOURCES` = `lantern` (and any others)
+
+### C) Deploy
+
+In Replit Deployments:
+
+* Click **Deploy** / **Redeploy** (whatever your UI shows)
+* Wait for status to show healthy
+
+---
+
+## 2) Production smoke test (the one that matters)
+
+Do this against **production** (ajmaksimeli.com), not dev:
+
+### First request (should succeed)
+
+```bash
+curl -sS -X POST "https://ajmaksimeli.com/api/integrations/ingest" \
+  -H "Authorization: Bearer $ELI_INGEST_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source":"lantern",
+    "eventType":"external_ingest",
+    "eventTime":"'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'",
+    "description":"Prod ingest smoke test",
+    "metadata":{"requestId":"prod-smoke-1","threadId":"t-1","model":"unknown"}
+  }'
+```
+
+### Second request (same requestId, no caseId) (should 409)
+
+```bash
+curl -sS -X POST "https://ajmaksimeli.com/api/integrations/ingest" \
+  -H "Authorization: Bearer $ELI_INGEST_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source":"lantern",
+    "eventType":"external_ingest",
+    "eventTime":"'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'",
+    "description":"Prod ingest smoke test retry",
+    "metadata":{"requestId":"prod-smoke-1","threadId":"t-1","model":"unknown"}
+  }'
+```
+
+Then open the returned `url` from the first call and confirm:
+
+* event exists
+* audit event exists
+
+---
+
+## 3) If your current dedupe is not global, here’s the correct “bulletproof” version
+
+If the test above creates two cases instead of returning 409, do this:
+
+### Add a tiny dedupe table
+
+`ingest_requests`:
+
+* `source` (text)
+* `request_id` (text)
+* `case_id` (text)
+* `created_at`
+* **UNIQUE(source, request_id)**
+
+Flow:
+
+* On ingest: try insert `(source, requestId)` first
+
+  * if unique violation → return 409 with existing `case_id`
+  * else continue, create case/event, then update row with `case_id`
+
+That’s the cleanest enterprise-proof way and it’s a small diff.
+
+---
+
+## 4) What’s left (correctly) on Lantern side
+
+Your final “done” state for integration is:
+
+* Lantern secrets:
+
+  * `ELI_BASE_URL=https://ajmaksimeli.com`
+  * `ELI_INGEST_TOKEN=...`
+* Lantern UI:
+
+  * “Send to ELI” button posts payload with `metadata.requestId = crypto.randomUUID()`
+  * shows returned `url`
+
+---
+
+### Bottom line
+
+Yes: **publish now** if (and only if) your idempotency check blocks duplicates **even when `caseId` is omitted**. Run the two-call prod smoke test above; if it behaves, redeploy and you’re production-ready for Lantern wiring.
+
+If you tell me what your current ingest implementation does when `caseId` is omitted (create new case every time vs dedupe first), I’ll tell you immediately whether you’re safe to ship or need the dedupe table.
