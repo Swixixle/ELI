@@ -1,23 +1,35 @@
 {
-  "schema_version": "0.1",
-  "created_at": "2026-02-08T15:30:00Z",
+  "schema_version": "0.2",
+  "created_at": "2026-02-17T00:52:00Z",
+  "actor": {
+    "actor_id": "user-analyst-8472",
+    "actor_role": "analyst",
+    "action": "review_clinical_documentation",
+    "timestamp": "2026-02-17T00:52:00Z"
+  },
   "eli": {
-    "engine": "ELI-core",
-    "mode": "advisory",
+    "engine": "ELI-Healthcare-v1",
+    "mode": "gatekeeper",
+    "execution_mode": "deterministic",
+    "model_version": "clinical-extractor-v2.1.0",
     "policy_hash": {
       "alg": "sha256",
       "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     }
   },
   "subject": {
-    "type": "clinical_question",
+    "type": "clinical_documentation",
     "content_type": "text/plain",
-    "byte_length": 128
+    "byte_length": 2048,
+    "patient_context_hash": {
+      "alg": "sha256",
+      "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    }
   },
   "inputs": {
     "sources": [
       {
-        "kind": "clinician_form",
+        "kind": "ehr_note_template",
         "content_hash": {
           "alg": "sha256",
           "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
@@ -26,31 +38,60 @@
     ],
     "redactions": {
       "phi_present": true,
-      "phi_fields": ["name", "dob"]
+      "phi_fields": ["patient_name", "date_of_birth", "medical_record_number"]
+    },
+    "phi_sanitization": {
+      "validated": true,
+      "method": "regex-pattern-match-hipaa"
     }
   },
   "decision": {
-    "verdict": "needs-expert",
-    "confidence": 0.42,
-    "rationale_codes": ["INSUFFICIENT_CONTEXT", "HIGH_RISK_DOMAIN"]
+    "verdict": "proceed",
+    "confidence_tier": "VERIFIED",
+    "confidence_score": 0.95,
+    "coverage_percentage": 98.5,
+    "rationale_codes": ["DETERMINISTIC_EXTRACTION", "STRUCTURED_SOURCE", "COMPLETE_FIELDS"]
   },
   "evidence": [
     {
       "id": "E1",
-      "claim": "Available inputs insufficient for safe autonomous decision",
+      "claim": "Clinical documentation extracted using deterministic rule-based methods",
+      "confidence_tier": "VERIFIED",
       "support": [
-        "Missing imaging",
-        "Incomplete lab values"
+        "Structured EHR template with defined fields",
+        "Cryptographic hash validation passed",
+        "All required fields present"
       ],
-      "counter": [
-        "Some historical notes available"
+      "counter": [],
+      "notes": "Deterministic extraction mode ensures compliance-grade output"
+    },
+    {
+      "id": "E2",
+      "claim": "PHI sanitization validated before persistence",
+      "confidence_tier": "VERIFIED",
+      "support": [
+        "HIPAA regex pattern matching applied",
+        "No PHI identifiers detected in output",
+        "Only SHA-256 patient context hash stored"
       ],
-      "notes": "Escalation recommended per safety policy"
+      "counter": [],
+      "notes": "PHI boundary enforcement confirmed"
     }
   ],
   "safety": {
-    "high_risk_flag": true,
-    "blocks": ["AUTONOMOUS_DIAGNOSIS"],
-    "warnings": ["Clinical judgment required"]
+    "high_risk_flag": false,
+    "blocks": [],
+    "warnings": []
+  },
+  "audit": {
+    "chain_head_hash": {
+      "alg": "sha256",
+      "value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    "signature_present": true,
+    "previous_hash": {
+      "alg": "sha256",
+      "value": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    }
   }
 }

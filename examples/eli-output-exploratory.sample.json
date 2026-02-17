@@ -1,0 +1,87 @@
+{
+  "schema_version": "0.2",
+  "created_at": "2026-02-17T00:52:00Z",
+  "actor": {
+    "actor_id": "user-admin-1337",
+    "actor_role": "admin",
+    "action": "exploratory_llm_analysis",
+    "timestamp": "2026-02-17T00:52:00Z"
+  },
+  "eli": {
+    "engine": "ELI-Healthcare-v1-LLM",
+    "mode": "advisory",
+    "execution_mode": "exploratory",
+    "model_version": "gpt-4-clinical-v1.5",
+    "policy_hash": {
+      "alg": "sha256",
+      "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  "subject": {
+    "type": "clinical_note_draft",
+    "content_type": "text/plain",
+    "byte_length": 4096,
+    "patient_context_hash": {
+      "alg": "sha256",
+      "value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0001"
+    }
+  },
+  "inputs": {
+    "sources": [
+      {
+        "kind": "unstructured_clinical_notes",
+        "content_hash": {
+          "alg": "sha256",
+          "value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0002"
+        }
+      }
+    ],
+    "redactions": {
+      "phi_present": true,
+      "phi_fields": ["patient_name", "date_of_birth", "medical_record_number", "admission_date"]
+    },
+    "phi_sanitization": {
+      "validated": true,
+      "method": "ml-entity-detection-hipaa"
+    }
+  },
+  "decision": {
+    "verdict": "needs-expert",
+    "confidence_tier": "UNKNOWN",
+    "confidence_score": 0.62,
+    "coverage_percentage": 45.0,
+    "rationale_codes": ["LLM_INFERENCE", "UNSTRUCTURED_SOURCE", "REQUIRES_VALIDATION"]
+  },
+  "evidence": [
+    {
+      "id": "E1",
+      "claim": "LLM-generated clinical note summary (Exploratory Mode - NOT for compliance reporting)",
+      "confidence_tier": "UNKNOWN",
+      "support": [
+        "LLM processing of unstructured notes",
+        "Pattern detection from historical data"
+      ],
+      "counter": [
+        "No structured source validation",
+        "LLM output not deterministically reproducible"
+      ],
+      "notes": "EXPLORATORY MODE: This output is excluded from compliance reporting and requires expert clinical review before use"
+    }
+  ],
+  "safety": {
+    "high_risk_flag": true,
+    "blocks": ["COMPLIANCE_REPORTING", "AUTOMATED_ATTESTATION"],
+    "warnings": [
+      "LLM-based inference - not suitable for regulatory compliance",
+      "Requires clinical expert validation",
+      "Excluded from immutable audit chain"
+    ]
+  },
+  "audit": {
+    "chain_head_hash": {
+      "alg": "sha256",
+      "value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0003"
+    },
+    "signature_present": false
+  }
+}
