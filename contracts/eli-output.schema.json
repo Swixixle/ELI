@@ -1,37 +1,77 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://eli.local/contracts/eli-output.schema.json",
-  "title": "ELI Output (signable artifact) v0.1",
+  "title": "ELI Output (Healthcare Compliance) v0.2",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schema_version",
     "created_at",
     "eli",
+    "actor",
     "subject",
     "inputs",
     "decision",
     "evidence",
-    "safety"
+    "safety",
+    "audit"
   ],
   "properties": {
     "schema_version": {
       "type": "string",
-      "const": "0.1"
+      "const": "0.2"
     },
     "created_at": {
       "type": "string",
       "format": "date-time"
     },
+    "actor": {
+      "type": "object",
+      "description": "Actor-bound audit attribution (REQUIRED for healthcare compliance)",
+      "additionalProperties": false,
+      "required": ["actor_id", "actor_role", "action", "timestamp"],
+      "properties": {
+        "actor_id": {
+          "type": "string",
+          "description": "Authenticated user identifier",
+          "minLength": 1
+        },
+        "actor_role": {
+          "type": "string",
+          "description": "Role-based access control classification",
+          "enum": ["viewer", "analyst", "admin"]
+        },
+        "action": {
+          "type": "string",
+          "description": "Type of operation performed",
+          "minLength": 1
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 timestamp for audit trail"
+        }
+      }
+    },
     "eli": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["engine", "mode", "policy_hash"],
+      "required": ["engine", "mode", "execution_mode", "policy_hash", "model_version"],
       "properties": {
         "engine": { "type": "string" },
         "mode": {
           "type": "string",
+          "description": "Compliance gating mode",
           "enum": ["advisory", "gatekeeper"]
+        },
+        "execution_mode": {
+          "type": "string",
+          "description": "Deterministic (rule-based, compliance-safe) vs Exploratory (LLM-based, excluded from compliance)",
+          "enum": ["deterministic", "exploratory"]
+        },
+        "model_version": {
+          "type": "string",
+          "description": "Specific AI model version identifier (if AI-assisted)"
         },
         "policy_hash": {
           "type": "object",
@@ -47,17 +87,27 @@
     "subject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "content_type", "byte_length"],
+      "required": ["type", "content_type", "byte_length", "patient_context_hash"],
       "properties": {
         "type": { "type": "string" },
         "content_type": { "type": "string" },
-        "byte_length": { "type": "integer", "minimum": 0 }
+        "byte_length": { "type": "integer", "minimum": 0 },
+        "patient_context_hash": {
+          "type": "object",
+          "description": "SHA-256 hash of patient context (NOT PHI) for correlation",
+          "additionalProperties": false,
+          "required": ["alg", "value"],
+          "properties": {
+            "alg": { "type": "string", "const": "sha256" },
+            "value": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          }
+        }
       }
     },
     "inputs": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sources", "redactions"],
+      "required": ["sources", "redactions", "phi_sanitization"],
       "properties": {
         "sources": {
           "type": "array",
@@ -88,7 +138,24 @@
             "phi_present": { "type": "boolean" },
             "phi_fields": {
               "type": "array",
-              "items": { "type": "string" }
+              "items": { "type": "string" },
+              "description": "List of field names that were redacted (not the PHI values)"
+            }
+          }
+        },
+        "phi_sanitization": {
+          "type": "object",
+          "description": "PHI boundary enforcement validation",
+          "additionalProperties": false,
+          "required": ["validated", "method"],
+          "properties": {
+            "validated": {
+              "type": "boolean",
+              "description": "Confirms PHI sanitization was performed"
+            },
+            "method": {
+              "type": "string",
+              "description": "Sanitization method used (e.g., 'regex-pattern-match', 'ml-entity-detection')"
             }
           }
         }
@@ -97,16 +164,28 @@
     "decision": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["verdict", "confidence", "rationale_codes"],
+      "required": ["verdict", "confidence_tier", "confidence_score", "rationale_codes"],
       "properties": {
         "verdict": {
           "type": "string",
           "enum": ["proceed", "park", "discard", "needs-expert"]
         },
-        "confidence": {
+        "confidence_tier": {
+          "type": "string",
+          "description": "Legally defensible confidence classification",
+          "enum": ["VERIFIED", "INFERRED", "UNKNOWN"]
+        },
+        "confidence_score": {
           "type": "number",
+          "description": "Numerical confidence (0-1) for internal use",
           "minimum": 0,
           "maximum": 1
+        },
+        "coverage_percentage": {
+          "type": "number",
+          "description": "Percentage of content covered by confidence tier",
+          "minimum": 0,
+          "maximum": 100
         },
         "rationale_codes": {
           "type": "array",
@@ -121,10 +200,15 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "claim", "support", "counter", "notes"],
+        "required": ["id", "claim", "confidence_tier", "support", "counter", "notes"],
         "properties": {
           "id": { "type": "string" },
           "claim": { "type": "string" },
+          "confidence_tier": {
+            "type": "string",
+            "description": "Evidence-level confidence classification",
+            "enum": ["VERIFIED", "INFERRED", "UNKNOWN"]
+          },
           "support": {
             "type": "array",
             "items": { "type": "string" }
@@ -150,6 +234,38 @@
         "warnings": {
           "type": "array",
           "items": { "type": "string" }
+        }
+      }
+    },
+    "audit": {
+      "type": "object",
+      "description": "Immutable audit chain metadata for forensic export",
+      "additionalProperties": false,
+      "required": ["chain_head_hash", "signature_present"],
+      "properties": {
+        "chain_head_hash": {
+          "type": "object",
+          "description": "Hash of this audit record for chain integrity",
+          "additionalProperties": false,
+          "required": ["alg", "value"],
+          "properties": {
+            "alg": { "type": "string", "const": "sha256" },
+            "value": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          }
+        },
+        "signature_present": {
+          "type": "boolean",
+          "description": "Indicates if cryptographic signature is available for this record"
+        },
+        "previous_hash": {
+          "type": "object",
+          "description": "Hash of previous audit record in chain (optional for first record)",
+          "additionalProperties": false,
+          "required": ["alg", "value"],
+          "properties": {
+            "alg": { "type": "string", "const": "sha256" },
+            "value": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          }
         }
       }
     }
