@@ -14,6 +14,11 @@ ELI is a compliance framework that enables hospitals to:
 
 ## Primary Use Case
 
+[Open in Replit](https://replit.com/github/Swixixle/ELI)
+
+This repository is configured to run in Replit. Simply:
+1. Click the link above to open this repository in Replit
+2. Click "Run" to validate the ELI schema and sample output
 **Hospital Risk & Compliance Officers** need to prove that AI-assisted clinical documentation systems:
 1. Never store Protected Health Information (PHI) in violation of HIPAA
 2. Maintain actor-bound audit trails showing who accessed what, when
