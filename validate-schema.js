@@ -124,10 +124,14 @@ try {
     console.log('✓ Validation PASSED');
     console.log('\nThe sample ELI output conforms to the schema.');
     console.log('\nSample content preview:');
+    console.log('  - Actor:', sample.actor.actor_id, '(' + sample.actor.actor_role + ')');
+    console.log('  - Execution mode:', sample.eli.execution_mode);
     console.log('  - Decision verdict:', sample.decision.verdict);
-    console.log('  - Confidence:', sample.decision.confidence);
+    console.log('  - Confidence tier:', sample.decision.confidence_tier);
+    console.log('  - Coverage:', sample.decision.coverage_percentage + '%');
     console.log('  - Evidence items:', sample.evidence.length);
     console.log('  - Safety flags:', sample.safety.high_risk_flag ? 'HIGH RISK' : 'normal');
+    console.log('  - PHI sanitized:', sample.inputs.phi_sanitization.validated ? 'YES' : 'NO');
   } else {
     console.log('✗ Validation FAILED');
     console.log('\nErrors found:');
@@ -136,10 +140,17 @@ try {
   }
   
   console.log('\n========================================');
-  console.log('ELI Framework Information');
+  console.log('ELI Healthcare Compliance Framework');
   console.log('========================================');
-  console.log('ELI separates cryptographic proof from inference.');
-  console.log('It produces justified, auditable claims from signed artifacts.');
+  console.log('ELI provides legally defensible audit trails for');
+  console.log('AI-assisted clinical documentation in healthcare.');
+  console.log('');
+  console.log('Key Features:');
+  console.log('  • Actor-bound audit trails');
+  console.log('  • PHI boundary enforcement');
+  console.log('  • Deterministic vs Exploratory mode separation');
+  console.log('  • Immutable forensic export capability');
+  console.log('  • RBAC with scoped API keys');
   console.log('\nFor more information, see README.md');
   console.log('========================================\n');
   
