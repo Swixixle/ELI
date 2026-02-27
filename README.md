@@ -26,8 +26,31 @@ To run ELI, ensure the following keys are configured in your environment:
 ## 📂 Integration
 
 ELI is designed to plug directly into:
+To integrate **ELI** (Epistemic Load Index) across your ecosystem, you can add a new **"Ecosystem Connectivity"** section to your README. This explains how ELI acts as the "translator" for each of your specific apps.
 
-* **[CDIL](https://www.google.com/search?q=https://github.com/Swixixle/CDIL):** To simplify clinical documentation for patients.
-* **[LANTERN](https://www.google.com/search?q=https://github.com/Swixixle/Lantern):** To explain architectural maps of codebases.
+Here is the updated Markdown for those specific integrations:
 
 ---
+
+## 🔗 Ecosystem Integration
+
+ELI is designed to ingest complex data from your other applications and output simplified, actionable insights:
+
+* **[CDIL](https://www.google.com/search?q=https://github.com/Swixixle/CDIL):** Connects to the Clinical Documentation Integrity Layer to translate high-level medical coding and "physician-speak" into patient-friendly summaries.
+* **[LANTERN](https://www.google.com/search?q=https://github.com/Swixixle/Lantern):** Works with the transparency engine to explain complex codebase maps and dependency graphs to non-technical stakeholders.
+* **[HALO-RECEIPT](https://replit.com/@albearpig/HALO-RECEIPT):** Simplifies the cryptographic "audit trail" and logic chains, turning raw verification data into readable proof-of-authenticity reports.
+* **Valet:** Acts as the natural language interface for your automated services, allowing you to "request" complex tasks using simple, conversational commands.
+
+## 🛠 Setup for Inter-App Communication
+
+To allow ELI to "talk" to these apps, ensure your **Secrets** include the specific API gateways for each:
+
+| Secret Key | Purpose |
+| --- | --- |
+| `CDIL_ENDPOINT` | URL for the Clinical Documentation API. |
+| `LANTERN_MAP_KEY` | Access key for codebase transparency data. |
+| `HALO_AUTH_TOKEN` | Token to pull signed logic chains for simplification. |
+| `VALET_SESSION_ID` | Connects ELI's simplified output to your automated assistant. |
+
+---
+
